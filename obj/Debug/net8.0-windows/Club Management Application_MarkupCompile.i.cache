@@ -1,0 +1,20 @@
+﻿Club Management Application
+1.0.0.0
+
+winexe
+C#
+.cs
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net8.0-windows\
+ClubManagementApp
+none
+false
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
+E:\Pet Projects\Dotnet\Club Management Application\App.xaml
+62006568574
+
+701183984464
+268-659774258
+MainWindow.xaml;Views\ClubManagementView.xaml;Views\EventManagementView.xaml;Views\LoginWindow.xaml;Views\MemberListView.xaml;Views\ReportsView.xaml;
+
+True
+

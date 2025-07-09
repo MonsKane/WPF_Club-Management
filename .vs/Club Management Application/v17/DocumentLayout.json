@@ -1,0 +1,52 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Pet Projects\\Dotnet\\Club Management Application\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{4D81A4C5-F681-4E5E-BDCE-E540524077EC}|Club Management Application.csproj|e:\\pet projects\\dotnet\\club management application\\views\\clubmanagementview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{4D81A4C5-F681-4E5E-BDCE-E540524077EC}|Club Management Application.csproj|solutionrelative:views\\clubmanagementview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4D81A4C5-F681-4E5E-BDCE-E540524077EC}|Club Management Application.csproj|e:\\pet projects\\dotnet\\club management application\\views\\eventmanagementview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{4D81A4C5-F681-4E5E-BDCE-E540524077EC}|Club Management Application.csproj|solutionrelative:views\\eventmanagementview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ClubManagementView.xaml",
+              "DocumentMoniker": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Views\\ClubManagementView.xaml",
+              "RelativeDocumentMoniker": "Views\\ClubManagementView.xaml",
+              "ToolTip": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Views\\ClubManagementView.xaml",
+              "RelativeToolTip": "Views\\ClubManagementView.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-07-09T11:38:40.572Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "EventManagementView.xaml",
+              "DocumentMoniker": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Views\\EventManagementView.xaml",
+              "RelativeDocumentMoniker": "Views\\EventManagementView.xaml",
+              "ToolTip": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Views\\EventManagementView.xaml",
+              "RelativeToolTip": "Views\\EventManagementView.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-07-09T11:37:56.563Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

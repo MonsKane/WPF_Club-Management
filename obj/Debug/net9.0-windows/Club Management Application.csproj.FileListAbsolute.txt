@@ -1,0 +1,8 @@
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\Club Management Application.csproj.AssemblyReference.cache
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\Views\LoginWindow.baml
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\MainWindow.g.cs
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\Views\LoginWindow.g.cs
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\App.g.cs
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\GeneratedInternalTypeHelper.g.cs
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\Club Management Application_MarkupCompile.cache
+E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net9.0-windows\Club Management Application_MarkupCompile.lref

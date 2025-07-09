@@ -1,0 +1,18 @@
+<Application x:Class="ClubManagementApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ClubManagementApp"
+             xmlns:converters="clr-namespace:ClubManagementApp.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Add any resource dictionaries here -->
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Converters -->
+             <converters:BooleanToColorConverter x:Key="BooleanToColorConverter" />
+             <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+             <converters:StatusToColorConverter x:Key="StatusToColorConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
