@@ -9,5 +9,8 @@ namespace ClubManagementApp.Services
         void OpenClubManagementWindow();
         void OpenReportsWindow();
         void ShowNotification(string message);
+        
+        // Event for notification instead of direct dependency on MainViewModel
+        event Action<string>? NotificationRequested;
     }
 }

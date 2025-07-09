@@ -91,6 +91,7 @@ BEGIN
         EventDate datetime2 NOT NULL,
         Location nvarchar(200),
         MaxParticipants int,
+        Status nvarchar(50) NOT NULL DEFAULT 'Scheduled',
         ClubID int NOT NULL,
         CreatedDate datetime2 NOT NULL DEFAULT GETUTCDATE(),
         UpdatedDate datetime2 NULL,

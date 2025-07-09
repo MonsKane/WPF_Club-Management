@@ -20,7 +20,8 @@ namespace ClubManagementApp.Views
 
         private void OnLoginSuccessful(object? sender, EventArgs e)
         {
-            DialogResult = true;
+            // DialogResult should not be set when window is shown non-modally
+            // App.xaml.cs handles the window transition
             Close();
         }
 

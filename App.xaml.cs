@@ -2,12 +2,13 @@ using ClubManagementApp.Data;
 using ClubManagementApp.Services;
 using ClubManagementApp.ViewModels;
 using ClubManagementApp.Views;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
-using System.Windows;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows;
 
 namespace ClubManagementApp
 {
@@ -29,7 +30,7 @@ namespace ClubManagementApp
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool AllocConsole();
-        
+
         /// <summary>
         /// Service provider for dependency injection container.
         /// This manages the lifetime of all registered services and provides
@@ -58,7 +59,7 @@ namespace ClubManagementApp
             // Allocate console for debugging
             AllocConsole();
             Console.WriteLine("=== APPLICATION STARTING ===");
-            
+
             try
             {
                 Console.WriteLine("Calling base.OnStartup...");
@@ -91,7 +92,18 @@ namespace ClubManagementApp
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ClubManagementDbContext>();
-                    await DatabaseInitializer.InitializeAsync(context);
+
+                    // Check for reset flag in command line arguments
+                    var args = Environment.GetCommandLineArgs();
+                    if (args.Contains("--reset-db") || args.Contains("/reset-db"))
+                    {
+                        Console.WriteLine("[APP] Database reset flag detected. Resetting database...");
+                        await DatabaseInitializer.ResetDatabaseAsync(context);
+                    }
+                    else
+                    {
+                        await DatabaseInitializer.InitializeAsync(context);
+                    }
                 }
                 Console.WriteLine("Database initialized successfully.");
 
@@ -121,7 +133,7 @@ namespace ClubManagementApp
                 }
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 Console.WriteLine($"=== END ERROR ===");
-                
+
                 // Handle any startup failures gracefully
                 MessageBox.Show($"Application startup failed: {ex.Message}\n\nInner Exception: {ex.InnerException?.Message}\n\nStack Trace: {ex.StackTrace}", "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Console.ReadKey(); // Wait for user input before closing
@@ -144,6 +156,17 @@ namespace ClubManagementApp
         /// <param name="services">Service collection to configure</param>
         private void ConfigureServices(ServiceCollection services)
         {
+            // CONFIGURATION SETUP
+            // Register Microsoft.Extensions.Configuration.IConfiguration for services that require it
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            services.AddSingleton<IConfiguration>(configuration);
+
             // LOGGING CONFIGURATION
             // Set up application-wide logging with Information level as minimum
             // Logs are written to console and file (configured in appsettings.json)
@@ -153,93 +176,96 @@ namespace ClubManagementApp
             });
 
             // DATABASE CONTEXT
-            // Singleton lifetime ensures single database connection throughout app lifecycle
             // DbContext manages Entity Framework operations and database connections
-            services.AddSingleton<ClubManagementDbContext>();
+            // Using AddDbContext with SQL Server for proper connection management and scoped lifetime
+            services.AddDbContext<ClubManagementDbContext>(options =>
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
 
-            // CORE BUSINESS SERVICES (Transient)
+            // CORE BUSINESS SERVICES (Scoped)
             // These services handle business logic and data operations
-            // Transient lifetime ensures fresh instances for each request, preventing state issues
-            
+            // Scoped lifetime ensures they share the same DbContext instance within an operation scope
+
             // User management: Authentication, user CRUD, activity tracking
-            services.AddTransient<IUserService, UserService>();
-            
+            // Changed to Singleton to maintain current user session state across the application
+            services.AddSingleton<IUserService, UserService>();
+
             // Member management: Club membership operations, role assignments
-            services.AddTransient<IMemberService, MemberService>();
-            
+            services.AddScoped<IMemberService, MemberService>();
+
             // Club management: Club CRUD, leadership roles, statistics
-            services.AddTransient<IClubService, ClubService>();
-            
+            services.AddScoped<IClubService, ClubService>();
+
             // Event management: Event lifecycle, participant registration, attendance tracking
-            services.AddTransient<IEventService, EventService>();
-            
+            services.AddScoped<IEventService, EventService>();
+
             // Report generation: Various report types, data aggregation, export functionality
-            services.AddTransient<IReportService, ReportService>();
-            
+            services.AddScoped<IReportService, ReportService>();
+
             // Authorization: Role-based access control, permission checking
-            services.AddTransient<IAuthorizationService, AuthorizationService>();
-            
+            services.AddScoped<IAuthorizationService, AuthorizationService>();
+
             // Notification system: Multi-channel notifications (email, in-app, SMS)
-            services.AddTransient<INotificationService, NotificationService>();
-            
+            services.AddScoped<INotificationService, NotificationService>();
+
             // Business logic coordinator: Orchestrates complex operations across services
-            services.AddTransient<IBusinessLogicManager, BusinessLogicManager>();
-            
+            services.AddScoped<IBusinessLogicManager, BusinessLogicManager>();
+
             // Dashboard data aggregation: Statistics, charts, summary information
-            services.AddTransient<IDashboardService, DashboardService>();
-            
+            services.AddScoped<IDashboardService, DashboardService>();
+
             // Audit logging: Track user actions, system events, security events
-            services.AddTransient<IAuditService, AuditService>();
-            
+            services.AddScoped<IAuditService, AuditService>();
+
             // Application settings: User preferences, system configuration
-            services.AddTransient<ISettingsService, SettingsService>();
-            
+            services.AddScoped<ISettingsService, SettingsService>();
+
             // Data backup and restore: Database backup, file system backup
-            services.AddTransient<IBackupService, BackupService>();
-            
+            services.AddScoped<IBackupService, BackupService>();
+
             // UI navigation: Window management, view transitions
             services.AddTransient<INavigationService, NavigationService>();
 
             // INFRASTRUCTURE SERVICES (Singleton)
             // These services maintain state and configuration throughout the application
-            
+
             // Application logging: File and console logging coordination
             services.AddSingleton<ILoggingService, LoggingService>();
-            
+
             // Configuration management: appsettings.json loading, environment variables
             services.AddSingleton<IConfigurationService, ConfigurationService>();
-            
+
             // Email service: SMTP configuration, email templates, delivery
             services.AddSingleton<IEmailService, EmailService>();
-            
+
             // Security service: Encryption, password hashing, token management
             services.AddSingleton<ISecurityService, SecurityService>();
-            
+
             // Data import/export: CSV/Excel processing, file operations
             services.AddSingleton<IDataImportExportService, DataImportExportService>();
 
             // VIEW MODELS (Transient)
             // ViewModels coordinate between Views and Services, implementing MVVM pattern
             // Transient lifetime allows fresh state for each window/view instance
-            
+
             // Main application window coordination
             services.AddTransient<MainViewModel>();
-            
+
             // User authentication and login flow
             services.AddTransient<LoginViewModel>();
-            
+
             // Dashboard statistics and overview
             services.AddTransient<DashboardViewModel>();
-            
+
             // Member list management and operations
             services.AddTransient<MemberListViewModel>();
-            
+
             // Event creation, editing, and management
             services.AddTransient<EventManagementViewModel>();
-            
+
             // Club administration and settings
             services.AddTransient<ClubManagementViewModel>();
-            
+
             // Report generation and viewing
             services.AddTransient<ReportsViewModel>();
         }
@@ -271,13 +297,14 @@ namespace ClubManagementApp
                     // STEP 2: Initialize main application context
                     // Create MainViewModel and establish user session with their profile and permissions
                     var mainViewModel = _serviceProvider!.GetRequiredService<MainViewModel>();
-                    await mainViewModel.LoginAsync(currentUser.Email, ""); // Password not needed here as user is already validated
-                    
+                    // Set the current user directly since authentication is already complete
+                    mainViewModel.CurrentUser = currentUser;
+
                     // STEP 3: Create and display main application window
                     // The MainWindow contains the primary UI with navigation, dashboard, and all features
                     var mainWindow = new MainWindow(mainViewModel);
                     mainWindow.Show();
-                    
+
                     // STEP 4: Close login window
                     // Clean up the login window to complete the transition to main application
                     foreach (Window window in Windows)
@@ -289,11 +316,15 @@ namespace ClubManagementApp
                         }
                     }
                 }
+                else
+                {
+                    MessageBox.Show("Không thể lấy thông tin người dùng hiện tại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             catch (Exception ex)
             {
                 // Handle any errors during the transition gracefully
-                MessageBox.Show($"Failed to open main window: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Không thể mở cửa sổ chính: {ex.Message}", "Lỗi hệ thống", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -314,7 +345,7 @@ namespace ClubManagementApp
             // This will dispose all registered services that implement IDisposable
             // including database contexts, file handles, and other managed resources
             _serviceProvider?.Dispose();
-            
+
             // STEP 2: Complete WPF shutdown process
             // Call base implementation to ensure proper WPF application cleanup
             base.OnExit(e);

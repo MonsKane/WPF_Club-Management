@@ -223,8 +223,8 @@ namespace ClubManagementApp.Services
                         AttendancePercentage = u.EventParticipations.Count() > 0 ? 
                             (double)u.EventParticipations.Count(ep => ep.Status == AttendanceStatus.Attended) / 
                             u.EventParticipations.Count() * 100 : 0,
-                        ActivityLevel = u.EventParticipations.Count(ep => ep.Status == AttendanceStatus.Attended) >= 5 ? "High" : 
-                                       u.EventParticipations.Count(ep => ep.Status == AttendanceStatus.Attended) >= 2 ? "Medium" : "Low"
+                        ActivityLevel = u.EventParticipations.Count(ep => ep.Status == AttendanceStatus.Attended) >= 5 ? "Active" : 
+                                       u.EventParticipations.Count(ep => ep.Status == AttendanceStatus.Attended) >= 2 ? "Normal" : "Inactive"
                     })
                     .OrderByDescending(ma => ma.TotalEventsRegistered)
                     .Take(count)

@@ -69,7 +69,8 @@ namespace ClubManagementApp.ViewModels
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
                 Console.WriteLine("[LOGIN] FAILED - Missing email or password");
-                ErrorMessage = "Please enter both email and password.";
+                ShowError("Vui lòng nhập đầy đủ email và mật khẩu.");
+                System.Windows.MessageBox.Show("Vui lòng nhập đầy đủ email và mật khẩu.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 return;
             }
 
@@ -89,24 +90,32 @@ namespace ClubManagementApp.ViewModels
                     {
                         Console.WriteLine($"[LOGIN] SUCCESS - User authenticated: {user.FullName} ({user.Role})");
                         _userService.SetCurrentUser(user);
+                        
+                        // Show success dialog
+                        System.Windows.MessageBox.Show($"Đăng nhập thành công!\nChào mừng {user.FullName}", "Đăng nhập thành công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        
                         LoginSuccessful?.Invoke(this, EventArgs.Empty);
                     }
                     else
                     {
                         Console.WriteLine("[LOGIN] FAILED - User object not found after validation");
-                        ErrorMessage = "User not found.";
+                        ShowError("Không tìm thấy thông tin người dùng.");
+                        System.Windows.MessageBox.Show("Không tìm thấy thông tin người dùng.", "Lỗi đăng nhập", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     }
                 }
                 else
                 {
                     Console.WriteLine("[LOGIN] FAILED - Invalid credentials");
-                    ErrorMessage = "Invalid email or password.";
+                    ShowError("Email hoặc mật khẩu không đúng.");
+                    System.Windows.MessageBox.Show("Email hoặc mật khẩu không đúng.", "Lỗi đăng nhập", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[LOGIN] FAILED - Exception: {ex.Message}");
-                ErrorMessage = $"Login failed: {ex.Message}";
+                var errorMsg = $"Đăng nhập thất bại: {ex.Message}";
+                ShowError(errorMsg);
+                System.Windows.MessageBox.Show(errorMsg, "Lỗi hệ thống", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {

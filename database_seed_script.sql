@@ -82,6 +82,7 @@ CREATE TABLE Events (
     IsActive bit NOT NULL DEFAULT 1,
     RegistrationDeadline datetime2 NULL,
     MaxParticipants int NULL,
+    Status nvarchar(50) NOT NULL DEFAULT 'Scheduled',
     ClubID int NOT NULL,
     FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE CASCADE
 );
@@ -263,36 +264,36 @@ GO
 -- Insert Users (including various roles and club memberships)
 INSERT INTO Users (FullName, Email, Password, StudentID, Role, ActivityLevel, JoinDate, IsActive, TwoFactorEnabled, ClubID) VALUES
 -- System Administrator
-('Admin User', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'SystemAdmin', 'High', '2024-01-01', 1, 1, NULL),
+('Admin User', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'SystemAdmin', 'Active', '2024-01-01', 1, 1, NULL),
 
 -- Club Presidents
-('Alice Johnson', 'alice.johnson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CS2024001', 'ClubPresident', 'High', '2024-01-15', 1, 1, 1),
-('Bob Smith', 'bob.smith@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DR2024002', 'ClubPresident', 'High', '2024-01-20', 1, 0, 2),
-('Carol Davis', 'carol.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'EN2024003', 'ClubPresident', 'High', '2024-02-01', 1, 1, 3),
-('David Wilson', 'david.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'PH2024004', 'ClubPresident', 'High', '2024-02-10', 1, 0, 4),
-('Emma Brown', 'emma.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DB2024005', 'ClubPresident', 'High', '2024-02-15', 1, 1, 5),
+('Alice Johnson', 'alice.johnson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CS2024001', 'ClubPresident', 'Active', '2024-01-15', 1, 1, 1),
+('Bob Smith', 'bob.smith@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DR2024002', 'ClubPresident', 'Active', '2024-01-20', 1, 0, 2),
+('Carol Davis', 'carol.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'EN2024003', 'ClubPresident', 'Active', '2024-02-01', 1, 1, 3),
+('David Wilson', 'david.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'PH2024004', 'ClubPresident', 'Active', '2024-02-10', 1, 0, 4),
+('Emma Brown', 'emma.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DB2024005', 'ClubPresident', 'Active', '2024-02-15', 1, 1, 5),
 
 -- Club Officers
-('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2024006', 'ClubOfficer', 'High', '2024-03-01', 1, 0, 6),
-('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2024007', 'ClubOfficer', 'High', '2024-03-05', 1, 1, 7),
-('Henry Taylor', 'henry.taylor@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'LT2024008', 'ClubOfficer', 'High', '2024-03-10', 1, 0, 8),
-('Ivy Chen', 'ivy.chen@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SC2024009', 'ClubOfficer', 'High', '2024-03-15', 1, 1, 9),
-('Jack Anderson', 'jack.anderson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CH2024010', 'ClubOfficer', 'High', '2024-03-20', 1, 0, 10),
+('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2024006', 'ClubOfficer', 'Active', '2024-03-01', 1, 0, 6),
+('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2024007', 'ClubOfficer', 'Active', '2024-03-05', 1, 1, 7),
+('Henry Taylor', 'henry.taylor@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'LT2024008', 'ClubOfficer', 'Active', '2024-03-10', 1, 0, 8),
+('Ivy Chen', 'ivy.chen@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SC2024009', 'ClubOfficer', 'Active', '2024-03-15', 1, 1, 9),
+('Jack Anderson', 'jack.anderson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CH2024010', 'ClubOfficer', 'Active', '2024-03-20', 1, 0, 10),
 
 -- Regular Members
 ('Kate Williams', 'kate.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024011', 'Member', 'Normal', '2024-04-01', 1, 0, 1),
 ('Liam Garcia', 'liam.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024012', 'Member', 'Normal', '2024-04-05', 1, 0, 2),
-('Mia Rodriguez', 'mia.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024013', 'Member', 'High', '2024-04-10', 1, 1, 3),
+('Mia Rodriguez', 'mia.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024013', 'Member', 'Active', '2024-04-10', 1, 1, 3),
 ('Noah Martinez', 'noah.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024014', 'Member', 'Normal', '2024-04-15', 1, 0, 4),
-('Olivia Lopez', 'olivia.lopez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024015', 'Member', 'Low', '2024-04-20', 1, 0, 5),
+('Olivia Lopez', 'olivia.lopez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024015', 'Member', 'Inactive', '2024-04-20', 1, 0, 5),
 ('Paul Gonzalez', 'paul.gonzalez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024016', 'Member', 'Normal', '2024-04-25', 1, 0, 6),
-('Quinn Wilson', 'quinn.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024017', 'Member', 'High', '2024-05-01', 1, 1, 7),
+('Quinn Wilson', 'quinn.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024017', 'Member', 'Active', '2024-05-01', 1, 1, 7),
 ('Rachel Kim', 'rachel.kim@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024018', 'Member', 'Normal', '2024-05-05', 1, 0, 8),
 ('Sam Thompson', 'sam.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024019', 'Member', 'Normal', '2024-05-10', 1, 0, 9),
-('Tina White', 'tina.white@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024020', 'Member', 'Low', '2024-05-15', 1, 0, 10),
+('Tina White', 'tina.white@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024020', 'Member', 'Inactive', '2024-05-15', 1, 0, 10),
 
 -- Multi-club member (not assigned to specific club in Users table)
-('Uma Patel', 'uma.patel@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024021', 'Member', 'High', '2024-05-20', 1, 1, NULL),
+('Uma Patel', 'uma.patel@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024021', 'Member', 'Active', '2024-05-20', 1, 1, NULL),
 ('Victor Chang', 'victor.chang@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024022', 'Member', 'Normal', '2024-05-25', 1, 0, NULL),
 ('Wendy Foster', 'wendy.foster@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024023', 'Member', 'Normal', '2024-06-01', 1, 0, NULL);
 GO

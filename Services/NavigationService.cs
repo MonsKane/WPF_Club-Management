@@ -11,17 +11,17 @@ namespace ClubManagementApp.Services
         private readonly IClubService _clubService;
         private readonly IEventService _eventService;
         private readonly IReportService _reportService;
-        private readonly MainViewModel _mainViewModel;
+        
+        // Event for notification instead of direct dependency on MainViewModel
+        public event Action<string>? NotificationRequested;
 
         public NavigationService(IUserService userService, IClubService clubService, 
-                               IEventService eventService, IReportService reportService,
-                               MainViewModel mainViewModel)
+                               IEventService eventService, IReportService reportService)
         {
             _userService = userService;
             _clubService = clubService;
             _eventService = eventService;
             _reportService = reportService;
-            _mainViewModel = mainViewModel;
         }
 
         public void OpenMemberListWindow()
@@ -50,7 +50,7 @@ namespace ClubManagementApp.Services
 
         public void ShowNotification(string message)
         {
-            _mainViewModel.ShowNotification(message);
+            NotificationRequested?.Invoke(message);
         }
     }
 }
