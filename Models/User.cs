@@ -43,6 +43,9 @@ namespace ClubManagementApp.Models
         [StringLength(20)]
         public string? StudentID { get; set; }
         
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
+        
         [Required]
         public UserRole Role { get; set; }
         

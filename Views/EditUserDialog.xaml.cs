@@ -8,7 +8,6 @@ namespace ClubManagementApp.Views
     public partial class EditUserDialog : Window
     {
         public User? UpdatedUser { get; private set; }
-        public new bool DialogResult { get; private set; }
         private readonly User _originalUser;
 
         public EditUserDialog(User user)
@@ -28,24 +27,39 @@ namespace ClubManagementApp.Views
 
                 // Set the selected role in ComboBox using string comparison
                 string roleString = _originalUser.Role.ToString();
+                Console.WriteLine($"[EditUserDialog] Looking for role: '{roleString}'");
+                
+                bool roleFound = false;
                 foreach (ComboBoxItem item in RoleComboBox.Items)
                 {
+                    Console.WriteLine($"[EditUserDialog] Checking item with Tag: '{item.Tag}', Content: '{item.Content}'");
                     if (item.Tag != null && item.Tag.ToString() == roleString)
                     {
                         RoleComboBox.SelectedItem = item;
+                        roleFound = true;
+                        Console.WriteLine($"[EditUserDialog] Role '{roleString}' found and selected");
                         break;
                     }
                 }
                 
                 // If role not found, show debug info and select first item as fallback
-                if (RoleComboBox.SelectedItem == null)
+                if (!roleFound)
                 {
                     Console.WriteLine($"[EditUserDialog] Warning: Role '{_originalUser.Role}' not found in ComboBox items");
+                    Console.WriteLine($"[EditUserDialog] Available items count: {RoleComboBox.Items.Count}");
                     if (RoleComboBox.Items.Count > 0)
                     {
                         RoleComboBox.SelectedIndex = 0;
+                        Console.WriteLine($"[EditUserDialog] Selected fallback item at index 0");
                     }
                 }
+                
+                Console.WriteLine($"[EditUserDialog] Final selected item: {RoleComboBox.SelectedItem}");
+                Console.WriteLine($"[EditUserDialog] Final selected value: {RoleComboBox.SelectedValue}");
+                Console.WriteLine($"[EditUserDialog] Final selected index: {RoleComboBox.SelectedIndex}");
+                
+                PhoneTextBox.Text = _originalUser.PhoneNumber ?? string.Empty;
+                Console.WriteLine($"[EditUserDialog] Phone number loaded: '{_originalUser.PhoneNumber}'");
             }
             catch (Exception ex)
             {
@@ -56,41 +70,61 @@ namespace ClubManagementApp.Views
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ValidateInput())
+            try
             {
-                UpdatedUser = new User
+                Console.WriteLine("[EditUserDialog] SaveButton_Click called");
+                Console.WriteLine($"[EditUserDialog] Current selected item: {RoleComboBox.SelectedItem}");
+                Console.WriteLine($"[EditUserDialog] Current selected value: {RoleComboBox.SelectedValue}");
+                
+                if (ValidateInput())
                 {
-                    UserID = _originalUser.UserID,
-                    FullName = FullNameTextBox.Text.Trim(),
-                    Email = EmailTextBox.Text.Trim(),
-                    Role = Enum.Parse<UserRole>(((ComboBoxItem)RoleComboBox.SelectedItem).Tag?.ToString() ?? "Member"),
-                    IsActive = IsActiveCheckBox.IsChecked ?? true,
-                    JoinDate = _originalUser.JoinDate,
-                    ClubID = _originalUser.ClubID,
-                    Club = _originalUser.Club,
-                    ActivityLevel = _originalUser.ActivityLevel,
-                    StudentID = _originalUser.StudentID,
-                    TwoFactorEnabled = _originalUser.TwoFactorEnabled
-                };
+                    Console.WriteLine("[EditUserDialog] Validation passed, creating updated user");
+                    
+                    UpdatedUser = new User
+                    {
+                        UserID = _originalUser.UserID,
+                        FullName = FullNameTextBox.Text.Trim(),
+                        Email = EmailTextBox.Text.Trim(),
+                        Role = Enum.Parse<UserRole>(((ComboBoxItem)RoleComboBox.SelectedItem).Tag?.ToString() ?? "Member"),
+                        PhoneNumber = string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim(),
+                        IsActive = IsActiveCheckBox.IsChecked ?? true,
+                        JoinDate = _originalUser.JoinDate,
+                        ClubID = _originalUser.ClubID,
+                        Club = _originalUser.Club,
+                        ActivityLevel = _originalUser.ActivityLevel,
+                        StudentID = _originalUser.StudentID,
+                        TwoFactorEnabled = _originalUser.TwoFactorEnabled
+                    };
 
-                // Update password if provided
-                if (!string.IsNullOrWhiteSpace(NewPasswordBox.Password))
-                {
-                    UpdatedUser.Password = NewPasswordBox.Password;
+                    // Update password if provided
+                    if (!string.IsNullOrWhiteSpace(NewPasswordBox.Password))
+                    {
+                        UpdatedUser.Password = NewPasswordBox.Password;
+                    }
+                    else
+                    {
+                        UpdatedUser.Password = _originalUser.Password;
+                    }
+
+                    Console.WriteLine("[EditUserDialog] Setting DialogResult = true");
+                    base.DialogResult = true;
+                    Close();
                 }
                 else
                 {
-                    UpdatedUser.Password = _originalUser.Password;
+                    Console.WriteLine("[EditUserDialog] Validation failed");
                 }
-
-                DialogResult = true;
-                Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EditUserDialog] Error in SaveButton_Click: {ex.Message}");
+                MessageBox.Show($"Error saving changes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            base.DialogResult = false;
             Close();
         }
 
@@ -131,7 +165,7 @@ namespace ClubManagementApp.Views
             }
 
             // Validate Role
-            if (RoleComboBox.SelectedValue == null)
+            if (RoleComboBox.SelectedItem == null)
             {
                 MessageBox.Show("Please select a role for the user.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);

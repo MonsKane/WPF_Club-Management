@@ -63,6 +63,7 @@ CREATE TABLE Users (
     Email nvarchar(150) NOT NULL,
     Password nvarchar(255) NOT NULL,
     StudentID nvarchar(20) NULL,
+    PhoneNumber nvarchar(20) NULL,
     Role nvarchar(50) NOT NULL,
     ActivityLevel nvarchar(50) NOT NULL DEFAULT 'Normal',
     JoinDate datetime2 NOT NULL DEFAULT GETDATE(),

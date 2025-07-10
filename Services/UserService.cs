@@ -209,9 +209,10 @@ namespace ClubManagementApp.Services
         /// 
         /// Data Flow:
         /// 1. Receive updated user entity from UI
-        /// 2. Mark entity as modified in EF context
-        /// 3. Save changes to update database record
-        /// 4. Return updated user entity
+        /// 2. Find existing entity in database
+        /// 3. Update properties to avoid tracking conflicts
+        /// 4. Save changes to update database record
+        /// 5. Return updated user entity
         /// 
         /// Note: Password updates should be handled separately for security
         /// Used by: User profile editing, admin user management
@@ -221,11 +222,34 @@ namespace ClubManagementApp.Services
         public async Task<User> UpdateUserAsync(User user)
         {
             Console.WriteLine($"[USER_SERVICE] Updating user: {user.FullName} (ID: {user.UserID})");
-            // Mark entity as modified for Entity Framework change tracking
-            _context.Users.Update(user);
+            
+            // Find the existing entity to avoid tracking conflicts
+            var existingUser = await _context.Users.FindAsync(user.UserID);
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException($"User with ID {user.UserID} not found");
+            }
+            
+            // Update properties manually to avoid entity tracking issues
+            existingUser.FullName = user.FullName;
+            existingUser.Email = user.Email;
+            existingUser.Role = user.Role;
+            existingUser.PhoneNumber = user.PhoneNumber;
+            existingUser.IsActive = user.IsActive;
+            existingUser.ClubID = user.ClubID;
+            existingUser.ActivityLevel = user.ActivityLevel;
+            existingUser.StudentID = user.StudentID;
+            existingUser.TwoFactorEnabled = user.TwoFactorEnabled;
+            
+            // Only update password if it's provided and different
+            if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
+            {
+                existingUser.Password = user.Password;
+            }
+            
             await _context.SaveChangesAsync();
-            Console.WriteLine($"[USER_SERVICE] User updated successfully: {user.FullName}");
-            return user;
+            Console.WriteLine($"[USER_SERVICE] User updated successfully: {existingUser.FullName}");
+            return existingUser;
         }
 
         /// <summary>

@@ -16,5 +16,5 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\App.xaml
 268-659774258
 MainWindow.xaml;Views\AddClubDialog.xaml;Views\AddEventDialog.xaml;Views\AddUserDialog.xaml;Views\ClubDetailsDialog.xaml;Views\ClubManagementView.xaml;Views\EditClubDialog.xaml;Views\EditEventDialog.xaml;Views\EditUserDialog.xaml;Views\EventManagementView.xaml;Views\LoginWindow.xaml;Views\ManageLeadershipDialog.xaml;Views\MemberListView.xaml;Views\ReportsView.xaml;
 
-True
+False
 
