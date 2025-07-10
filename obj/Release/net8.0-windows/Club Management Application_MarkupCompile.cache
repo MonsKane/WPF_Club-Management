@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-E:\Pet Projects\Dotnet\Club Management Application\obj\Release\net8.0-windows\
-Club_Management_Application
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Release\net8.0-windows\
+ClubManagementApp
 none
 false
 TRACE;RELEASE;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-E:\Pet Projects\Dotnet\Club Management Application\App.xaml
-21594365281
+E:\Pet Projects\Freelancers\WPF_Club-Management\App.xaml
+14-1343914215
 
-53-1309872339
-230557750140
-MainWindow.xaml;Views\LoginWindow.xaml;
+79-596843277
+268-659774258
+MainWindow.xaml;Views\AddClubDialog.xaml;Views\AddEventDialog.xaml;Views\AddUserDialog.xaml;Views\ClubDetailsDialog.xaml;Views\ClubManagementView.xaml;Views\EditClubDialog.xaml;Views\EditEventDialog.xaml;Views\EditUserDialog.xaml;Views\EventManagementView.xaml;Views\LoginWindow.xaml;Views\ManageLeadershipDialog.xaml;Views\MemberListView.xaml;Views\ReportsView.xaml;
 
-True
+False
 

@@ -5,18 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:converters="clr-namespace:ClubManagementApp.Converters"
         mc:Ignorable="d"
-        Title="Club Management" WindowState="Maximized"
-        WindowStartupLocation="CenterScreen">
+        Title="Club Management" 
+        WindowStartupLocation="CenterScreen"
+        Width="1400" Height="900"
+        MinWidth="1200" MinHeight="700"
+        WindowState="Normal">
     
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
         <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+        <converters:NullToBooleanConverter x:Key="NullToBooleanConverter"/>
+        <converters:BooleanToBackgroundConverter x:Key="BooleanToBackgroundConverter"/>
+        <converters:BooleanToBorderBrushConverter x:Key="BooleanToBorderBrushConverter"/>
         
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="Foreground" Value="Black"/>
             <Setter Property="Margin" Value="0,0,0,20"/>
         </Style>
         
@@ -127,7 +133,7 @@
                                         <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                             <VisualBrush.Visual>
                                                 <TextBlock Text="Search clubs..." 
-                                                         Foreground="#95A5A6" 
+                                                         Foreground="Black" 
                                                          FontSize="14" 
                                                          Margin="10,0,0,0"/>
                                             </VisualBrush.Visual>
@@ -164,7 +170,13 @@
                 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ClubCardStyle}" Width="320" Height="280">
+                        <Border Style="{StaticResource ClubCardStyle}" Width="320" Height="280"
+                                MouseLeftButtonDown="ClubCard_MouseLeftButtonDown"
+                                Tag="{Binding}"
+                                Background="{Binding IsSelected, Converter={StaticResource BooleanToBackgroundConverter}, FallbackValue=White}"
+                                BorderBrush="{Binding IsSelected, Converter={StaticResource BooleanToBorderBrushConverter}, FallbackValue=LightGray}"
+                                BorderThickness="2"
+                                Cursor="Hand">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -179,7 +191,7 @@
                                           Text="{Binding Name}" 
                                           FontSize="18" 
                                           FontWeight="Bold" 
-                                          Foreground="#2C3E50"
+                                          Foreground="Black"
                                           TextWrapping="Wrap"
                                           Margin="0,0,0,10"/>
                                 
@@ -200,7 +212,7 @@
                                 <TextBlock Grid.Row="2" 
                                           Text="{Binding Description}" 
                                           FontSize="14" 
-                                          Foreground="#7F8C8D"
+                                          Foreground="Black"
                                           TextWrapping="Wrap"
                                           VerticalAlignment="Top"
                                           Margin="0,0,0,15"/>
@@ -215,23 +227,23 @@
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Members" 
                                                   FontSize="12" 
-                                                  Foreground="#95A5A6" 
+                                                  Foreground="Black" 
                                                   FontWeight="SemiBold"/>
                                         <TextBlock Text="{Binding MemberCount}" 
                                                   FontSize="20" 
                                                   FontWeight="Bold" 
-                                                  Foreground="#3498DB"/>
+                                                  Foreground="Black"/>
                                     </StackPanel>
                                     
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Events" 
                                                   FontSize="12" 
-                                                  Foreground="#95A5A6" 
+                                                  Foreground="Black" 
                                                   FontWeight="SemiBold"/>
                                         <TextBlock Text="{Binding EventCount}" 
                                                   FontSize="20" 
                                                   FontWeight="Bold" 
-                                                  Foreground="#27AE60"/>
+                                                  Foreground="Black"/>
                                     </StackPanel>
                                 </Grid>
                                 
@@ -271,13 +283,13 @@
             
             <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <TextBlock Text="Total Clubs: " FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding FilteredClubs.Count}" FontWeight="Bold" Foreground="#3498DB"/>
+                <TextBlock Text="{Binding FilteredClubs.Count}" FontWeight="Bold" Foreground="Black"/>
                 
                 <TextBlock Text=" | Active Clubs: " Margin="20,0,0,0" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding ActiveClubsCount}" FontWeight="Bold" Foreground="#27AE60"/>
+                <TextBlock Text="{Binding ActiveClubsCount}" FontWeight="Bold" Foreground="Black"/>
                 
                 <TextBlock Text=" | Total Members: " Margin="20,0,0,0" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding TotalMembersCount}" FontWeight="Bold" Foreground="#F39C12"/>
+                <TextBlock Text="{Binding TotalMembersCount}" FontWeight="Bold" Foreground="Black"/>
                 
                 <TextBlock Text=" | Loading: " Margin="20,0,0,0" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding IsLoading}" FontWeight="Bold" 
@@ -287,17 +299,23 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button Content="Manage Leadership" 
                         Command="{Binding ManageLeadershipCommand}"
+                        CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource PrimaryButtonStyle}"
-                        Margin="0,0,10,0"/>
+                        Margin="0,0,10,0"
+                        IsEnabled="{Binding SelectedClub, Converter={StaticResource NullToBooleanConverter}}"/>
                 
                 <Button Content="View Members" 
                         Command="{Binding ViewMembersCommand}"
+                        CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource InfoButtonStyle}"
-                        Margin="0,0,10,0"/>
+                        Margin="0,0,10,0"
+                        IsEnabled="{Binding SelectedClub, Converter={StaticResource NullToBooleanConverter}}"/>
                 
                 <Button Content="View Events" 
                         Command="{Binding ViewEventsCommand}"
-                        Style="{StaticResource WarningButtonStyle}"/>
+                        CommandParameter="{Binding SelectedClub}"
+                        Style="{StaticResource WarningButtonStyle}"
+                        IsEnabled="{Binding SelectedClub, Converter={StaticResource NullToBooleanConverter}}"/>
             </StackPanel>
         </Grid>
         
@@ -308,7 +326,7 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="200" Height="10" Margin="0,0,0,10"/>
                 <TextBlock Text="Loading clubs..." 
-                          Foreground="White" 
+                          Foreground="Black" 
                           FontSize="16" 
                           HorizontalAlignment="Center"/>
             </StackPanel>
@@ -322,12 +340,12 @@
                 <TextBlock Text="No clubs found" 
                           FontSize="24" 
                           FontWeight="Bold" 
-                          Foreground="#95A5A6" 
+                          Foreground="Black" 
                           HorizontalAlignment="Center" 
                           Margin="0,0,0,10"/>
                 <TextBlock Text="Create your first club to get started" 
                           FontSize="16" 
-                          Foreground="#BDC3C7" 
+                          Foreground="Black" 
                           HorizontalAlignment="Center" 
                           Margin="0,0,0,20"/>
                 <Button Content="Add Club" 

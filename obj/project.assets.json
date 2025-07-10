@@ -9544,11 +9544,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Club Management Application.csproj",
+      "projectUniqueName": "E:\\Pet Projects\\Freelancers\\WPF_Club-Management\\Club Management Application.csproj",
       "projectName": "Club Management Application",
-      "projectPath": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Club Management Application.csproj",
+      "projectPath": "E:\\Pet Projects\\Freelancers\\WPF_Club-Management\\Club Management Application.csproj",
       "packagesPath": "C:\\Users\\Minh\\.nuget\\packages\\",
-      "outputPath": "E:\\Pet Projects\\Dotnet\\Club Management Application\\obj\\",
+      "outputPath": "E:\\Pet Projects\\Freelancers\\WPF_Club-Management\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

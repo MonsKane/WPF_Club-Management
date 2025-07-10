@@ -24,11 +24,13 @@ namespace ClubManagementApp.ViewModels
         public ReportsViewModel(IReportService reportService, IUserService userService,
                               IEventService eventService, IClubService clubService)
         {
+            Console.WriteLine("[ReportsViewModel] Initializing ReportsViewModel with services");
             _reportService = reportService;
             _userService = userService;
             _eventService = eventService;
             _clubService = clubService;
             InitializeCommands();
+            Console.WriteLine("[ReportsViewModel] ReportsViewModel initialization completed");
         }
 
         public ObservableCollection<Report> Reports
@@ -62,6 +64,7 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _selectedReportType, value))
                 {
+                    Console.WriteLine($"[ReportsViewModel] Selected report type changed to: {value}");
                     FilterReports();
                 }
             }
@@ -79,7 +82,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public bool IsLoading
+        public new bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
@@ -121,8 +124,10 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[ReportsViewModel] Starting to load reports");
                 IsLoading = true;
                 var reports = await _reportService.GetAllReportsAsync();
+                Console.WriteLine($"[ReportsViewModel] Retrieved {reports.Count()} reports from service");
 
                 Reports.Clear();
                 foreach (var report in reports.OrderByDescending(r => r.GeneratedDate))
@@ -131,9 +136,11 @@ namespace ClubManagementApp.ViewModels
                 }
 
                 FilterReports();
+                Console.WriteLine("[ReportsViewModel] Reports loaded and filtered successfully");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ReportsViewModel] Error loading reports: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading reports: {ex.Message}");
             }
             finally
@@ -144,6 +151,7 @@ namespace ClubManagementApp.ViewModels
 
         private void FilterReports()
         {
+            Console.WriteLine($"[ReportsViewModel] Filtering reports - Search: '{SearchText}', Type: {SelectedReportType}, Date: {SelectedDate}");
             var filtered = Reports.AsEnumerable();
 
             // Filter by search text
@@ -173,10 +181,12 @@ namespace ClubManagementApp.ViewModels
             {
                 FilteredReports.Add(report);
             }
+            Console.WriteLine($"[ReportsViewModel] Filtered to {FilteredReports.Count} reports");
         }
 
         private void GenerateReport(object? parameter)
         {
+            Console.WriteLine("[ReportsViewModel] Generate Report command executed");
             // Logic to open report generation dialog
             System.Diagnostics.Debug.WriteLine("Generate Report clicked");
         }
@@ -185,6 +195,7 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[ReportsViewModel] Starting membership report generation");
                 IsLoading = true;
 
                 var reportDto = new ReportDto
@@ -215,6 +226,7 @@ namespace ClubManagementApp.ViewModels
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
+                Console.WriteLine($"[ReportsViewModel] Membership report created successfully with ID: {createdReport.ReportID}");
 
                 System.Windows.MessageBox.Show(
                     "Membership report generated successfully!",
@@ -224,6 +236,7 @@ namespace ClubManagementApp.ViewModels
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ReportsViewModel] Error generating membership report: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error generating membership report: {ex.Message}",
                     "Error",
@@ -240,6 +253,7 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[ReportsViewModel] Starting event report generation");
                 IsLoading = true;
 
                 var reportDto = new ReportDto
@@ -250,6 +264,7 @@ namespace ClubManagementApp.ViewModels
                 };
 
                 var events = await _eventService.GetAllEventsAsync();
+                Console.WriteLine($"[ReportsViewModel] Retrieved {events.Count()} events for event report");
 
                 // Generate report content
                 var reportContent = GenerateEventReportContent(events);
@@ -269,6 +284,7 @@ namespace ClubManagementApp.ViewModels
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
+                Console.WriteLine($"[ReportsViewModel] Event report created successfully with ID: {createdReport.ReportID}");
 
                 System.Windows.MessageBox.Show(
                     "Event report generated successfully!",
@@ -278,6 +294,7 @@ namespace ClubManagementApp.ViewModels
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ReportsViewModel] Error generating event report: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error generating event report: {ex.Message}",
                     "Error",
@@ -294,6 +311,7 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[ReportsViewModel] Starting financial report generation");
                 IsLoading = true;
 
                 var reportDto = new ReportDto
@@ -306,6 +324,7 @@ namespace ClubManagementApp.ViewModels
                 // Generate financial report content (placeholder)
                 var reportContent = "Financial Report Content - To be implemented with actual financial data";
                 reportDto.Content = reportContent;
+                Console.WriteLine("[ReportsViewModel] Generated financial report content (placeholder)");
 
                 var report = new Report
                 {
@@ -321,6 +340,7 @@ namespace ClubManagementApp.ViewModels
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
+                Console.WriteLine($"[ReportsViewModel] Financial report created successfully with ID: {createdReport.ReportID}");
 
                 System.Windows.MessageBox.Show(
                     "Financial report generated successfully!",
@@ -330,6 +350,7 @@ namespace ClubManagementApp.ViewModels
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ReportsViewModel] Error generating financial report: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error generating financial report: {ex.Message}",
                     "Error",
@@ -346,6 +367,7 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[ReportsViewModel] Starting activity report generation");
                 IsLoading = true;
 
                 var reportDto = new ReportDto
@@ -357,6 +379,7 @@ namespace ClubManagementApp.ViewModels
 
                 var events = await _eventService.GetAllEventsAsync();
                 var users = await _userService.GetAllUsersAsync();
+                Console.WriteLine($"[ReportsViewModel] Retrieved {events.Count()} events and {users.Count()} users for activity report");
 
                 // Generate activity report content
                 var reportContent = GenerateActivityReportContent(events, users);
@@ -376,6 +399,7 @@ namespace ClubManagementApp.ViewModels
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
+                Console.WriteLine($"[ReportsViewModel] Activity report created successfully with ID: {createdReport.ReportID}");
 
                 System.Windows.MessageBox.Show(
                     "Activity report generated successfully!",
@@ -385,6 +409,7 @@ namespace ClubManagementApp.ViewModels
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ReportsViewModel] Error generating activity report: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error generating activity report: {ex.Message}",
                     "Error",
@@ -470,6 +495,7 @@ namespace ClubManagementApp.ViewModels
         {
             if (report == null) return;
 
+            Console.WriteLine($"[ReportsViewModel] Viewing report: {report.Title} (ID: {report.ReportID})");
             // Logic to open report viewer window/dialog
             System.Diagnostics.Debug.WriteLine($"View Report: {report.Title}");
         }
@@ -478,6 +504,7 @@ namespace ClubManagementApp.ViewModels
         {
             if (report == null) return;
 
+            Console.WriteLine($"[ReportsViewModel] Downloading report: {report.Title} (ID: {report.ReportID})");
             // Logic to download/export report
             System.Diagnostics.Debug.WriteLine($"Download Report: {report.Title}");
         }
@@ -486,6 +513,7 @@ namespace ClubManagementApp.ViewModels
         {
             if (report == null) return;
 
+            Console.WriteLine($"[ReportsViewModel] Emailing report: {report.Title} (ID: {report.ReportID})");
             // Logic to email report
             System.Diagnostics.Debug.WriteLine($"Email Report: {report.Title}");
         }
@@ -494,6 +522,7 @@ namespace ClubManagementApp.ViewModels
         {
             if (report == null) return;
 
+            Console.WriteLine($"[ReportsViewModel] Delete report requested: {report.Title} (ID: {report.ReportID})");
             try
             {
                 var result = System.Windows.MessageBox.Show(
@@ -504,13 +533,20 @@ namespace ClubManagementApp.ViewModels
 
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
+                    Console.WriteLine($"[ReportsViewModel] Deleting report: {report.Title} (ID: {report.ReportID})");
                     await _reportService.DeleteReportAsync(report.ReportID);
                     Reports.Remove(report);
                     FilterReports();
+                    Console.WriteLine($"[ReportsViewModel] Report deleted successfully: {report.Title}");
+                }
+                else
+                {
+                    Console.WriteLine($"[ReportsViewModel] Report deletion cancelled by user: {report.Title}");
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ReportsViewModel] Error deleting report {report.Title}: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error deleting report: {ex.Message}",
                     "Error",

@@ -22,19 +22,33 @@ namespace ClubManagementApp.Services
 
         public async Task<IEnumerable<Report>> GetAllReportsAsync()
         {
-            return await _context.Reports
+            Console.WriteLine("[REPORT_SERVICE] Getting all reports from database...");
+            var reports = await _context.Reports
                 .Include(r => r.Club)
                 .Include(r => r.GeneratedByUser)
                 .OrderByDescending(r => r.GeneratedDate)
                 .ToListAsync();
+            Console.WriteLine($"[REPORT_SERVICE] Retrieved {reports.Count} reports from database");
+            return reports;
         }
 
         public async Task<Report?> GetReportByIdAsync(int reportId)
         {
-            return await _context.Reports
+            Console.WriteLine($"[REPORT_SERVICE] Getting report by ID: {reportId}");
+            var report = await _context.Reports
                 .Include(r => r.Club)
                 .Include(r => r.GeneratedByUser)
                 .FirstOrDefaultAsync(r => r.ReportID == reportId);
+            
+            if (report != null)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Found report: {report.Title} ({report.Type}) generated on {report.GeneratedDate:yyyy-MM-dd}");
+            }
+            else
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Report not found with ID: {reportId}");
+            }
+            return report;
         }
 
         public async Task<IEnumerable<Report>> GetReportsByClubAsync(int clubId)
@@ -59,25 +73,43 @@ namespace ClubManagementApp.Services
 
         public async Task<Report> CreateReportAsync(Report report)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Creating new report: {report.Title} ({report.Type})");
+            Console.WriteLine($"[REPORT_SERVICE] Report for club ID: {report.ClubID}, semester: {report.Semester}");
+            
             _context.Reports.Add(report);
             await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"[REPORT_SERVICE] Report created successfully with ID: {report.ReportID}");
             return report;
         }
 
         public async Task<bool> DeleteReportAsync(int reportId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Attempting to delete report with ID: {reportId}");
             var report = await _context.Reports.FindAsync(reportId);
-            if (report == null) return false;
+            if (report == null) 
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Report not found for deletion: {reportId}");
+                return false;
+            }
 
+            Console.WriteLine($"[REPORT_SERVICE] Deleting report: {report.Title} ({report.Type})");
             _context.Reports.Remove(report);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[REPORT_SERVICE] Report deleted successfully: {report.Title}");
             return true;
         }
 
         public async Task<Report> GenerateMemberStatisticsReportAsync(int clubId, string semester, int generatedByUserId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Generating member statistics report for club {clubId}, semester {semester}");
             var club = await _context.Clubs.Include(c => c.Members).FirstOrDefaultAsync(c => c.ClubID == clubId);
-            if (club == null) throw new ArgumentException("Club not found");
+            if (club == null) 
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Club not found: {clubId}");
+                throw new ArgumentException("Club not found");
+            }
+            Console.WriteLine($"[REPORT_SERVICE] Found club: {club.Name} with {club.Members.Count} members");
 
             var memberStats = new
             {
@@ -99,18 +131,22 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
+            Console.WriteLine($"[REPORT_SERVICE] Member statistics calculated - Total: {memberStats.TotalMembers}, Active: {memberStats.ActiveMembers}, Normal: {memberStats.NormalMembers}, Inactive: {memberStats.InactiveMembers}");
             return await CreateReportAsync(report);
         }
 
         public async Task<Report> GenerateEventOutcomesReportAsync(int clubId, string semester, int generatedByUserId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Generating event outcomes report for club {clubId}, semester {semester}");
             var semesterStart = GetSemesterStartDate(semester);
             var semesterEnd = GetSemesterEndDate(semester);
+            Console.WriteLine($"[REPORT_SERVICE] Semester period: {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
 
             var events = await _context.Events
                 .Include(e => e.Participants)
                 .Where(e => e.ClubID == clubId && e.EventDate >= semesterStart && e.EventDate <= semesterEnd)
                 .ToListAsync();
+            Console.WriteLine($"[REPORT_SERVICE] Found {events.Count} events in the specified period");
 
             var eventStats = new
             {
@@ -141,19 +177,23 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
+            Console.WriteLine($"[REPORT_SERVICE] Event outcomes calculated - Total events: {eventStats.TotalEvents}, Completed: {eventStats.CompletedEvents}, Upcoming: {eventStats.UpcomingEvents}");
             return await CreateReportAsync(report);
         }
 
         public async Task<Report> GenerateActivityTrackingReportAsync(int clubId, string semester, int generatedByUserId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Generating activity tracking report for club {clubId}, semester {semester}");
             var semesterStart = GetSemesterStartDate(semester);
             var semesterEnd = GetSemesterEndDate(semester);
+            Console.WriteLine($"[REPORT_SERVICE] Analyzing member activity from {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
 
             var members = await _context.Users
                 .Include(u => u.EventParticipations)
                     .ThenInclude(ep => ep.Event)
                 .Where(u => u.ClubID == clubId && u.IsActive)
                 .ToListAsync();
+            Console.WriteLine($"[REPORT_SERVICE] Analyzing activity for {members.Count} active members");
 
             var activityData = members.Select(member =>
             {
@@ -195,14 +235,17 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
+            Console.WriteLine($"[REPORT_SERVICE] Activity tracking calculated - Total members: {activityStats.TotalMembers}, High performers: {activityStats.HighPerformers}, Average attendance: {activityStats.AverageAttendance}%");
             return await CreateReportAsync(report);
         }
 
         public async Task<Report> GenerateSemesterSummaryReportAsync(int clubId, string semester, int generatedByUserId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Generating comprehensive semester summary report for club {clubId}, semester {semester}");
             var memberReport = await GenerateMemberStatisticsReportAsync(clubId, semester, generatedByUserId);
             var eventReport = await GenerateEventOutcomesReportAsync(clubId, semester, generatedByUserId);
             var activityReport = await GenerateActivityTrackingReportAsync(clubId, semester, generatedByUserId);
+            Console.WriteLine($"[REPORT_SERVICE] Combined all sub-reports for semester summary");
 
             var summaryData = new
             {
@@ -229,8 +272,13 @@ namespace ClubManagementApp.Services
 
         public async Task<byte[]> ExportReportToPdfAsync(int reportId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to PDF format");
             var report = await GetReportByIdAsync(reportId);
-            if (report == null) return Array.Empty<byte>();
+            if (report == null) 
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
+                return Array.Empty<byte>();
+            }
 
             using var memoryStream = new MemoryStream();
             using var writer = new PdfWriter(memoryStream);
@@ -277,13 +325,19 @@ namespace ClubManagementApp.Services
             }
 
             document.Close();
+            Console.WriteLine($"[REPORT_SERVICE] PDF export completed for report: {report.Title}");
             return memoryStream.ToArray();
         }
 
         public async Task<byte[]> ExportReportToExcelAsync(int reportId)
         {
+            Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to Excel format");
             var report = await GetReportByIdAsync(reportId);
-            if (report == null) return Array.Empty<byte>();
+            if (report == null) 
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
+                return Array.Empty<byte>();
+            }
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
@@ -326,6 +380,7 @@ namespace ClubManagementApp.Services
             // Auto-fit columns
             worksheet.Cells.AutoFitColumns();
 
+            Console.WriteLine($"[REPORT_SERVICE] Excel export completed for report: {report.Title}");
             return package.GetAsByteArray();
         }
 

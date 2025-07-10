@@ -56,10 +56,13 @@ namespace ClubManagementApp.Services
         /// <returns>Collection of all users with club details, ordered by name</returns>
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
-            return await _context.Users
+            Console.WriteLine("[USER_SERVICE] Getting all users from database...");
+            var users = await _context.Users
                 .Include(u => u.Club) // Load related club data for display
                 .OrderBy(u => u.FullName) // Alphabetical sorting for user-friendly display
                 .ToListAsync();
+            Console.WriteLine($"[USER_SERVICE] Retrieved {users.Count} users from database");
+            return users;
         }
 
         /// <summary>
@@ -77,11 +80,22 @@ namespace ClubManagementApp.Services
         /// <returns>Complete user profile with club and event participation data, or null</returns>
         public async Task<User?> GetUserByIdAsync(int userId)
         {
-            return await _context.Users
+            Console.WriteLine($"[USER_SERVICE] Getting user by ID: {userId}");
+            var user = await _context.Users
                 .Include(u => u.Club) // Club membership information
                 .Include(u => u.EventParticipations) // User's event participation history
                     .ThenInclude(ep => ep.Event) // Event details for each participation
                 .FirstOrDefaultAsync(u => u.UserID == userId);
+            
+            if (user != null)
+            {
+                Console.WriteLine($"[USER_SERVICE] Found user: {user.FullName} ({user.Email})");
+            }
+            else
+            {
+                Console.WriteLine($"[USER_SERVICE] User not found with ID: {userId}");
+            }
+            return user;
         }
 
         /// <summary>
@@ -98,9 +112,20 @@ namespace ClubManagementApp.Services
         /// <returns>User profile with club information, or null if not found</returns>
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await _context.Users
+            Console.WriteLine($"[USER_SERVICE] Getting user by email: {email}");
+            var user = await _context.Users
                 .Include(u => u.Club) // Club context for authenticated user
                 .FirstOrDefaultAsync(u => u.Email == email);
+            
+            if (user != null)
+            {
+                Console.WriteLine($"[USER_SERVICE] Found user: {user.FullName} (ID: {user.UserID}, Role: {user.Role})");
+            }
+            else
+            {
+                Console.WriteLine($"[USER_SERVICE] User not found with email: {email}");
+            }
+            return user;
         }
 
         /// <summary>
@@ -164,13 +189,18 @@ namespace ClubManagementApp.Services
         /// <returns>Created user entity with hashed password and generated ID</returns>
         public async Task<User> CreateUserAsync(User user)
         {
+            Console.WriteLine($"[USER_SERVICE] Creating new user: {user.FullName} ({user.Email})");
+            Console.WriteLine($"[USER_SERVICE] User role: {user.Role}, Club ID: {user.ClubID}");
+            
             // SECURITY: Hash password before database storage
             // This ensures plain text passwords are never stored in the database
             user.Password = HashPassword(user.Password);
+            Console.WriteLine("[USER_SERVICE] Password hashed successfully");
             
             // Add user to database context and persist changes
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[USER_SERVICE] User created successfully with ID: {user.UserID}");
             return user;
         }
 
@@ -190,9 +220,11 @@ namespace ClubManagementApp.Services
         /// <returns>Updated user entity</returns>
         public async Task<User> UpdateUserAsync(User user)
         {
+            Console.WriteLine($"[USER_SERVICE] Updating user: {user.FullName} (ID: {user.UserID})");
             // Mark entity as modified for Entity Framework change tracking
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[USER_SERVICE] User updated successfully: {user.FullName}");
             return user;
         }
 
@@ -212,12 +244,19 @@ namespace ClubManagementApp.Services
         /// <returns>True if user was deleted, false if user not found</returns>
         public async Task<bool> DeleteUserAsync(int userId)
         {
+            Console.WriteLine($"[USER_SERVICE] Attempting to delete user with ID: {userId}");
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return false; // User not found
+            if (user == null) 
+            {
+                Console.WriteLine($"[USER_SERVICE] User not found for deletion: {userId}");
+                return false; // User not found
+            }
 
+            Console.WriteLine($"[USER_SERVICE] Deleting user: {user.FullName} ({user.Email})");
             // Remove user entity and persist changes
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[USER_SERVICE] User deleted successfully: {user.FullName}");
             return true;
         }
 
@@ -460,12 +499,19 @@ namespace ClubManagementApp.Services
         /// <returns>True if assignment successful, false if user not found</returns>
         public async Task<bool> AssignUserToClubAsync(int userId, int clubId)
         {
+            Console.WriteLine($"[USER_SERVICE] Assigning user {userId} to club {clubId}");
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return false; // User not found
+            if (user == null) 
+            {
+                Console.WriteLine($"[USER_SERVICE] User not found for club assignment: {userId}");
+                return false; // User not found
+            }
 
+            Console.WriteLine($"[USER_SERVICE] Assigning {user.FullName} to club {clubId}");
             // Establish club membership by setting foreign key
             user.ClubID = clubId;
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[USER_SERVICE] User {user.FullName} successfully assigned to club {clubId}");
             return true;
         }
 
@@ -509,12 +555,20 @@ namespace ClubManagementApp.Services
         /// <returns>True if role update successful, false if user not found</returns>
         public async Task<bool> UpdateUserRoleAsync(int userId, UserRole newRole)
         {
+            Console.WriteLine($"[USER_SERVICE] Updating role for user {userId} to {newRole}");
             var user = await _context.Users.FindAsync(userId);
-            if (user == null) return false; // User not found
+            if (user == null) 
+            {
+                Console.WriteLine($"[USER_SERVICE] User not found for role update: {userId}");
+                return false; // User not found
+            }
 
+            var oldRole = user.Role;
+            Console.WriteLine($"[USER_SERVICE] Changing {user.FullName} role from {oldRole} to {newRole}");
             // Update user's organizational role
             user.Role = newRole;
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[USER_SERVICE] Role updated successfully for {user.FullName}: {oldRole} -> {newRole}");
             return true;
         }
 

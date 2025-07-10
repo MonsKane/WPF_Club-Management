@@ -60,9 +60,12 @@ namespace ClubManagementApp.Helpers
             {
                 return currentUserRole switch
                 {
-                    UserRole.Admin => true,
-                    UserRole.Chairman => targetRole != UserRole.Admin,
-                    UserRole.ViceChairman => targetRole == UserRole.Member || targetRole == UserRole.TeamLeader,
+                    UserRole.SystemAdmin => true,
+                    UserRole.Admin => targetRole != UserRole.SystemAdmin,
+                    UserRole.ClubPresident => targetRole != UserRole.SystemAdmin && targetRole != UserRole.Admin,
+                    UserRole.Chairman => targetRole != UserRole.SystemAdmin && targetRole != UserRole.Admin && targetRole != UserRole.ClubPresident,
+                    UserRole.ViceChairman => targetRole == UserRole.Member || targetRole == UserRole.TeamLeader || targetRole == UserRole.ClubOfficer,
+                    UserRole.ClubOfficer => targetRole == UserRole.Member || targetRole == UserRole.TeamLeader,
                     UserRole.TeamLeader => targetRole == UserRole.Member,
                     _ => false
                 };
@@ -174,13 +177,21 @@ namespace ClubManagementApp.Helpers
                 if (user.UserID == currentUser.UserID)
                     return false;
 
-                // Admin can delete anyone except other admins
-                if (currentUser.Role == UserRole.Admin)
-                    return user.Role != UserRole.Admin;
+                // SystemAdmin can delete anyone except other SystemAdmins
+                if (currentUser.Role == UserRole.SystemAdmin)
+                    return user.Role != UserRole.SystemAdmin;
 
-                // Chairman can delete members, team leaders, and vice chairmen
+                // Admin can delete anyone except SystemAdmin and other Admins
+                if (currentUser.Role == UserRole.Admin)
+                    return user.Role != UserRole.SystemAdmin && user.Role != UserRole.Admin;
+
+                // ClubPresident can delete members, team leaders, vice chairmen, and club officers
+                if (currentUser.Role == UserRole.ClubPresident)
+                    return user.Role != UserRole.SystemAdmin && user.Role != UserRole.Admin && user.Role != UserRole.ClubPresident;
+
+                // Chairman can delete members, team leaders, vice chairmen, and club officers
                 if (currentUser.Role == UserRole.Chairman)
-                    return user.Role != UserRole.Admin && user.Role != UserRole.Chairman;
+                    return user.Role != UserRole.SystemAdmin && user.Role != UserRole.Admin && user.Role != UserRole.ClubPresident && user.Role != UserRole.Chairman;
 
                 return false;
             }
@@ -191,12 +202,16 @@ namespace ClubManagementApp.Helpers
                 if (eventItem.EventDate <= DateTime.Now)
                     return false;
 
-                // Admin and Chairman can delete any event
-                if (currentUser.Role == UserRole.Admin || currentUser.Role == UserRole.Chairman)
+                // SystemAdmin and Admin can delete any event
+                if (currentUser.Role == UserRole.SystemAdmin || currentUser.Role == UserRole.Admin)
                     return true;
 
-                // Vice Chairman and Team Leader can delete events from their club
-                if ((currentUser.Role == UserRole.ViceChairman || currentUser.Role == UserRole.TeamLeader) &&
+                // ClubPresident and Chairman can delete any event
+                if (currentUser.Role == UserRole.ClubPresident || currentUser.Role == UserRole.Chairman)
+                    return true;
+
+                // Vice Chairman, Club Officer, and Team Leader can delete events from their club
+                if ((currentUser.Role == UserRole.ViceChairman || currentUser.Role == UserRole.ClubOfficer || currentUser.Role == UserRole.TeamLeader) &&
                     currentUser.ClubID == eventItem.ClubID)
                     return true;
 
@@ -207,9 +222,12 @@ namespace ClubManagementApp.Helpers
             {
                 return currentUser.Role switch
                 {
+                    UserRole.SystemAdmin => true,
                     UserRole.Admin => true,
+                    UserRole.ClubPresident => true,
                     UserRole.Chairman => true,
                     UserRole.ViceChairman => reportType != ReportType.SemesterSummary,
+                    UserRole.ClubOfficer => reportType == ReportType.EventOutcomes || reportType == ReportType.ActivityTracking,
                     UserRole.TeamLeader => reportType == ReportType.EventOutcomes || reportType == ReportType.ActivityTracking,
                     _ => false
                 };

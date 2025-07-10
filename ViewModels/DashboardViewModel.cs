@@ -25,11 +25,13 @@ namespace ClubManagementApp.ViewModels
         public DashboardViewModel(IUserService userService, IClubService clubService,
                                 IEventService eventService, IReportService reportService)
         {
+            Console.WriteLine("[DashboardViewModel] Initializing DashboardViewModel with services");
             _userService = userService;
             _clubService = clubService;
             _eventService = eventService;
             _reportService = reportService;
             InitializeCommands();
+            Console.WriteLine("[DashboardViewModel] DashboardViewModel initialization completed");
         }
 
         public int TotalUsers
@@ -74,7 +76,7 @@ namespace ClubManagementApp.ViewModels
             set => SetProperty(ref _newMembersThisMonth, value);
         }
 
-        public bool IsLoading
+        public new bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
@@ -114,6 +116,7 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[DashboardViewModel] Starting to load dashboard data");
                 IsLoading = true;
 
                 // Load statistics
@@ -121,6 +124,7 @@ namespace ClubManagementApp.ViewModels
                 var clubs = await _clubService.GetAllClubsAsync();
                 var events = await _eventService.GetAllEventsAsync();
                 var reports = await _reportService.GetAllReportsAsync();
+                Console.WriteLine($"[DashboardViewModel] Retrieved data - Users: {users.Count()}, Clubs: {clubs.Count()}, Events: {events.Count()}, Reports: {reports.Count()}");
 
                 TotalUsers = users.Count();
                 TotalClubs = clubs.Count();
@@ -131,10 +135,12 @@ namespace ClubManagementApp.ViewModels
                 var now = DateTime.Now;
                 ActiveEvents = events.Count(e => e.EventDate <= now && e.EventDate >= now);
                 UpcomingEvents = events.Count(e => e.EventDate > now);
+                Console.WriteLine($"[DashboardViewModel] Event statistics - Active: {ActiveEvents}, Upcoming: {UpcomingEvents}");
 
                 // Calculate new members this month
                 var startOfMonth = new DateTime(now.Year, now.Month, 1);
                 NewMembersThisMonth = users.Count(u => u.JoinDate >= startOfMonth);
+                Console.WriteLine($"[DashboardViewModel] New members this month: {NewMembersThisMonth}");
 
                 // Load recent events
                 var recentEventsList = events
@@ -147,9 +153,12 @@ namespace ClubManagementApp.ViewModels
                 {
                     RecentEvents.Add(eventItem);
                 }
+                Console.WriteLine($"[DashboardViewModel] Loaded {RecentEvents.Count} recent events");
+                Console.WriteLine("[DashboardViewModel] Dashboard data loaded successfully");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DashboardViewModel] Error loading dashboard data: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading dashboard data: {ex.Message}");
             }
             finally
@@ -160,48 +169,56 @@ namespace ClubManagementApp.ViewModels
 
         private void AddMember(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] Add Member command executed from Dashboard");
             // Logic to navigate to add member view or open dialog
             System.Diagnostics.Debug.WriteLine("Add Member clicked from Dashboard");
         }
 
         private void CreateEvent(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] Create Event command executed from Dashboard");
             // Logic to navigate to create event view or open dialog
             System.Diagnostics.Debug.WriteLine("Create Event clicked from Dashboard");
         }
 
         private void AddClub(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] Add Club command executed from Dashboard");
             // Logic to navigate to add club view or open dialog
             System.Diagnostics.Debug.WriteLine("Add Club clicked from Dashboard");
         }
 
         private void GenerateReport(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] Generate Report command executed from Dashboard");
             // Logic to navigate to reports view or open report generation dialog
             System.Diagnostics.Debug.WriteLine("Generate Report clicked from Dashboard");
         }
 
         private void ViewAllUsers(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] View All Users command executed from Dashboard");
             // Logic to navigate to users view
             System.Diagnostics.Debug.WriteLine("View All Users clicked from Dashboard");
         }
 
         private void ViewAllClubs(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] View All Clubs command executed from Dashboard");
             // Logic to navigate to clubs view
             System.Diagnostics.Debug.WriteLine("View All Clubs clicked from Dashboard");
         }
 
         private void ViewAllEvents(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] View All Events command executed from Dashboard");
             // Logic to navigate to events view
             System.Diagnostics.Debug.WriteLine("View All Events clicked from Dashboard");
         }
 
         private void ViewAllReports(object? parameter)
         {
+            Console.WriteLine("[DashboardViewModel] View All Reports command executed from Dashboard");
             // Logic to navigate to reports view
             System.Diagnostics.Debug.WriteLine("View All Reports clicked from Dashboard");
         }

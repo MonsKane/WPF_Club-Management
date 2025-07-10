@@ -50,11 +50,20 @@
 
 ### Initial Login
 
-**Default Administrator Account:**
-- Email: `admin@university.edu`
-- Password: `admin123`
+**Default Test Accounts:**
 
-**⚠️ Important:** Change the default password immediately after first login for security.
+| Role | Email | Password | Club Assignment |
+|------|-------|----------|----------------|
+| SystemAdmin | `admin@university.edu` | `admin123` | None (Full System Access) |
+| Admin | `admin.manager@university.edu` | `admin123` | None (System Management) |
+| ClubPresident | `alice.johnson@student.edu` | `admin123` | Computer Science Club |
+| Chairman | `michael.chen@student.edu` | `admin123` | Music Club |
+| ViceChairman | `lisa.thompson@student.edu` | `admin123` | Science Innovation Lab |
+| TeamLeader | `kevin.martinez@student.edu` | `admin123` | Drama Society |
+| ClubOfficer | `frank.miller@student.edu` | `admin123` | Debate Society |
+| Member | `kate.williams@student.edu` | `admin123` | Computer Science Club |
+
+**⚠️ Important:** Change all default passwords immediately after first login for security.
 
 ---
 
@@ -293,10 +302,17 @@ The dashboard provides a comprehensive overview of your club's activities and sy
 
 **Step 1: Initial Login**
 1. Launch the Club Management Application
-2. Enter default credentials:
-   - Email: `admin@university.edu`
-   - Password: `admin123`
-3. Click "Login"
+2. Choose appropriate test account based on your role:
+   - **System Administrator**: `admin@university.edu`
+   - **Regular Admin**: `admin.manager@university.edu`
+   - **Club President**: `alice.johnson@student.edu`
+   - **Chairman**: `michael.chen@student.edu`
+   - **Vice Chairman**: `lisa.thompson@student.edu`
+   - **Team Leader**: `kevin.martinez@student.edu`
+   - **Club Officer**: `frank.miller@student.edu`
+   - **Member**: `kate.williams@student.edu`
+3. Enter password: `admin123` (same for all accounts)
+4. Click "Login"
 
 **Step 2: Change Default Password**
 1. Click on your name in the top-right corner

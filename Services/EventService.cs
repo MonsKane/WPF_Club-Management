@@ -60,12 +60,15 @@ namespace ClubManagementApp.Services
         /// <returns>Collection of all events with club and participant information</returns>
         public async Task<IEnumerable<Event>> GetAllEventsAsync()
         {
-            return await _context.Events
+            Console.WriteLine("[EVENT_SERVICE] Getting all events from database...");
+            var events = await _context.Events
                 .Include(e => e.Club)
                 .Include(e => e.Participants)
                     .ThenInclude(p => p.User)
                 .OrderByDescending(e => e.EventDate)
                 .ToListAsync();
+            Console.WriteLine($"[EVENT_SERVICE] Retrieved {events.Count} events from database");
+            return events;
         }
 
         /// <summary>
@@ -84,11 +87,22 @@ namespace ClubManagementApp.Services
         /// <returns>Event object with relationships, or null if not found</returns>
         public async Task<Event?> GetEventByIdAsync(int eventId)
         {
-            return await _context.Events
+            Console.WriteLine($"[EVENT_SERVICE] Getting event by ID: {eventId}");
+            var eventItem = await _context.Events
                 .Include(e => e.Club)
                 .Include(e => e.Participants)
                     .ThenInclude(p => p.User)
                 .FirstOrDefaultAsync(e => e.EventID == eventId);
+            
+            if (eventItem != null)
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Found event: {eventItem.Name} on {eventItem.EventDate:yyyy-MM-dd} with {eventItem.Participants?.Count ?? 0} participants");
+            }
+            else
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Event not found with ID: {eventId}");
+            }
+            return eventItem;
         }
 
         /// <summary>
@@ -150,25 +164,39 @@ namespace ClubManagementApp.Services
 
         public async Task<Event> CreateEventAsync(Event eventItem)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Creating new event: {eventItem.Name}");
+            Console.WriteLine($"[EVENT_SERVICE] Event date: {eventItem.EventDate:yyyy-MM-dd HH:mm}, Location: {eventItem.Location}, Club ID: {eventItem.ClubID}");
+            
             _context.Events.Add(eventItem);
             await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"[EVENT_SERVICE] Event created successfully with ID: {eventItem.EventID}");
             return eventItem;
         }
 
         public async Task<Event> UpdateEventAsync(Event eventItem)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Updating event: {eventItem.Name} (ID: {eventItem.EventID})");
             _context.Events.Update(eventItem);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {eventItem.Name}");
             return eventItem;
         }
 
         public async Task<bool> UpdateEventStatusAsync(int eventId, EventStatus status)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Updating event {eventId} status to {status}");
             var eventEntity = await _context.Events.FindAsync(eventId);
-            if (eventEntity == null) return false;
+            if (eventEntity == null) 
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Event not found for status update: {eventId}");
+                return false;
+            }
 
+            var oldStatus = eventEntity.Status;
             eventEntity.Status = status;
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[EVENT_SERVICE] Event {eventEntity.Name} status changed from {oldStatus} to {status}");
             return true;
         }
 
@@ -190,22 +218,34 @@ namespace ClubManagementApp.Services
 
         public async Task<bool> DeleteEventAsync(int eventId)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Attempting to delete event with ID: {eventId}");
             var eventToDelete = await _context.Events.FindAsync(eventId);
-            if (eventToDelete == null) return false;
+            if (eventToDelete == null) 
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Event not found for deletion: {eventId}");
+                return false;
+            }
 
+            Console.WriteLine($"[EVENT_SERVICE] Deleting event: {eventToDelete.Name} ({eventToDelete.EventDate:yyyy-MM-dd})");
             _context.Events.Remove(eventToDelete);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[EVENT_SERVICE] Event deleted successfully: {eventToDelete.Name}");
             return true;
         }
 
         public async Task<bool> RegisterUserForEventAsync(int eventId, int userId)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Registering user {userId} for event {eventId}");
+            
             // Check if user is already registered
             var existingParticipation = await _context.EventParticipants
                 .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
 
             if (existingParticipation != null)
+            {
+                Console.WriteLine($"[EVENT_SERVICE] User {userId} already registered for event {eventId}");
                 return false; // Already registered
+            }
 
             var participation = new EventParticipant
             {
@@ -217,23 +257,32 @@ namespace ClubManagementApp.Services
 
             _context.EventParticipants.Add(participation);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[EVENT_SERVICE] User {userId} successfully registered for event {eventId}");
             return true;
         }
 
         public async Task<bool> UpdateParticipantStatusAsync(int eventId, int userId, AttendanceStatus status)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Updating participant status for user {userId} in event {eventId} to {status}");
             var participation = await _context.EventParticipants
                 .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
 
-            if (participation == null) return false;
+            if (participation == null) 
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Participation record not found for user {userId} in event {eventId}");
+                return false;
+            }
 
+            var oldStatus = participation.Status;
             participation.Status = status;
             if (status == AttendanceStatus.Attended)
             {
                 participation.AttendanceDate = DateTime.Now;
+                Console.WriteLine($"[EVENT_SERVICE] Marked attendance time for user {userId} in event {eventId}");
             }
 
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[EVENT_SERVICE] Participant status updated: user {userId} in event {eventId} changed from {oldStatus} to {status}");
             return true;
         }
 
@@ -289,13 +338,19 @@ namespace ClubManagementApp.Services
 
         public async Task<bool> UnregisterUserFromEventAsync(int eventId, int userId)
         {
+            Console.WriteLine($"[EVENT_SERVICE] Unregistering user {userId} from event {eventId}");
             var participation = await _context.EventParticipants
                 .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
 
-            if (participation == null) return false;
+            if (participation == null) 
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Participation record not found for user {userId} in event {eventId}");
+                return false;
+            }
 
             _context.EventParticipants.Remove(participation);
             await _context.SaveChangesAsync();
+            Console.WriteLine($"[EVENT_SERVICE] User {userId} successfully unregistered from event {eventId}");
             return true;
         }
 

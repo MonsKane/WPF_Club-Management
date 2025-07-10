@@ -50,7 +50,7 @@ namespace ClubManagementApp.ViewModels
             set => SetProperty(ref _hasError, value);
         }
 
-        public bool IsLoading
+        public new bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);

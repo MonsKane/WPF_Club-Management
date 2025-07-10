@@ -11,18 +11,22 @@ namespace ClubManagementApp.ViewModels
         private readonly IClubService _clubService;
         private readonly IUserService _userService;
         private readonly IEventService _eventService;
+        private readonly INavigationService _navigationService;
         private ObservableCollection<Club> _clubs = new();
         private ObservableCollection<Club> _filteredClubs = new();
         private string _searchText = string.Empty;
         private bool _isLoading;
         private Club? _selectedClub;
 
-        public ClubManagementViewModel(IClubService clubService, IUserService userService, IEventService eventService)
+        public ClubManagementViewModel(IClubService clubService, IUserService userService, IEventService eventService, INavigationService navigationService)
         {
+            Console.WriteLine("[ClubManagementViewModel] Initializing ClubManagementViewModel with services");
             _clubService = clubService;
             _userService = userService;
             _eventService = eventService;
+            _navigationService = navigationService;
             InitializeCommands();
+            Console.WriteLine("[ClubManagementViewModel] ClubManagementViewModel initialization completed");
         }
 
         public ObservableCollection<Club> Clubs
@@ -44,12 +48,13 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
+                    Console.WriteLine($"[ClubManagementViewModel] Search text changed to: '{value}'");
                     FilterClubs();
                 }
             }
         }
 
-        public bool IsLoading
+        public new bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
@@ -59,6 +64,11 @@ namespace ClubManagementApp.ViewModels
         {
             get => _selectedClub;
             set => SetProperty(ref _selectedClub, value);
+        }
+
+        public bool HasNoClubs
+        {
+            get => !IsLoading && FilteredClubs.Count == 0;
         }
 
         // Commands
@@ -87,8 +97,10 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[ClubManagementViewModel] Starting to load clubs");
                 IsLoading = true;
                 var clubs = await _clubService.GetAllClubsAsync();
+                Console.WriteLine($"[ClubManagementViewModel] Retrieved {clubs.Count()} clubs from service");
 
                 Clubs.Clear();
                 foreach (var club in clubs)
@@ -99,14 +111,17 @@ namespace ClubManagementApp.ViewModels
                 }
 
                 FilterClubs();
+                Console.WriteLine("[ClubManagementViewModel] Clubs loaded and filtered successfully");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ClubManagementViewModel] Error loading clubs: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading clubs: {ex.Message}");
             }
             finally
             {
                 IsLoading = false;
+                OnPropertyChanged(nameof(HasNoClubs));
             }
         }
 
@@ -114,22 +129,27 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine($"[ClubManagementViewModel] Loading statistics for club: {club.Name} (ID: {club.ClubID})");
                 // Load members count
                 var members = await _userService.GetUsersByClubAsync(club.ClubID);
                 club.Members = members.ToList();
+                Console.WriteLine($"[ClubManagementViewModel] Loaded {club.Members.Count} members for club: {club.Name}");
 
                 // Load events count
                 var events = await _eventService.GetEventsByClubAsync(club.ClubID);
                 club.Events = events.ToList();
+                Console.WriteLine($"[ClubManagementViewModel] Loaded {club.Events.Count} events for club: {club.Name}");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ClubManagementViewModel] Error loading club statistics for {club.Name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading club statistics for {club.Name}: {ex.Message}");
             }
         }
 
         private void FilterClubs()
         {
+            Console.WriteLine($"[ClubManagementViewModel] Filtering clubs - Search: '{SearchText}'");
             var filtered = Clubs.AsEnumerable();
 
             // Filter by search text
@@ -145,31 +165,108 @@ namespace ClubManagementApp.ViewModels
             {
                 FilteredClubs.Add(club);
             }
+            Console.WriteLine($"[ClubManagementViewModel] Filtered to {FilteredClubs.Count} clubs");
+            OnPropertyChanged(nameof(HasNoClubs));
         }
 
-        private void AddClub(object? parameter)
+        private async void AddClub(object? parameter)
         {
-            // Logic to open add club window/dialog
-            System.Diagnostics.Debug.WriteLine("Add Club clicked");
+            Console.WriteLine("[ClubManagementViewModel] Add Club command executed");
+            try
+            {
+                var dialog = new Views.AddClubDialog();
+                dialog.Owner = System.Windows.Application.Current.MainWindow;
+                dialog.ShowDialog();
+
+                if (dialog.DialogResult && dialog.CreatedClub != null)
+                {
+                    Console.WriteLine($"[ClubManagementViewModel] Creating new club: {dialog.CreatedClub.Name}");
+                    var createdClub = await _clubService.CreateClubAsync(dialog.CreatedClub);
+                    
+                    // Load statistics for the new club
+                    await LoadClubStatistics(createdClub);
+                    
+                    Clubs.Add(createdClub);
+                    FilterClubs();
+                    
+                    System.Windows.MessageBox.Show(
+                        $"Club '{createdClub.Name}' has been created successfully!",
+                        "Club Created",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                    
+                    Console.WriteLine($"[ClubManagementViewModel] Club created successfully: {createdClub.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClubManagementViewModel] Error creating club: {ex.Message}");
+                System.Windows.MessageBox.Show(
+                    $"Error creating club: {ex.Message}",
+                    "Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
+            }
         }
 
-        private void EditClub(Club? club)
+        private async void EditClub(Club? club)
         {
             if (club == null) return;
 
-            // Logic to open edit club window/dialog
-            System.Diagnostics.Debug.WriteLine($"Edit Club: {club.Name}");
+            Console.WriteLine($"[ClubManagementViewModel] Edit Club command executed for: {club.Name} (ID: {club.ClubID})");
+            try
+            {
+                var dialog = new Views.EditClubDialog(club);
+                dialog.Owner = System.Windows.Application.Current.MainWindow;
+                dialog.ShowDialog();
+
+                if (dialog.DialogResult && dialog.UpdatedClub != null)
+                {
+                    Console.WriteLine($"[ClubManagementViewModel] Updating club: {dialog.UpdatedClub.Name}");
+                    var updatedClub = await _clubService.UpdateClubAsync(dialog.UpdatedClub);
+                    
+                    // Find and replace the club in the collection
+                    var index = Clubs.ToList().FindIndex(c => c.ClubID == updatedClub.ClubID);
+                    if (index >= 0)
+                    {
+                        // Load statistics for the updated club
+                        await LoadClubStatistics(updatedClub);
+                        
+                        Clubs[index] = updatedClub;
+                        FilterClubs();
+                        
+                        System.Windows.MessageBox.Show(
+                            $"Club '{updatedClub.Name}' has been updated successfully!",
+                            "Club Updated",
+                            System.Windows.MessageBoxButton.OK,
+                            System.Windows.MessageBoxImage.Information);
+                        
+                        Console.WriteLine($"[ClubManagementViewModel] Club updated successfully: {updatedClub.Name}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClubManagementViewModel] Error updating club {club.Name}: {ex.Message}");
+                System.Windows.MessageBox.Show(
+                    $"Error updating club: {ex.Message}",
+                    "Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private async void DeleteClub(Club? club)
         {
             if (club == null) return;
 
+            Console.WriteLine($"[ClubManagementViewModel] Delete Club command executed for: {club.Name} (ID: {club.ClubID})");
             try
             {
                 // Check if club has members or events
                 if (club.Members?.Any() == true || club.Events?.Any() == true)
                 {
+                    Console.WriteLine($"[ClubManagementViewModel] Cannot delete club {club.Name} - has {club.Members?.Count ?? 0} members and {club.Events?.Count ?? 0} events");
                     System.Windows.MessageBox.Show(
                         "Cannot delete club that has members or events. Please remove all members and events first.",
                         "Cannot Delete Club",
@@ -186,13 +283,20 @@ namespace ClubManagementApp.ViewModels
 
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
+                    Console.WriteLine($"[ClubManagementViewModel] User confirmed deletion of club: {club.Name}");
                     await _clubService.DeleteClubAsync(club.ClubID);
                     Clubs.Remove(club);
                     FilterClubs();
+                    Console.WriteLine($"[ClubManagementViewModel] Club deleted successfully: {club.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"[ClubManagementViewModel] User cancelled deletion of club: {club.Name}");
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ClubManagementViewModel] Error deleting club {club.Name}: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error deleting club: {ex.Message}",
                     "Error",
@@ -205,33 +309,69 @@ namespace ClubManagementApp.ViewModels
         {
             if (club == null) return;
 
+            Console.WriteLine($"[ClubManagementViewModel] View Club Details command executed for: {club.Name} (ID: {club.ClubID})");
             SelectedClub = club;
-            // Logic to open club details window/dialog
-            System.Diagnostics.Debug.WriteLine($"View Club Details: {club.Name}");
+            try
+            {
+                _navigationService.ShowClubDetails(club);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClubManagementViewModel] Error showing club details: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening club details: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
-        private void ManageLeadership(Club? club)
+        private async void ManageLeadership(Club? club)
         {
             if (club == null) return;
 
-            // Logic to open leadership management window/dialog
-            System.Diagnostics.Debug.WriteLine($"Manage Leadership for: {club.Name}");
+            Console.WriteLine($"[ClubManagementViewModel] Manage Leadership command executed for: {club.Name} (ID: {club.ClubID})");
+            try
+            {
+                await _navigationService.ShowManageLeadership(club);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClubManagementViewModel] Error opening leadership management: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening leadership management: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void ViewMembers(Club? club)
         {
             if (club == null) return;
 
-            // Logic to navigate to members view filtered by this club
-            System.Diagnostics.Debug.WriteLine($"View Members for: {club.Name}");
+            Console.WriteLine($"[ClubManagementViewModel] View Members command executed for: {club.Name} (ID: {club.ClubID})");
+            try
+            {
+                _navigationService.OpenMemberListWindow(club);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClubManagementViewModel] Error opening member list: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening member list: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void ViewEvents(Club? club)
         {
             if (club == null) return;
 
-            // Logic to navigate to events view filtered by this club
-            System.Diagnostics.Debug.WriteLine($"View Events for: {club.Name}");
+            Console.WriteLine($"[ClubManagementViewModel] View Events command executed for: {club.Name} (ID: {club.ClubID})");
+            try
+            {
+                _navigationService.OpenEventManagementWindow(club);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClubManagementViewModel] Error opening event management: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening event management: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         public string GetClubStatusText(Club club)

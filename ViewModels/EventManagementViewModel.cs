@@ -19,13 +19,16 @@ namespace ClubManagementApp.ViewModels
         private DateTime? _selectedDate;
         private bool _isLoading;
         private Event? _selectedEvent;
+        private Club? _clubFilter;
 
         public EventManagementViewModel(IEventService eventService, IClubService clubService, IUserService userService)
         {
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Initializing EventManagementViewModel");
             _eventService = eventService;
             _clubService = clubService;
             _userService = userService;
             InitializeCommands();
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] EventManagementViewModel initialized successfully");
         }
 
         public ObservableCollection<Event> Events
@@ -53,6 +56,7 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Search text changed to: '{value}'");
                     FilterEvents();
                 }
             }
@@ -65,6 +69,7 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _selectedStatus, value))
                 {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Status filter changed to: '{value}'");
                     FilterEvents();
                 }
             }
@@ -77,12 +82,13 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _selectedDate, value))
                 {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Date filter changed to: {value?.ToString("yyyy-MM-dd") ?? "None"}");
                     FilterEvents();
                 }
             }
         }
 
-        public bool IsLoading
+        public new bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
@@ -92,6 +98,19 @@ namespace ClubManagementApp.ViewModels
         {
             get => _selectedEvent;
             set => SetProperty(ref _selectedEvent, value);
+        }
+
+        public Club? ClubFilter
+        {
+            get => _clubFilter;
+            private set
+            {
+                if (SetProperty(ref _clubFilter, value))
+                {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Club filter changed to: {value?.Name ?? "All Clubs"}");
+                    FilterEvents();
+                }
+            }
         }
 
         // Commands
@@ -118,28 +137,35 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Starting to load event management data...");
                 IsLoading = true;
 
                 // Load events
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Loading events...");
                 var events = await _eventService.GetAllEventsAsync();
                 Events.Clear();
                 foreach (var eventItem in events)
                 {
                     Events.Add(eventItem);
                 }
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Loaded {Events.Count} events");
 
                 // Load clubs
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Loading clubs...");
                 var clubs = await _clubService.GetAllClubsAsync();
                 Clubs.Clear();
                 foreach (var club in clubs)
                 {
                     Clubs.Add(club);
                 }
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Loaded {Clubs.Count} clubs");
 
                 FilterEvents();
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Event management data loaded successfully");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error loading events: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading events: {ex.Message}");
             }
             finally
@@ -150,7 +176,9 @@ namespace ClubManagementApp.ViewModels
 
         private void FilterEvents()
         {
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Applying event filters...");
             var filtered = Events.AsEnumerable();
+            var originalCount = Events.Count;
 
             // Filter by search text
             if (!string.IsNullOrWhiteSpace(SearchText))
@@ -159,6 +187,7 @@ namespace ClubManagementApp.ViewModels
                     e.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     (e.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                     (e.Location?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied search filter: '{SearchText}'");
             }
 
             // Filter by status
@@ -172,6 +201,7 @@ namespace ClubManagementApp.ViewModels
                     "Completed" => filtered.Where(e => e.EventDate < now),
                     _ => filtered
                 };
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied status filter: '{SelectedStatus}'");
             }
 
             // Filter by date
@@ -180,6 +210,14 @@ namespace ClubManagementApp.ViewModels
                 var selectedDate = SelectedDate.Value.Date;
                 filtered = filtered.Where(e =>
                     e.EventDate.Date <= selectedDate && e.EventDate.Date >= selectedDate);
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied date filter: {SelectedDate.Value:yyyy-MM-dd}");
+            }
+
+            // Filter by club
+            if (ClubFilter != null)
+            {
+                filtered = filtered.Where(e => e.ClubID == ClubFilter.ClubID);
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied club filter: '{ClubFilter.Name}'");
             }
 
             FilteredEvents.Clear();
@@ -187,25 +225,80 @@ namespace ClubManagementApp.ViewModels
             {
                 FilteredEvents.Add(eventItem);
             }
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] Filtering complete: {originalCount} -> {FilteredEvents.Count} events");
         }
 
-        private void CreateEvent(object? parameter)
+        private async void CreateEvent(object? parameter)
         {
-            // Logic to open create event window/dialog
-            System.Diagnostics.Debug.WriteLine("Create Event clicked");
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Create Event command executed");
+            try
+            {
+                var addEventDialog = new Views.AddEventDialog(Clubs);
+                if (addEventDialog.ShowDialog() == true && addEventDialog.NewEvent != null)
+                {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Creating new event: {addEventDialog.NewEvent.Name}");
+                    var createdEvent = await _eventService.CreateEventAsync(addEventDialog.NewEvent);
+                    Events.Add(createdEvent);
+                    FilterEvents();
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event created successfully: {createdEvent.Name}");
+                    System.Windows.MessageBox.Show($"Event '{createdEvent.Name}' created successfully!", "Success", 
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error creating event: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error creating event: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
-        private void EditEvent(Event? eventItem)
+        private async void EditEvent(Event? eventItem)
         {
-            if (eventItem == null) return;
+            if (eventItem == null) 
+            {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Edit Event command called with null event");
+                return;
+            }
 
-            // Logic to open edit event window/dialog
-            System.Diagnostics.Debug.WriteLine($"Edit Event: {eventItem.Name}");
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] Edit Event command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
+            try
+            {
+                var editEventDialog = new Views.EditEventDialog(eventItem, Clubs);
+                if (editEventDialog.ShowDialog() == true && editEventDialog.UpdatedEvent != null)
+                {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Updating event: {editEventDialog.UpdatedEvent.Name}");
+                    var updatedEvent = await _eventService.UpdateEventAsync(editEventDialog.UpdatedEvent);
+                    
+                    // Update the event in the collection
+                    var index = Events.IndexOf(eventItem);
+                    if (index >= 0)
+                    {
+                        Events[index] = updatedEvent;
+                    }
+                    FilterEvents();
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event updated successfully: {updatedEvent.Name}");
+                    System.Windows.MessageBox.Show($"Event '{updatedEvent.Name}' updated successfully!", "Success", 
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error updating event {eventItem.Name}: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error updating event: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private async void DeleteEvent(Event? eventItem)
         {
-            if (eventItem == null) return;
+            if (eventItem == null) 
+            {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Delete Event command called with null event");
+                return;
+            }
+
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] Delete Event command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
 
             try
             {
@@ -217,13 +310,20 @@ namespace ClubManagementApp.ViewModels
 
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] User confirmed deletion of event: {eventItem.Name}");
                     await _eventService.DeleteEventAsync(eventItem.EventID);
                     Events.Remove(eventItem);
                     FilterEvents();
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event deleted successfully: {eventItem.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] User cancelled deletion of event: {eventItem.Name}");
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error deleting event {eventItem.Name}: {ex.Message}");
                 System.Windows.MessageBox.Show(
                     $"Error deleting event: {ex.Message}",
                     "Error",
@@ -234,22 +334,33 @@ namespace ClubManagementApp.ViewModels
 
         private void ViewEvent(Event? eventItem)
         {
-            if (eventItem == null) return;
+            if (eventItem == null) 
+            {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] View Event command called with null event");
+                return;
+            }
 
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] View Event command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
             // Logic to open event details window/dialog
             System.Diagnostics.Debug.WriteLine($"View Event: {eventItem.Name}");
         }
 
         private void ManageParticipants(Event? eventItem)
         {
-            if (eventItem == null) return;
+            if (eventItem == null) 
+            {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Manage Participants command called with null event");
+                return;
+            }
 
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] Manage Participants command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
             // Logic to open participants management window/dialog
             System.Diagnostics.Debug.WriteLine($"Manage Participants for: {eventItem.Name}");
         }
 
         private void ExportEvents(object? parameter)
         {
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] Export Events command executed - exporting {FilteredEvents.Count} events");
             // Logic to export events to CSV/Excel
             System.Diagnostics.Debug.WriteLine("Export Events clicked");
         }
@@ -263,6 +374,16 @@ namespace ClubManagementApp.ViewModels
                 return "Ongoing";
             else
                 return "Completed";
+        }
+
+        public void SetClubFilter(Club club)
+        {
+            ClubFilter = club;
+        }
+
+        public void ClearClubFilter()
+        {
+            ClubFilter = null;
         }
 
         public override Task LoadAsync()

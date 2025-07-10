@@ -17,9 +17,12 @@ namespace ClubManagementApp.Services
         {
             return role switch
             {
+                UserRole.SystemAdmin => true, // SystemAdmin has access to everything
                 UserRole.Admin => true, // Admin has access to everything
+                UserRole.ClubPresident => feature != "SystemConfig" && feature != "UserManagement",
                 UserRole.Chairman => feature != "SystemConfig" && feature != "UserManagement",
                 UserRole.ViceChairman => feature != "SystemConfig" && feature != "UserManagement" && feature != "ApproveMember",
+                UserRole.ClubOfficer => feature is "EventManagement" or "MemberView" or "ReportView" or "ClubManagement",
                 UserRole.TeamLeader => feature is "EventManagement" or "MemberView" or "ReportView",
                 UserRole.Member => feature is "EventView" or "ProfileEdit",
                 _ => false
@@ -30,9 +33,12 @@ namespace ClubManagementApp.Services
         {
             return role switch
             {
+                UserRole.SystemAdmin => true,
                 UserRole.Admin => true,
+                UserRole.ClubPresident => userClubId == targetClubId,
                 UserRole.Chairman => userClubId == targetClubId,
                 UserRole.ViceChairman => userClubId == targetClubId,
+                UserRole.ClubOfficer => userClubId == targetClubId,
                 _ => false
             };
         }
@@ -41,11 +47,22 @@ namespace ClubManagementApp.Services
         {
             return role switch
             {
-                UserRole.Admin => true,
-                UserRole.Chairman => userClubId == targetUserClubId && targetUserRole != UserRole.Admin,
+                UserRole.SystemAdmin => true,
+                UserRole.Admin => targetUserRole != UserRole.SystemAdmin,
+                UserRole.ClubPresident => userClubId == targetUserClubId && 
+                                        targetUserRole != UserRole.SystemAdmin && 
+                                        targetUserRole != UserRole.Admin,
+                UserRole.Chairman => userClubId == targetUserClubId && 
+                                   targetUserRole != UserRole.SystemAdmin && 
+                                   targetUserRole != UserRole.Admin && 
+                                   targetUserRole != UserRole.ClubPresident,
                 UserRole.ViceChairman => userClubId == targetUserClubId && 
+                                       targetUserRole != UserRole.SystemAdmin && 
                                        targetUserRole != UserRole.Admin && 
+                                       targetUserRole != UserRole.ClubPresident && 
                                        targetUserRole != UserRole.Chairman,
+                UserRole.ClubOfficer => userClubId == targetUserClubId && 
+                                      (targetUserRole == UserRole.TeamLeader || targetUserRole == UserRole.Member),
                 UserRole.TeamLeader => userClubId == targetUserClubId && 
                                      targetUserRole == UserRole.Member,
                 _ => false
@@ -56,9 +73,12 @@ namespace ClubManagementApp.Services
         {
             return role switch
             {
+                UserRole.SystemAdmin => true,
                 UserRole.Admin => true,
+                UserRole.ClubPresident => userClubId == eventClubId,
                 UserRole.Chairman => userClubId == eventClubId,
                 UserRole.ViceChairman => userClubId == eventClubId,
+                UserRole.ClubOfficer => userClubId == eventClubId,
                 UserRole.TeamLeader => userClubId == eventClubId,
                 _ => false
             };
@@ -68,9 +88,12 @@ namespace ClubManagementApp.Services
         {
             return role switch
             {
+                UserRole.SystemAdmin => true,
                 UserRole.Admin => true,
+                UserRole.ClubPresident => reportClubId == null || userClubId == reportClubId,
                 UserRole.Chairman => reportClubId == null || userClubId == reportClubId,
                 UserRole.ViceChairman => reportClubId == null || userClubId == reportClubId,
+                UserRole.ClubOfficer => userClubId == reportClubId,
                 UserRole.TeamLeader => userClubId == reportClubId,
                 _ => false
             };
@@ -78,7 +101,7 @@ namespace ClubManagementApp.Services
 
         public bool CanGenerateReports(UserRole role)
         {
-            return role is UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman;
+            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.ClubPresident or UserRole.Chairman or UserRole.ViceChairman;
         }
 
         public async Task<bool> IsAuthorizedAsync(int userId, string action, object? resource = null)

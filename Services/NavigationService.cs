@@ -1,5 +1,6 @@
 using ClubManagementApp.ViewModels;
 using ClubManagementApp.Views;
+using ClubManagementApp.Models;
 using System.Windows;
 
 namespace ClubManagementApp.Services
@@ -20,9 +21,31 @@ namespace ClubManagementApp.Services
             await ShowWindowAsync<MemberListView, MemberListViewModel>();
         }
 
+        public async void OpenMemberListWindow(Club club)
+        {
+            await ShowWindowAsync<MemberListView, MemberListViewModel>(vm => 
+            {
+                if (vm is MemberListViewModel memberVM)
+                {
+                    memberVM.SetClubFilter(club);
+                }
+            });
+        }
+
         public async void OpenEventManagementWindow()
         {
             await ShowWindowAsync<EventManagementView, EventManagementViewModel>();
+        }
+
+        public async void OpenEventManagementWindow(Club club)
+        {
+            await ShowWindowAsync<EventManagementView, EventManagementViewModel>(vm => 
+            {
+                if (vm is EventManagementViewModel eventVM)
+                {
+                    eventVM.SetClubFilter(club);
+                }
+            });
         }
 
         public async void OpenClubManagementWindow()
@@ -40,7 +63,46 @@ namespace ClubManagementApp.Services
             NotificationRequested?.Invoke(message);
         }
 
-        private async Task ShowWindowAsync<TWindow, TViewModel>()
+        public void ShowClubDetails(Club club)
+        {
+            try
+            {
+                var userService = _serviceProvider.GetService(typeof(UserService)) as UserService;
+                var eventService = _serviceProvider.GetService(typeof(EventService)) as EventService;
+                
+                if (userService == null || eventService == null)
+                    throw new InvalidOperationException("Unable to resolve required services from DI container.");
+
+                var dialog = new ClubDetailsDialog(club, this, userService, eventService);
+                dialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error opening club details: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        public async Task ShowManageLeadership(Club club)
+        {
+            try
+            {
+                var clubService = _serviceProvider.GetService(typeof(ClubService)) as ClubService;
+                var userService = _serviceProvider.GetService(typeof(UserService)) as UserService;
+                
+                if (clubService == null || userService == null)
+                    throw new InvalidOperationException("Unable to resolve required services from DI container.");
+
+                var dialog = new ManageLeadershipDialog(club, clubService, userService, this);
+                dialog.Owner = Application.Current.MainWindow;
+                dialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                ShowNotification($"Error opening leadership management: {ex.Message}");
+            }
+        }
+
+        private async Task ShowWindowAsync<TWindow, TViewModel>(Action<TViewModel>? configureViewModel = null)
             where TWindow : Window
             where TViewModel : class
         {
@@ -51,6 +113,9 @@ namespace ClubManagementApp.Services
                 throw new InvalidOperationException("Unable to resolve window or view model from DI container.");
 
             view.DataContext = viewModel;
+
+            // Configure the view model if a configuration action is provided
+            configureViewModel?.Invoke(viewModel);
 
             if (viewModel is BaseViewModel loadable)
                 await loadable.LoadAsync();

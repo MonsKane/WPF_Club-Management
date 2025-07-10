@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "S2cBHoJk2ms=",
+  "dgSpecHash": "lqom0TJFKZQ=",
   "success": true,
-  "projectFilePath": "E:\\Pet Projects\\Dotnet\\Club Management Application\\Club Management Application.csproj",
+  "projectFilePath": "E:\\Pet Projects\\Freelancers\\WPF_Club-Management\\Club Management Application.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Minh\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\Minh\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

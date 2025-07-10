@@ -41,7 +41,13 @@ CREATE TABLE Clubs (
     ClubID int IDENTITY(1,1) PRIMARY KEY,
     Name nvarchar(100) NOT NULL,
     Description nvarchar(500) NULL,
+    ContactEmail nvarchar(150) NULL,
+    ContactPhone nvarchar(20) NULL,
+    Website nvarchar(200) NULL,
+    MeetingSchedule nvarchar(200) NULL,
+    FoundedDate datetime2 NULL,
     IsActive bit NOT NULL DEFAULT 1,
+    IsSelected bit NOT NULL DEFAULT 0,
     CreatedDate datetime2 NOT NULL DEFAULT GETDATE()
 );
 GO
@@ -248,23 +254,26 @@ GO
 -- ========================================
 
 -- Insert Clubs
-INSERT INTO Clubs (Name, Description, IsActive, CreatedDate) VALUES
-('Computer Science Club', 'A club for computer science enthusiasts to learn and share knowledge about programming, algorithms, and technology.', 1, '2024-01-15'),
-('Drama Society', 'Dedicated to theatrical performances, script writing, and dramatic arts education.', 1, '2024-01-20'),
-('Environmental Club', 'Focused on environmental conservation, sustainability projects, and eco-friendly initiatives.', 1, '2024-02-01'),
-('Photography Club', 'For photography enthusiasts to improve skills, share techniques, and organize photo walks.', 1, '2024-02-10'),
-('Debate Society', 'Enhancing public speaking, critical thinking, and argumentation skills through structured debates.', 1, '2024-02-15'),
-('Music Club', 'Bringing together musicians of all levels to perform, collaborate, and appreciate various music genres.', 1, '2024-03-01'),
-('Sports Club', 'Organizing various sports activities, tournaments, and promoting physical fitness among students.', 1, '2024-03-05'),
-('Literature Society', 'For book lovers, creative writers, and those passionate about literature and poetry.', 1, '2024-03-10'),
-('Science Innovation Lab', 'Encouraging scientific research, innovation projects, and STEM education initiatives.', 1, '2024-03-15'),
-('Cultural Heritage Club', 'Preserving and promoting cultural traditions, organizing cultural events and festivals.', 1, '2024-03-20');
+INSERT INTO Clubs (Name, Description, ContactEmail, ContactPhone, Website, MeetingSchedule, FoundedDate, IsActive, IsSelected, CreatedDate) VALUES
+('Computer Science Club', 'A club for computer science enthusiasts to learn and share knowledge about programming, algorithms, and technology.', 'cs.club@university.edu', '555-0101', 'https://csclub.university.edu', 'Fridays 3:00 PM - Room 201', '2020-09-15', 1, 0, '2024-01-15'),
+('Drama Society', 'Dedicated to theatrical performances, script writing, and dramatic arts education.', 'drama@university.edu', '555-0102', 'https://drama.university.edu', 'Wednesdays 4:00 PM - Theater', '2019-03-20', 1, 0, '2024-01-20'),
+('Environmental Club', 'Focused on environmental conservation, sustainability projects, and eco-friendly initiatives.', 'eco.club@university.edu', '555-0103', 'https://ecoclub.university.edu', 'Tuesdays 2:00 PM - Green Room', '2021-04-22', 1, 0, '2024-02-01'),
+('Photography Club', 'For photography enthusiasts to improve skills, share techniques, and organize photo walks.', 'photo@university.edu', '555-0104', 'https://photoclub.university.edu', 'Saturdays 10:00 AM - Studio', '2020-11-10', 1, 0, '2024-02-10'),
+('Debate Society', 'Enhancing public speaking, critical thinking, and argumentation skills through structured debates.', 'debate@university.edu', '555-0105', 'https://debate.university.edu', 'Thursdays 5:00 PM - Hall A', '2018-01-15', 1, 0, '2024-02-15'),
+('Music Club', 'Bringing together musicians of all levels to perform, collaborate, and appreciate various music genres.', 'music@university.edu', '555-0106', 'https://musicclub.university.edu', 'Mondays 6:00 PM - Music Room', '2017-08-30', 1, 0, '2024-03-01'),
+('Sports Club', 'Organizing various sports activities, tournaments, and promoting physical fitness among students.', 'sports@university.edu', '555-0107', 'https://sportsclub.university.edu', 'Daily 7:00 AM - Gym', '2016-05-12', 1, 0, '2024-03-05'),
+('Literature Society', 'For book lovers, creative writers, and those passionate about literature and poetry.', 'literature@university.edu', '555-0108', 'https://litclub.university.edu', 'Sundays 3:00 PM - Library', '2019-10-05', 1, 0, '2024-03-10'),
+('Science Innovation Lab', 'Encouraging scientific research, innovation projects, and STEM education initiatives.', 'scilab@university.edu', '555-0109', 'https://scilab.university.edu', 'Wednesdays 1:00 PM - Lab 301', '2021-02-28', 1, 0, '2024-03-15'),
+('Cultural Heritage Club', 'Preserving and promoting cultural traditions, organizing cultural events and festivals.', 'culture@university.edu', '555-0110', 'https://culture.university.edu', 'Fridays 4:00 PM - Cultural Center', '2020-07-18', 1, 0, '2024-03-20');
 GO
 
 -- Insert Users (including various roles and club memberships)
 INSERT INTO Users (FullName, Email, Password, StudentID, Role, ActivityLevel, JoinDate, IsActive, TwoFactorEnabled, ClubID) VALUES
 -- System Administrator
-('Admin User', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'SystemAdmin', 'Active', '2024-01-01', 1, 1, NULL),
+('System Admin', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'SystemAdmin', 'Active', '2024-01-01', 1, 1, NULL),
+
+-- Regular Admin
+('Admin Manager', 'admin.manager@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'Admin', 'Active', '2024-01-01', 1, 1, NULL),
 
 -- Club Presidents
 ('Alice Johnson', 'alice.johnson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CS2024001', 'ClubPresident', 'Active', '2024-01-15', 1, 1, 1),
@@ -273,29 +282,42 @@ INSERT INTO Users (FullName, Email, Password, StudentID, Role, ActivityLevel, Jo
 ('David Wilson', 'david.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'PH2024004', 'ClubPresident', 'Active', '2024-02-10', 1, 0, 4),
 ('Emma Brown', 'emma.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DB2024005', 'ClubPresident', 'Active', '2024-02-15', 1, 1, 5),
 
+-- Club Chairmen
+('Michael Chen', 'michael.chen@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2024006', 'Chairman', 'Active', '2024-03-01', 1, 0, 6),
+('Sarah Williams', 'sarah.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2024007', 'Chairman', 'Active', '2024-03-05', 1, 1, 7),
+('James Rodriguez', 'james.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'LT2024008', 'Chairman', 'Active', '2024-03-10', 1, 0, 8),
+
+-- Vice Chairmen
+('Lisa Thompson', 'lisa.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SC2024009', 'ViceChairman', 'Active', '2024-03-15', 1, 1, 9),
+('Robert Garcia', 'robert.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CH2024010', 'ViceChairman', 'Active', '2024-03-20', 1, 0, 10),
+('Jennifer Lee', 'jennifer.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'VC2024011', 'ViceChairman', 'Active', '2024-03-25', 1, 1, 1),
+
+-- Team Leaders
+('Kevin Martinez', 'kevin.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024012', 'TeamLeader', 'Active', '2024-04-01', 1, 0, 2),
+('Amanda Davis', 'amanda.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024013', 'TeamLeader', 'Active', '2024-04-05', 1, 1, 3),
+('Daniel Brown', 'daniel.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024014', 'TeamLeader', 'Active', '2024-04-10', 1, 0, 4),
+
 -- Club Officers
-('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2024006', 'ClubOfficer', 'Active', '2024-03-01', 1, 0, 6),
-('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2024007', 'ClubOfficer', 'Active', '2024-03-05', 1, 1, 7),
-('Henry Taylor', 'henry.taylor@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'LT2024008', 'ClubOfficer', 'Active', '2024-03-10', 1, 0, 8),
-('Ivy Chen', 'ivy.chen@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SC2024009', 'ClubOfficer', 'Active', '2024-03-15', 1, 1, 9),
-('Jack Anderson', 'jack.anderson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CH2024010', 'ClubOfficer', 'Active', '2024-03-20', 1, 0, 10),
+('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024015', 'ClubOfficer', 'Active', '2024-04-15', 1, 0, 5),
+('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024016', 'ClubOfficer', 'Active', '2024-04-20', 1, 1, 6),
+('Henry Taylor', 'henry.taylor@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024017', 'ClubOfficer', 'Active', '2024-04-25', 1, 0, 7),
 
 -- Regular Members
-('Kate Williams', 'kate.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024011', 'Member', 'Normal', '2024-04-01', 1, 0, 1),
-('Liam Garcia', 'liam.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024012', 'Member', 'Normal', '2024-04-05', 1, 0, 2),
-('Mia Rodriguez', 'mia.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024013', 'Member', 'Active', '2024-04-10', 1, 1, 3),
-('Noah Martinez', 'noah.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024014', 'Member', 'Normal', '2024-04-15', 1, 0, 4),
-('Olivia Lopez', 'olivia.lopez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024015', 'Member', 'Inactive', '2024-04-20', 1, 0, 5),
-('Paul Gonzalez', 'paul.gonzalez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024016', 'Member', 'Normal', '2024-04-25', 1, 0, 6),
-('Quinn Wilson', 'quinn.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024017', 'Member', 'Active', '2024-05-01', 1, 1, 7),
-('Rachel Kim', 'rachel.kim@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024018', 'Member', 'Normal', '2024-05-05', 1, 0, 8),
-('Sam Thompson', 'sam.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024019', 'Member', 'Normal', '2024-05-10', 1, 0, 9),
-('Tina White', 'tina.white@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024020', 'Member', 'Inactive', '2024-05-15', 1, 0, 10),
+('Kate Williams', 'kate.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024018', 'Member', 'Normal', '2024-05-01', 1, 0, 1),
+('Liam Garcia', 'liam.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024019', 'Member', 'Normal', '2024-05-05', 1, 0, 2),
+('Mia Rodriguez', 'mia.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024020', 'Member', 'Active', '2024-05-10', 1, 1, 3),
+('Noah Martinez', 'noah.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024021', 'Member', 'Normal', '2024-05-15', 1, 0, 4),
+('Olivia Lopez', 'olivia.lopez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024022', 'Member', 'Inactive', '2024-05-20', 1, 0, 5),
+('Paul Gonzalez', 'paul.gonzalez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024023', 'Member', 'Normal', '2024-05-25', 1, 0, 6),
+('Quinn Wilson', 'quinn.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024024', 'Member', 'Active', '2024-06-01', 1, 1, 7),
+('Rachel Kim', 'rachel.kim@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024025', 'Member', 'Normal', '2024-06-05', 1, 0, 8),
+('Sam Thompson', 'sam.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024026', 'Member', 'Normal', '2024-06-10', 1, 0, 9),
+('Tina White', 'tina.white@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024027', 'Member', 'Inactive', '2024-06-15', 1, 0, 10),
 
 -- Multi-club member (not assigned to specific club in Users table)
-('Uma Patel', 'uma.patel@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024021', 'Member', 'Active', '2024-05-20', 1, 1, NULL),
-('Victor Chang', 'victor.chang@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024022', 'Member', 'Normal', '2024-05-25', 1, 0, NULL),
-('Wendy Foster', 'wendy.foster@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024023', 'Member', 'Normal', '2024-06-01', 1, 0, NULL);
+('Uma Patel', 'uma.patel@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024028', 'Member', 'Active', '2024-06-20', 1, 1, NULL),
+('Victor Chang', 'victor.chang@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024029', 'Member', 'Normal', '2024-06-25', 1, 0, NULL),
+('Wendy Foster', 'wendy.foster@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024030', 'Member', 'Normal', '2024-07-01', 1, 0, NULL);
 GO
 
 -- Insert Events
@@ -441,7 +463,7 @@ GO
 PRINT 'Database seeded successfully!';
 PRINT 'Summary:';
 PRINT '- 10 Clubs created';
-PRINT '- 23 Users created (1 Admin, 22 Club Members)';
+PRINT '- 30 Users created across all roles';
 PRINT '- 12 Events created across different clubs';
 PRINT '- 15 Event Participants registered';
 PRINT '- 6 Reports generated';
@@ -451,8 +473,15 @@ PRINT '- 3 Scheduled Notifications created';
 PRINT '- 8 Notifications created';
 PRINT '- 17 Settings configured';
 PRINT '';
-PRINT 'Test Accounts:';
-PRINT 'Admin: admin@university.edu';
-PRINT 'CS Club Chairman: alice.johnson@student.edu';
-PRINT 'Photography Club Chairman: frank.miller@student.edu';
-PRINT 'All passwords are hashed versions of test passwords';
+PRINT 'Default Test Accounts (Password: admin123 for all):';
+PRINT 'SystemAdmin: admin@university.edu';
+PRINT 'Admin: admin.manager@university.edu';
+PRINT 'ClubPresident: alice.johnson@student.edu (Computer Science Club)';
+PRINT 'Chairman: michael.chen@student.edu (Music Club)';
+PRINT 'ViceChairman: lisa.thompson@student.edu (Science Innovation Lab)';
+PRINT 'TeamLeader: kevin.martinez@student.edu (Drama Society)';
+PRINT 'ClubOfficer: frank.miller@student.edu (Debate Society)';
+PRINT 'Member: kate.williams@student.edu (Computer Science Club)';
+PRINT '';
+PRINT 'All passwords are hashed versions of "admin123"';
+PRINT 'Please change default passwords after first login for security.';

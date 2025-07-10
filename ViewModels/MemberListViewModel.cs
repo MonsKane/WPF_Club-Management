@@ -25,6 +25,7 @@ namespace ClubManagementApp.ViewModels
         private bool _isLoading;
         private User? _selectedMember;
         private bool _disposed;
+        private Club? _clubFilter;
 
         public MemberListViewModel(
             IUserService userService,
@@ -32,12 +33,14 @@ namespace ClubManagementApp.ViewModels
             INotificationService notificationService,
             ILogger<MemberListViewModel>? logger = null)
         {
+            Console.WriteLine("[MemberListViewModel] Initializing MemberListViewModel with services");
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _clubService = clubService ?? throw new ArgumentNullException(nameof(clubService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _logger = logger;
 
             InitializeCommands();
+            Console.WriteLine("[MemberListViewModel] MemberListViewModel initialization completed");
         }
 
         public ObservableCollection<User> Members
@@ -59,6 +62,7 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
+                    Console.WriteLine($"[MemberListViewModel] Search text changed to: '{value}'");
                     FilterMembers();
                 }
             }
@@ -71,12 +75,13 @@ namespace ClubManagementApp.ViewModels
             {
                 if (SetProperty(ref _selectedRole, value))
                 {
+                    Console.WriteLine($"[MemberListViewModel] Selected role filter changed to: {value}");
                     FilterMembers();
                 }
             }
         }
 
-        public bool IsLoading
+        public new bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
@@ -86,6 +91,19 @@ namespace ClubManagementApp.ViewModels
         {
             get => _selectedMember;
             set => SetProperty(ref _selectedMember, value);
+        }
+
+        public Club? ClubFilter
+        {
+            get => _clubFilter;
+            private set
+            {
+                if (SetProperty(ref _clubFilter, value))
+                {
+                    Console.WriteLine($"[MemberListViewModel] Club filter changed to: {value?.Name ?? "All Clubs"}");
+                    FilterMembers();
+                }
+            }
         }
 
         // Commands
@@ -131,9 +149,11 @@ namespace ClubManagementApp.ViewModels
 
             try
             {
+                Console.WriteLine("[MemberListViewModel] Starting to load members");
                 IsLoading = true;
 
                 var members = await _userService.GetAllUsersAsync();
+                Console.WriteLine($"[MemberListViewModel] Retrieved {members.Count()} members from service");
 
                 if (_cancellationTokenSource.Token.IsCancellationRequested)
                     return;
@@ -149,14 +169,17 @@ namespace ClubManagementApp.ViewModels
                     FilterMembers();
                 });
 
+                Console.WriteLine("[MemberListViewModel] Members loaded and UI updated successfully");
                 _logger?.LogInformation("Successfully loaded {Count} members", members.Count());
             }
             catch (OperationCanceledException)
             {
+                Console.WriteLine("[MemberListViewModel] Member loading was cancelled");
                 _logger?.LogInformation("Member loading was cancelled");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[MemberListViewModel] Error loading members: {ex.Message}");
                 await HandleErrorAsync("Failed to load members", ex);
             }
             finally
@@ -167,6 +190,7 @@ namespace ClubManagementApp.ViewModels
 
         private async Task RefreshMembersAsync()
         {
+            Console.WriteLine("[MemberListViewModel] Refresh members command executed");
             await LoadMembersAsync();
             await ShowNotificationAsync("Member list refreshed successfully");
         }
@@ -178,6 +202,7 @@ namespace ClubManagementApp.ViewModels
 
             try
             {
+                Console.WriteLine($"[MemberListViewModel] Filtering members - Search: '{SearchText}', Role: {SelectedRole}");
                 var filtered = Members.AsEnumerable();
 
                 // Filter by search text
@@ -196,6 +221,12 @@ namespace ClubManagementApp.ViewModels
                     filtered = filtered.Where(m => m.Role == SelectedRole.Value);
                 }
 
+                // Filter by club
+                if (ClubFilter != null)
+                {
+                    filtered = filtered.Where(m => m.ClubID == ClubFilter.ClubID);
+                }
+
                 var filteredList = filtered.ToList();
 
                 FilteredMembers.Clear();
@@ -204,10 +235,12 @@ namespace ClubManagementApp.ViewModels
                     FilteredMembers.Add(member);
                 }
 
+                Console.WriteLine($"[MemberListViewModel] Filtering completed - {filteredList.Count} of {Members.Count} members displayed");
                 _logger?.LogDebug("Filtered members: {Count} of {Total}", filteredList.Count, Members.Count);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[MemberListViewModel] Error filtering members: {ex.Message}");
                 _logger?.LogError(ex, "Error occurred while filtering members");
             }
         }
@@ -216,39 +249,40 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
-                // Navigate to add member functionality
-                // For now, show a simple input dialog for demonstration
-                var newMemberName = Microsoft.VisualBasic.Interaction.InputBox(
-                    "Enter new member's full name:", "Add New Member", "");
-
-                if (!string.IsNullOrWhiteSpace(newMemberName))
+                Console.WriteLine("[MemberListViewModel] Add Member command executed");
+                
+                var addDialog = new Views.AddUserDialog();
+                if (addDialog.ShowDialog() == true && addDialog.CreatedUser != null)
                 {
-                    var newMemberEmail = Microsoft.VisualBasic.Interaction.InputBox(
-                        "Enter new member's email:", "Add New Member", "");
+                    Console.WriteLine($"[MemberListViewModel] Adding new member: {addDialog.CreatedUser.FullName}");
+                    IsLoading = true;
 
-                    if (!string.IsNullOrWhiteSpace(newMemberEmail))
+                    var createdUser = await _userService.CreateUserAsync(addDialog.CreatedUser);
+                    
+                    // Update UI on main thread
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        var newUser = new User
-                        {
-                            FullName = newMemberName.Trim(),
-                            Email = newMemberEmail.Trim(),
-                            Role = UserRole.Member,
-                            JoinDate = DateTime.Now,
-                            IsActive = true,
-                            Password = "DefaultPassword123" // Should be changed on first login
-                        };
-
-                        var createdUser = await _userService.CreateUserAsync(newUser);
                         Members.Add(createdUser);
                         FilterMembers();
-                        await ShowNotificationAsync($"Member {newMemberName} added successfully");
-                    }
+                    });
+
+                    Console.WriteLine($"[MemberListViewModel] Member {createdUser.FullName} added successfully with ID: {createdUser.UserID}");
+                    await ShowNotificationAsync($"Member {createdUser.FullName} added successfully");
+                }
+                else
+                {
+                    Console.WriteLine("[MemberListViewModel] Add member cancelled by user");
                 }
                 _logger?.LogInformation("Add Member action triggered");
             }
             catch (Exception ex)
             {
-                await HandleErrorAsync("Failed to open add member dialog", ex);
+                Console.WriteLine($"[MemberListViewModel] Error adding member: {ex.Message}");
+                await HandleErrorAsync("Failed to add member", ex);
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -256,28 +290,57 @@ namespace ClubManagementApp.ViewModels
         {
             if (member == null)
             {
+                Console.WriteLine("[MemberListViewModel] Edit member failed - no member selected");
                 await ShowNotificationAsync("Please select a member to edit");
                 return;
             }
 
             try
             {
-                // Simple edit functionality using input dialogs
-                var newName = Microsoft.VisualBasic.Interaction.InputBox(
-                    "Edit member's full name:", "Edit Member", member.FullName);
-
-                if (!string.IsNullOrWhiteSpace(newName) && newName != member.FullName)
+                Console.WriteLine($"[MemberListViewModel] Edit Member command executed for: {member.FullName} (ID: {member.UserID})");
+                
+                // Create and show the edit dialog
+                var editDialog = new Views.EditUserDialog(member);
+                Console.WriteLine($"[MemberListViewModel] EditUserDialog created successfully for {member.FullName}");
+                
+                var dialogResult = editDialog.ShowDialog();
+                Console.WriteLine($"[MemberListViewModel] Dialog result: {dialogResult}");
+                
+                if (dialogResult == true && editDialog.UpdatedUser != null)
                 {
-                    member.FullName = newName.Trim();
-                    await _userService.UpdateUserAsync(member);
-                    FilterMembers();
-                    await ShowNotificationAsync($"Member {member.FullName} updated successfully");
+                    Console.WriteLine($"[MemberListViewModel] Updating member: {editDialog.UpdatedUser.FullName}");
+                    IsLoading = true;
+
+                    await _userService.UpdateUserAsync(editDialog.UpdatedUser);
+                    
+                    // Update the member in the collection
+                    var index = Members.IndexOf(member);
+                    if (index >= 0)
+                    {
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            Members[index] = editDialog.UpdatedUser;
+                            FilterMembers();
+                        });
+                    }
+
+                    Console.WriteLine($"[MemberListViewModel] Member {editDialog.UpdatedUser.FullName} updated successfully");
+                    await ShowNotificationAsync($"Member {editDialog.UpdatedUser.FullName} updated successfully");
+                }
+                else
+                {
+                    Console.WriteLine("[MemberListViewModel] Edit member cancelled by user");
                 }
                 _logger?.LogInformation("Edit Member action triggered for user {UserId}", member.UserID);
             }
             catch (Exception ex)
             {
-                await HandleErrorAsync($"Failed to open edit dialog for {member.FullName}", ex);
+                Console.WriteLine($"[MemberListViewModel] Error editing member {member.FullName}: {ex.Message}");
+                await HandleErrorAsync($"Failed to edit member {member.FullName}", ex);
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -285,12 +348,14 @@ namespace ClubManagementApp.ViewModels
         {
             if (member == null)
             {
+                Console.WriteLine("[MemberListViewModel] Delete member failed - no member selected");
                 await ShowNotificationAsync("Please select a member to delete");
                 return;
             }
 
             try
             {
+                Console.WriteLine($"[MemberListViewModel] Delete Member command executed for: {member.FullName} (ID: {member.UserID})");
                 // Using MessageBox for confirmation dialog
                 var result = System.Windows.MessageBox.Show(
                     $"Are you sure you want to delete {member.FullName}?\n\nThis action cannot be undone.",
@@ -300,6 +365,7 @@ namespace ClubManagementApp.ViewModels
 
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
+                    Console.WriteLine($"[MemberListViewModel] User confirmed deletion of member: {member.FullName}");
                     IsLoading = true;
 
                     await _userService.DeleteUserAsync(member.UserID);
@@ -315,12 +381,18 @@ namespace ClubManagementApp.ViewModels
                         FilterMembers();
                     });
 
+                    Console.WriteLine($"[MemberListViewModel] Member {member.FullName} deleted successfully");
                     await ShowNotificationAsync($"Member {member.FullName} has been deleted successfully");
                     _logger?.LogInformation("Successfully deleted member {UserId}: {FullName}", member.UserID, member.FullName);
+                }
+                else
+                {
+                    Console.WriteLine($"[MemberListViewModel] User cancelled deletion of member: {member.FullName}");
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[MemberListViewModel] Error deleting member {member.FullName}: {ex.Message}");
                 await HandleErrorAsync($"Failed to delete member {member.FullName}", ex);
             }
             finally
@@ -333,8 +405,10 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
+                Console.WriteLine($"[MemberListViewModel] Export Members command executed for {FilteredMembers.Count} members");
                 if (!FilteredMembers.Any())
                 {
+                    Console.WriteLine("[MemberListViewModel] Export cancelled - no members to export");
                     await ShowNotificationAsync("No members to export");
                     return;
                 }
@@ -349,6 +423,7 @@ namespace ClubManagementApp.ViewModels
 
                 if (saveFileDialog.ShowDialog() == true)
                 {
+                    Console.WriteLine($"[MemberListViewModel] Exporting {FilteredMembers.Count} members to: {saveFileDialog.FileName}");
                     var csvContent = new StringBuilder();
                     csvContent.AppendLine("Full Name,Email,Role,Club,Join Date,Status");
 
@@ -358,12 +433,18 @@ namespace ClubManagementApp.ViewModels
                     }
 
                     await File.WriteAllTextAsync(saveFileDialog.FileName, csvContent.ToString());
+                    Console.WriteLine($"[MemberListViewModel] Successfully exported {FilteredMembers.Count} members to {Path.GetFileName(saveFileDialog.FileName)}");
                     await ShowNotificationAsync($"Successfully exported {FilteredMembers.Count} members to {Path.GetFileName(saveFileDialog.FileName)}");
+                }
+                else
+                {
+                    Console.WriteLine("[MemberListViewModel] Export cancelled by user");
                 }
                 _logger?.LogInformation("Export Members action triggered for {Count} members", FilteredMembers.Count);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[MemberListViewModel] Error exporting members: {ex.Message}");
                 await HandleErrorAsync("Failed to export members", ex);
             }
         }
@@ -390,6 +471,16 @@ namespace ClubManagementApp.ViewModels
                 System.Windows.MessageBox.Show(message, "Member Management",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
+        }
+
+        public void SetClubFilter(Club club)
+        {
+            ClubFilter = club;
+        }
+
+        public void ClearClubFilter()
+        {
+            ClubFilter = null;
         }
 
         public void Dispose()

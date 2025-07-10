@@ -35,6 +35,7 @@ namespace ClubManagementApp.ViewModels
                            IEventService eventService, IReportService reportService,
                            INavigationService navigationService, INotificationService notificationService)
         {
+            Console.WriteLine("[MainViewModel] Initializing MainViewModel with services");
             _userService = userService;
             _clubService = clubService;
             _eventService = eventService;
@@ -44,6 +45,7 @@ namespace ClubManagementApp.ViewModels
 
             InitializeCommands();
             InitializeChildViewModels();
+            Console.WriteLine("[MainViewModel] MainViewModel initialization completed");
         }
 
         public User? CurrentUser
@@ -106,71 +108,110 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            NavigateToDashboardCommand = new RelayCommand(() => CurrentView = "Dashboard");
-            OpenMemberListCommand = new RelayCommand(() => _navigationService.OpenMemberListWindow());
-            OpenClubManagementCommand = new RelayCommand(() => _navigationService.OpenClubManagementWindow());
-            OpenEventManagementCommand = new RelayCommand(() => _navigationService.OpenEventManagementWindow());
-            OpenReportsCommand = new RelayCommand(() => _navigationService.OpenReportsWindow());
-            RefreshDataCommand = new RelayCommand(async () => await LoadDataAsync());
+            NavigateToDashboardCommand = new RelayCommand(() => {
+                Console.WriteLine("[NAVIGATION] Navigating to Dashboard");
+                CurrentView = "Dashboard";
+            });
+            OpenMemberListCommand = new RelayCommand(() => {
+                Console.WriteLine("[NAVIGATION] Opening Member List Window");
+                _navigationService.OpenMemberListWindow();
+            });
+            OpenClubManagementCommand = new RelayCommand(() => {
+                Console.WriteLine("[NAVIGATION] Opening Club Management Window");
+                _navigationService.OpenClubManagementWindow();
+            });
+            OpenEventManagementCommand = new RelayCommand(() => {
+                Console.WriteLine("[NAVIGATION] Opening Event Management Window");
+                _navigationService.OpenEventManagementWindow();
+            });
+            OpenReportsCommand = new RelayCommand(() => {
+                Console.WriteLine("[NAVIGATION] Opening Reports Window");
+                _navigationService.OpenReportsWindow();
+            });
+            RefreshDataCommand = new RelayCommand(async () => {
+                Console.WriteLine("[DATA] Refreshing all data...");
+                await LoadDataAsync();
+            });
             LogoutCommand = new RelayCommand(Logout);
             DismissNotificationCommand = new RelayCommand(DismissNotification);
         }
 
         private void InitializeChildViewModels()
         {
+            Console.WriteLine("[MainViewModel] Initializing child ViewModels");
             DashboardViewModel = new DashboardViewModel(_userService, _clubService, _eventService, _reportService);
             MemberListViewModel = new MemberListViewModel(_userService, _clubService, _notificationService, null);
             EventManagementViewModel = new EventManagementViewModel(_eventService, _clubService, _userService);
-            ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService);
+            ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService);
             ReportsViewModel = new ReportsViewModel(_reportService, _userService, _eventService, _clubService);
+            Console.WriteLine("[MainViewModel] Child ViewModels initialized successfully");
         }
 
         private async Task LoadDataAsync()
         {
+            Console.WriteLine("[DATA] Starting data load operation...");
             try
             {
+                Console.WriteLine("[DATA] Loading users...");
                 var users = await _userService.GetAllUsersAsync();
                 Users.Clear();
                 foreach (var user in users)
                     Users.Add(user);
+                Console.WriteLine($"[DATA] Loaded {users.Count()} users");
 
+                Console.WriteLine("[DATA] Loading clubs...");
                 var clubs = await _clubService.GetAllClubsAsync();
                 Clubs.Clear();
                 foreach (var club in clubs)
                     Clubs.Add(club);
+                Console.WriteLine($"[DATA] Loaded {clubs.Count()} clubs");
 
+                Console.WriteLine("[DATA] Loading events...");
                 var events = await _eventService.GetAllEventsAsync();
                 Events.Clear();
                 foreach (var eventItem in events)
                     Events.Add(eventItem);
+                Console.WriteLine($"[DATA] Loaded {events.Count()} events");
 
+                Console.WriteLine("[DATA] Loading reports...");
                 var reports = await _reportService.GetAllReportsAsync();
                 Reports.Clear();
                 foreach (var report in reports)
                     Reports.Add(report);
+                Console.WriteLine($"[DATA] Loaded {reports.Count()} reports");
+                
+                Console.WriteLine("[DATA] All data loaded successfully");
             }
             catch (Exception ex)
             {
-                // Handle error - in a real app, you'd show a message to the user
+                Console.WriteLine($"[DATA] ERROR loading data: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
             }
         }
 
         public async Task<bool> LoginAsync(string email, string password)
         {
+            Console.WriteLine($"[MAIN_LOGIN] Attempting login for: {email}");
             try
             {
                 var isValid = await _userService.ValidateUserCredentialsAsync(email, password);
                 if (isValid)
                 {
+                    Console.WriteLine("[MAIN_LOGIN] Credentials validated, getting user details...");
                     CurrentUser = await _userService.GetUserByEmailAsync(email);
+                    Console.WriteLine($"[MAIN_LOGIN] User set: {CurrentUser?.FullName} ({CurrentUser?.Role})");
+                    
+                    Console.WriteLine("[MAIN_LOGIN] Loading initial data...");
                     await LoadDataAsync();
+                    Console.WriteLine("[MAIN_LOGIN] Login process completed successfully");
                     return true;
                 }
+                Console.WriteLine("[MAIN_LOGIN] Invalid credentials");
                 return false;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[MAIN_LOGIN] ERROR: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Login error: {ex.Message}");
                 return false;
             }
@@ -178,26 +219,30 @@ namespace ClubManagementApp.ViewModels
 
         private void Logout()
         {
+            Console.WriteLine($"[LOGOUT] User {CurrentUser?.FullName} logging out...");
             CurrentUser = null;
             CurrentView = "Dashboard";
             Users.Clear();
             Clubs.Clear();
             Events.Clear();
             Reports.Clear();
+            Console.WriteLine("[LOGOUT] Logout completed, data cleared");
         }
 
-        public bool CanAccessAdminFeatures => CurrentUser?.Role == UserRole.Admin;
-        public bool CanAccessClubManagement => CurrentUser?.Role is UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman;
-        public bool CanAccessEventManagement => CurrentUser?.Role is UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+        public bool CanAccessAdminFeatures => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin;
+        public bool CanAccessClubManagement => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin or UserRole.ClubPresident or UserRole.Chairman or UserRole.ViceChairman or UserRole.ClubOfficer;
+        public bool CanAccessEventManagement => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin or UserRole.ClubPresident or UserRole.Chairman or UserRole.ViceChairman or UserRole.ClubOfficer or UserRole.TeamLeader;
 
         public void ShowNotification(string message)
         {
+            Console.WriteLine($"[MainViewModel] Showing notification: {message}");
             NotificationMessage = message;
             HasNotifications = true;
         }
 
         private void DismissNotification()
         {
+            Console.WriteLine("[MainViewModel] Dismissing notification");
             HasNotifications = false;
             NotificationMessage = string.Empty;
         }

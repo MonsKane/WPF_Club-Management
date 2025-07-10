@@ -13,7 +13,10 @@
         WindowStartupLocation="CenterScreen"
         AllowsTransparency="True"
         WindowStyle="None"
-        Background="Transparent">
+        Background="Transparent"
+        ResizeMode="CanResize"
+        MinWidth="1200"
+        MinHeight="800">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
@@ -54,7 +57,7 @@
         <!-- Modern Navigation Button Style -->
         <Style x:Key="ModernNavButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#ecf0f1"/>
+            <Setter Property="Foreground" Value="#374151"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="20,15"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -76,12 +79,15 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Background" Value="#3B82F6"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="Background" Value="#2563EB"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="True">
                                 <Setter Property="Background" Value="#3B82F6"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -108,9 +114,9 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Bảng Điều Khiển" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#1E293B" Margin="0,0,0,5"/>
+                                   Foreground="Black" Margin="0,0,0,5"/>
                             <TextBlock Text="Chào mừng trở lại! Đây là những gì đang diễn ra với các câu lạc bộ của bạn." 
-                                   FontSize="16" Foreground="#64748B"/>
+                                   FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
                         <Border Grid.Column="1" Background="#3B82F6" CornerRadius="12" Padding="15,10">
@@ -147,9 +153,9 @@
                                 </Border>
 
                                 <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalUsers}" FontSize="36" FontWeight="Bold" 
-                                       Foreground="#1E293B" Margin="0,16,0,4"/>
+                                       Foreground="Black" Margin="0,16,0,4"/>
                                 <TextBlock Grid.Row="2" Text="Tổng Người Dùng" FontSize="14" FontWeight="Medium" 
-                                       Foreground="#64748B"/>
+                                       Foreground="Black"/>
                             </Grid>
                         </Border>
 
@@ -170,9 +176,9 @@
                                 </Border>
 
                                 <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalClubs}" FontSize="36" FontWeight="Bold" 
-                                       Foreground="#1E293B" Margin="0,16,0,4"/>
+                                       Foreground="Black" Margin="0,16,0,4"/>
                                 <TextBlock Grid.Row="2" Text="Tổng Câu Lạc Bộ" FontSize="14" FontWeight="Medium" 
-                                       Foreground="#64748B"/>
+                                       Foreground="Black"/>
                             </Grid>
                         </Border>
 
@@ -193,9 +199,9 @@
                                 </Border>
 
                                 <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalEvents}" FontSize="36" FontWeight="Bold" 
-                                       Foreground="#1E293B" Margin="0,16,0,4"/>
+                                       Foreground="Black" Margin="0,16,0,4"/>
                                 <TextBlock Grid.Row="2" Text="Tổng Sự Kiện" FontSize="14" FontWeight="Medium" 
-                                       Foreground="#64748B"/>
+                                       Foreground="Black"/>
                             </Grid>
                         </Border>
 
@@ -216,9 +222,9 @@
                                 </Border>
 
                                 <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalReports}" FontSize="36" FontWeight="Bold" 
-                                       Foreground="#1E293B" Margin="0,16,0,4"/>
+                                       Foreground="Black" Margin="0,16,0,4"/>
                                 <TextBlock Grid.Row="2" Text="Tổng Báo Cáo" FontSize="14" FontWeight="Medium" 
-                                       Foreground="#64748B"/>
+                                       Foreground="Black"/>
                             </Grid>
                         </Border>
                     </Grid>
@@ -243,9 +249,9 @@
 
                                 <StackPanel Grid.Row="0" Margin="0,0,0,24">
                                     <TextBlock Text="Sự Kiện Gần Đây" FontSize="20" FontWeight="Bold" 
-                                           Foreground="#1E293B" Margin="0,0,0,4"/>
+                                           Foreground="Black" Margin="0,0,0,4"/>
                                     <TextBlock Text="Các sự kiện mới nhất từ câu lạc bộ của bạn" 
-                                           FontSize="14" Foreground="#64748B"/>
+                                           FontSize="14" Foreground="Black"/>
                                 </StackPanel>
 
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="300">
@@ -255,9 +261,9 @@
                                                 <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,12">
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" 
-                                                               Foreground="#1E293B" Margin="0,0,0,4"/>
+                                                               Foreground="Black" Margin="0,0,0,4"/>
                                                         <TextBlock Text="{Binding EventDate, StringFormat='Date: {0:MMM dd, yyyy}'}" 
-                                                               FontSize="14" Foreground="#64748B"/>
+                                                               FontSize="14" Foreground="Black"/>
                                                     </StackPanel>
                                                 </Border>
                                             </DataTemplate>
@@ -280,9 +286,9 @@
 
                                 <StackPanel Grid.Row="0" Margin="0,0,0,24">
                                     <TextBlock Text="Thao Tác Nhanh" FontSize="20" FontWeight="Bold" 
-                                           Foreground="#1E293B" Margin="0,0,0,4"/>
+                                           Foreground="Black" Margin="0,0,0,4"/>
                                     <TextBlock Text="Các tác vụ thông thường và phím tắt" 
-                                           FontSize="14" Foreground="#64748B"/>
+                                           FontSize="14" Foreground="Black"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="1">
@@ -340,9 +346,9 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Quản Lý Người Dùng" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#1E293B" Margin="0,0,0,5"/>
+                                   Foreground="Black" Margin="0,0,0,5"/>
                             <TextBlock Text="Quản lý người dùng, vai trò và quyền hạn trong tổ chức của bạn." 
-                                   FontSize="16" Foreground="#64748B"/>
+                                   FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" Background="#3B82F6" Foreground="White" BorderThickness="0" 
@@ -378,7 +384,7 @@
                                 </Border>
                                 <TextBox Grid.Column="1" Name="SearchBox" BorderThickness="0" Background="Transparent" 
                                      VerticalAlignment="Center" FontSize="16" 
-                                     Foreground="#1E293B" FontWeight="Medium"/>
+                                     Foreground="Black" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 
@@ -388,7 +394,7 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16" 
-                                  Foreground="#1E293B" FontWeight="Medium">
+                                  Foreground="Black" FontWeight="Medium">
                                 <ComboBoxItem Content="Tất Cả Vai Trò"/>
                                 <ComboBoxItem Content="Quản Trị Viên"/>
                                 <ComboBoxItem Content="Chủ Tịch"/>
@@ -405,7 +411,7 @@
                             </Border.Effect>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Xuất" FontSize="16" FontWeight="Medium" Foreground="#1E293B"/>
+                                <TextBlock Text="Xuất" FontSize="16" FontWeight="Medium" Foreground="Black"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -434,12 +440,12 @@
                                         <ColumnDefinition Width="150"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Column="0" Text="Họ Tên" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="1" Text="Email" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="2" Text="Vai Trò" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="3" Text="Câu Lạc Bộ" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="4" Text="Ngày Tham Gia" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="5" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="#475569" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="Họ Tên" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="1" Text="Email" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="2" Text="Vai Trò" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="3" Text="Câu Lạc Bộ" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="4" Text="Ngày Tham Gia" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="5" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
                                 </Grid>
                             </Border>
 
@@ -460,17 +466,17 @@
                                                     </Grid.ColumnDefinitions>
 
                                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding FullName}" FontSize="16" FontWeight="Medium" Foreground="#1E293B"/>
+                                                        <TextBlock Text="{Binding FullName}" FontSize="16" FontWeight="Medium" Foreground="Black"/>
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="1" Text="{Binding Email}" FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Email}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <Border Grid.Column="2" Background="#EFF6FF" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Role}" FontSize="12" FontWeight="Medium" Foreground="#1D4ED8"/>
+                                                        <TextBlock Text="{Binding Role}" FontSize="12" FontWeight="Medium" Foreground="Black"/>
                                                     </Border>
 
-                                                    <TextBlock Grid.Column="3" Text="{Binding Club.Name}" FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="4" Text="{Binding JoinDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding Club.Name}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="4" Text="{Binding JoinDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Button Background="#3B82F6" Foreground="White" BorderThickness="0" 
@@ -515,9 +521,9 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Báo Cáo &amp; Phân Tích" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#1E293B" Margin="0,0,0,5"/>
+                                   Foreground="Black" Margin="0,0,0,5"/>
                             <TextBlock Text="Tạo thông tin chi tiết và theo dõi hiệu suất trong tổ chức của bạn." 
-                                   FontSize="16" Foreground="#64748B"/>
+                                   FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" Background="#10B981" Foreground="White" BorderThickness="0" 
@@ -546,8 +552,8 @@
                                 <Border Background="#EFF6FF" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
                                     <TextBlock Text="👥" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Thành Viên" FontSize="16" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                                <TextBlock Text="Phân tích người dùng" FontSize="12" Foreground="#64748B"/>
+                                <TextBlock Text="Thành Viên" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
+                                <TextBlock Text="Phân tích người dùng" FontSize="12" Foreground="Black"/>
                             </StackPanel>
                         </Border>
 
@@ -559,8 +565,8 @@
                                 <Border Background="#FEF3F2" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
                                     <TextBlock Text="📅" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Sự Kiện" FontSize="16" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                                <TextBlock Text="Số liệu sự kiện" FontSize="12" Foreground="#64748B"/>
+                                <TextBlock Text="Sự Kiện" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
+                                <TextBlock Text="Số liệu sự kiện" FontSize="12" Foreground="Black"/>
                             </StackPanel>
                         </Border>
 
@@ -572,8 +578,8 @@
                                 <Border Background="#FFFBEB" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
                                     <TextBlock Text="💰" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Tài Chính" FontSize="16" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                                <TextBlock Text="Theo dõi ngân sách" FontSize="12" Foreground="#64748B"/>
+                                <TextBlock Text="Tài Chính" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
+                                <TextBlock Text="Theo dõi ngân sách" FontSize="12" Foreground="Black"/>
                             </StackPanel>
                         </Border>
 
@@ -585,8 +591,8 @@
                                 <Border Background="#F3F4F6" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
                                     <TextBlock Text="📈" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Hoạt Động" FontSize="16" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,4"/>
-                                <TextBlock Text="Thống kê sử dụng" FontSize="12" Foreground="#64748B"/>
+                                <TextBlock Text="Hoạt Động" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
+                                <TextBlock Text="Thống kê sử dụng" FontSize="12" Foreground="Black"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -615,7 +621,7 @@
                                 </Border>
                                 <TextBox Grid.Column="1" Name="ReportSearchBox" BorderThickness="0" Background="Transparent" 
                                      VerticalAlignment="Center" FontSize="16" 
-                                     Foreground="#1E293B" FontWeight="Medium"/>
+                                     Foreground="Black" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 
@@ -625,7 +631,7 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16" 
-                                  Foreground="#1E293B" FontWeight="Medium">
+                                  Foreground="Black" FontWeight="Medium">
                                 <ComboBoxItem Content="Tất Cả Loại"/>
                                 <ComboBoxItem Content="Thành Viên"/>
                                 <ComboBoxItem Content="Sự Kiện"/>
@@ -640,7 +646,7 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <DatePicker Background="Transparent" BorderThickness="0" FontSize="16" 
-                                    Foreground="#1E293B" FontWeight="Medium"/>
+                                    Foreground="Black" FontWeight="Medium"/>
                         </Border>
                     </Grid>
 
@@ -667,11 +673,11 @@
                                         <ColumnDefinition Width="200"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Column="0" Text="Tên Báo Cáo" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="1" Text="Loại" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="2" Text="Ngày Tạo" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="3" Text="Người Tạo" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="4" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="#475569" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="Tên Báo Cáo" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="1" Text="Loại" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="2" Text="Ngày Tạo" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="3" Text="Người Tạo" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="4" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
                                 </Grid>
                             </Border>
 
@@ -690,14 +696,14 @@
                                                         <ColumnDefinition Width="200"/>
                                                     </Grid.ColumnDefinitions>
 
-                                                    <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="16" FontWeight="Medium" Foreground="#1E293B" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="16" FontWeight="Medium" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <Border Grid.Column="1" Background="#F0F9FF" CornerRadius="6" Padding="8,4" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Type}" FontSize="12" FontWeight="Medium" Foreground="#0369A1"/>
+                                                        <TextBlock Text="{Binding Type}" FontSize="12" FontWeight="Medium" Foreground="Black"/>
                                                     </Border>
 
-                                                    <TextBlock Grid.Column="2" Text="{Binding GeneratedDate, StringFormat='MMM dd, yyyy HH:mm'}" FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding GeneratedByUser.FullName}" FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding GeneratedDate, StringFormat='MMM dd, yyyy HH:mm'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding GeneratedByUser.FullName}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Button Background="#3B82F6" Foreground="White" BorderThickness="0" 
@@ -751,9 +757,9 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Quản Lý Câu Lạc Bộ" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#1E293B" Margin="0,0,0,5"/>
+                                   Foreground="Black" Margin="0,0,0,5"/>
                             <TextBlock Text="Quản lý và tổ chức tất cả câu lạc bộ của bạn ở một nơi." 
-                                   FontSize="16" Foreground="#64748B"/>
+                                   FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" Background="#EF4444" Foreground="White" BorderThickness="0" 
@@ -781,7 +787,7 @@
                             </Border>
                             <TextBox Grid.Column="1" Name="ClubSearchBox" BorderThickness="0" Background="Transparent" 
                                  VerticalAlignment="Center" FontSize="16" 
-                                 Foreground="#1E293B" FontWeight="Medium"/>
+                                 Foreground="Black" FontWeight="Medium"/>
                         </Grid>
                     </Border>
 
@@ -818,11 +824,11 @@
 
                                             <!-- Club Name -->
                                             <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="20" FontWeight="Bold" 
-                                                   Foreground="#1E293B" Margin="0,0,0,8" TextTrimming="CharacterEllipsis"/>
+                                                   Foreground="Black" Margin="0,0,0,8" TextTrimming="CharacterEllipsis"/>
 
                                             <!-- Club Description -->
                                             <TextBlock Grid.Row="2" Text="{Binding Description}" FontSize="14" 
-                                                   Foreground="#64748B" TextWrapping="Wrap" 
+                                                   Foreground="Black" TextWrapping="Wrap" 
                                                    Margin="0,0,0,20" MaxHeight="60" TextTrimming="WordEllipsis"/>
 
                                             <!-- Stats -->
@@ -835,8 +841,8 @@
                                                 <Border Grid.Column="0" Background="#F0F9FF" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding Users.Count}" FontSize="18" FontWeight="Bold" 
-                                                               Foreground="#0369A1" HorizontalAlignment="Center"/>
-                                                        <TextBlock Text="Thành Viên" FontSize="12" Foreground="#64748B" 
+                                                               Foreground="Black" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Thành Viên" FontSize="12" Foreground="Black" 
                                                                HorizontalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
@@ -844,8 +850,8 @@
                                                 <Border Grid.Column="1" Background="#FEF3F2" CornerRadius="8" Padding="12,8" Margin="8,0,0,0">
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding Events.Count}" FontSize="18" FontWeight="Bold" 
-                                                               Foreground="#DC2626" HorizontalAlignment="Center"/>
-                                                        <TextBlock Text="Sự Kiện" FontSize="12" Foreground="#64748B" 
+                                                               Foreground="Black" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Sự Kiện" FontSize="12" Foreground="Black" 
                                                                HorizontalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
@@ -897,9 +903,9 @@
 
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Quản Lý Sự Kiện" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#1E293B" Margin="0,0,0,5"/>
+                                   Foreground="Black" Margin="0,0,0,5"/>
                             <TextBlock Text="Lập kế hoạch, tổ chức và theo dõi tất cả sự kiện một cách liền mạch." 
-                                   FontSize="16" Foreground="#64748B"/>
+                                   FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0" 
@@ -935,7 +941,7 @@
                                 </Border>
                                 <TextBox Grid.Column="1" Name="EventSearchBox" BorderThickness="0" Background="Transparent" 
                                      VerticalAlignment="Center" FontSize="16" 
-                                     Foreground="#1E293B" FontWeight="Medium"/>
+                                     Foreground="Black" FontWeight="Medium"/>
                             </Grid>
                         </Border>
 
@@ -945,7 +951,7 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16" 
-                                  Foreground="#1E293B" FontWeight="Medium">
+                                  Foreground="Black" FontWeight="Medium">
                                 <ComboBoxItem Content="Tất Cả Sự Kiện"/>
                                 <ComboBoxItem Content="Sắp Tới"/>
                                 <ComboBoxItem Content="Đang Diễn Ra"/>
@@ -959,7 +965,7 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <DatePicker Background="Transparent" BorderThickness="0" FontSize="16" 
-                                    Foreground="#1E293B" FontWeight="Medium"/>
+                                    Foreground="Black" FontWeight="Medium"/>
                         </Border>
                     </Grid>
 
@@ -986,11 +992,11 @@
                                         <ColumnDefinition Width="180"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Column="0" Text="Tên Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="1" Text="Ngày Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="2" Text="Địa Điểm" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="3" Text="Người Tham Gia" FontSize="14" FontWeight="Bold" Foreground="#475569"/>
-                                    <TextBlock Grid.Column="4" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="#475569" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="Tên Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="1" Text="Ngày Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="2" Text="Địa Điểm" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="3" Text="Người Tham Gia" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="4" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
                                 </Grid>
                             </Border>
 
@@ -1010,19 +1016,19 @@
                                                     </Grid.ColumnDefinitions>
 
                                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Medium" Foreground="#1E293B"/>
-                                                        <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#64748B" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Medium" Foreground="Black"/>
+                                                        <TextBlock Text="{Binding Description}" FontSize="12" Foreground="Black" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="1" Text="{Binding EventDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding EventDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Location}" FontSize="14" Foreground="#1E293B" FontWeight="Medium"/>
-                                                        <TextBlock Text="{Binding Venue}" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                                                        <TextBlock Text="{Binding Location}" FontSize="14" Foreground="Black" FontWeight="Medium"/>
+                                                        <TextBlock Text="{Binding Venue}" FontSize="12" Foreground="Black" Margin="0,2,0,0"/>
                                                     </StackPanel>
 
                                                     <Border Grid.Column="3" Background="#F0F9FF" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Participants.Count}" FontSize="14" FontWeight="Bold" Foreground="#0369A1"/>
+                                                        <TextBlock Text="{Binding Participants.Count}" FontSize="14" FontWeight="Bold" Foreground="Black"/>
                                                     </Border>
 
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -1076,7 +1082,7 @@
             </Grid.RowDefinitions>
 
             <!-- Custom Title Bar -->
-            <Border Grid.Row="0" CornerRadius="12,12,0,0" Height="60">
+            <Border Grid.Row="0" CornerRadius="12,12,0,0" Height="60" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="#667eea" Offset="0"/>
@@ -1104,7 +1110,7 @@
                         </Ellipse>
                         <StackPanel>
                             <TextBlock Text="Quản Lý Câu Lạc Bộ" FontSize="16" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="{Binding CurrentUser.Club.Name}" FontSize="11" Foreground="#E8E8E8" Opacity="0.8"/>
+                            <TextBlock Text="{Binding CurrentUser.Club.Name}" FontSize="11" Foreground="White" Opacity="0.8"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -1120,9 +1126,66 @@
 
                     <!-- Window Controls -->
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="🗕" Width="30" Height="30" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="12" Margin="2,0"/>
-                        <Button Content="🗖" Width="30" Height="30" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="12" Margin="2,0"/>
-                        <Button Content="✕" Width="30" Height="30" Background="#FF5F56" Foreground="White" BorderThickness="0" FontSize="12" Margin="2,0" Command="{Binding LogoutCommand}"/>
+                        <Button Content="🗕" Width="30" Height="30" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="12" Margin="2,0" Click="MinimizeButton_Click" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#40FFFFFF"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button x:Name="MaximizeRestoreButton" Content="🗖" Width="30" Height="30" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="12" Margin="2,0" Click="MaximizeRestoreButton_Click" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#40FFFFFF"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <Button Content="✕" Width="30" Height="30" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="12" Margin="2,0" Click="CloseButton_Click" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#ff4757"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -1140,7 +1203,7 @@
                         <StackPanel Margin="20,30,20,20">
 
                             <!-- Navigation Header -->
-                            <TextBlock Text="ĐIỀU HƯỚNG" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,15"/>
+                            <TextBlock Text="ĐIỀU HƯỚNG" FontSize="12" FontWeight="SemiBold" Foreground="Black" Margin="0,0,0,15"/>
 
                             <!-- Dashboard -->
                             <Button Command="{Binding NavigateToDashboardCommand}" Style="{StaticResource ModernNavButtonStyle}" Click="Button_Click" Margin="0,0,0,8">
@@ -1148,7 +1211,7 @@
                                     <Border Background="#3B82F6" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="📊" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Bảng Điều Khiển" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Bảng Điều Khiển" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
                                 </StackPanel>
                             </Button>
 
@@ -1159,7 +1222,7 @@
                                     <Border Background="#10B981" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Người Dùng" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Người Dùng" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
                                 </StackPanel>
                             </Button>
 
@@ -1170,7 +1233,7 @@
                                     <Border Background="#8B5CF6" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="🏛️" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Câu Lạc Bộ" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Câu Lạc Bộ" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
                                 </StackPanel>
                             </Button>
 
@@ -1181,7 +1244,7 @@
                                     <Border Background="#F59E0B" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="📅" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Sự Kiện" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Sự Kiện" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
                                 </StackPanel>
                             </Button>
 
@@ -1191,7 +1254,7 @@
                                     <Border Background="#EF4444" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="📈" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Báo Cáo" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Báo Cáo" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
                                 </StackPanel>
                             </Button>
 
@@ -1199,7 +1262,7 @@
                             <Border Height="1" Background="#E2E8F0" Margin="0,10,0,20"/>
 
                             <!-- Quick Actions Header -->
-                            <TextBlock Text="THAO TÁC NHANH" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,15"/>
+                            <TextBlock Text="THAO TÁC NHANH" FontSize="12" FontWeight="SemiBold" Foreground="Black" Margin="0,0,0,15"/>
 
                             <!-- Refresh Data -->
                             <Button Command="{Binding RefreshDataCommand}" Style="{StaticResource ModernNavButtonStyle}" Margin="0,0,0,8">
@@ -1207,7 +1270,7 @@
                                     <Border Background="#6B7280" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="🔄" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Làm Mới Dữ Liệu" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Làm Mới Dữ Liệu" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
                                 </StackPanel>
                             </Button>
 
@@ -1246,7 +1309,7 @@
                                 <TextBlock Text="🔔" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <TextBlock Grid.Column="1" Text="{Binding NotificationMessage}" FontSize="14" FontWeight="Medium"
-                                       Foreground="#92400E" VerticalAlignment="Center"/>
+                                       Foreground="Black" VerticalAlignment="Center"/>
                             <Button Grid.Column="2" Content="✕" Background="#F59E0B" Foreground="White" BorderThickness="0" 
                                     FontWeight="Bold" Padding="8" Width="32" Height="32"
                                     Command="{Binding DismissNotificationCommand}"/>
