@@ -164,23 +164,73 @@ namespace ClubManagementApp.Services
 
         public async Task<Event> CreateEventAsync(Event eventItem)
         {
-            Console.WriteLine($"[EVENT_SERVICE] Creating new event: {eventItem.Name}");
-            Console.WriteLine($"[EVENT_SERVICE] Event date: {eventItem.EventDate:yyyy-MM-dd HH:mm}, Location: {eventItem.Location}, Club ID: {eventItem.ClubID}");
-            
-            _context.Events.Add(eventItem);
-            await _context.SaveChangesAsync();
-            
-            Console.WriteLine($"[EVENT_SERVICE] Event created successfully with ID: {eventItem.EventID}");
-            return eventItem;
+            try
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Creating new event: {eventItem.Name}");
+                Console.WriteLine($"[EVENT_SERVICE] Event date: {eventItem.EventDate:yyyy-MM-dd HH:mm}, Location: {eventItem.Location}, Club ID: {eventItem.ClubID}");
+                
+                // Input validation
+                if (eventItem == null)
+                    throw new ArgumentNullException(nameof(eventItem), "Event cannot be null");
+                
+                if (string.IsNullOrWhiteSpace(eventItem.Name))
+                    throw new ArgumentException("Event name is required", nameof(eventItem));
+                
+                if (eventItem.EventDate <= DateTime.Now)
+                    throw new ArgumentException("Event date must be in the future", nameof(eventItem));
+                
+                if (eventItem.ClubID <= 0)
+                    throw new ArgumentException("Valid club ID is required", nameof(eventItem));
+                
+                // Verify club exists
+                var club = await _context.Clubs.FindAsync(eventItem.ClubID);
+                if (club == null)
+                    throw new InvalidOperationException($"Club with ID {eventItem.ClubID} not found");
+                
+                _context.Events.Add(eventItem);
+                await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"[EVENT_SERVICE] Event created successfully with ID: {eventItem.EventID}");
+                return eventItem;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Error creating event: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Event> UpdateEventAsync(Event eventItem)
         {
-            Console.WriteLine($"[EVENT_SERVICE] Updating event: {eventItem.Name} (ID: {eventItem.EventID})");
-            _context.Events.Update(eventItem);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {eventItem.Name}");
-            return eventItem;
+            try
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Updating event: {eventItem.Name} (ID: {eventItem.EventID})");
+                
+                // Input validation
+                if (eventItem == null)
+                    throw new ArgumentNullException(nameof(eventItem), "Event cannot be null");
+                
+                if (eventItem.EventID <= 0)
+                    throw new ArgumentException("Invalid event ID", nameof(eventItem));
+                
+                if (string.IsNullOrWhiteSpace(eventItem.Name))
+                    throw new ArgumentException("Event name is required", nameof(eventItem));
+                
+                // Check if event exists
+                var existingEvent = await _context.Events.FindAsync(eventItem.EventID);
+                if (existingEvent == null)
+                    throw new InvalidOperationException($"Event with ID {eventItem.EventID} not found");
+                
+                _context.Events.Update(eventItem);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {eventItem.Name}");
+                return eventItem;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Error updating event: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> UpdateEventStatusAsync(int eventId, EventStatus status)
@@ -218,72 +268,152 @@ namespace ClubManagementApp.Services
 
         public async Task<bool> DeleteEventAsync(int eventId)
         {
-            Console.WriteLine($"[EVENT_SERVICE] Attempting to delete event with ID: {eventId}");
-            var eventToDelete = await _context.Events.FindAsync(eventId);
-            if (eventToDelete == null) 
+            try
             {
-                Console.WriteLine($"[EVENT_SERVICE] Event not found for deletion: {eventId}");
-                return false;
-            }
+                Console.WriteLine($"[EVENT_SERVICE] Deleting event with ID: {eventId}");
+                
+                // Input validation
+                if (eventId <= 0)
+                    throw new ArgumentException("Invalid event ID", nameof(eventId));
+                
+                var eventItem = await _context.Events.FindAsync(eventId);
+                if (eventItem == null)
+                {
+                    Console.WriteLine($"[EVENT_SERVICE] Event with ID {eventId} not found");
+                    return false;
+                }
+                
+                // Check if event has participants
+                var hasParticipants = await _context.EventParticipants
+                    .AnyAsync(ep => ep.EventID == eventId);
+                
+                if (hasParticipants)
+                    throw new InvalidOperationException($"Cannot delete event '{eventItem.Name}' because it has registered participants");
 
-            Console.WriteLine($"[EVENT_SERVICE] Deleting event: {eventToDelete.Name} ({eventToDelete.EventDate:yyyy-MM-dd})");
-            _context.Events.Remove(eventToDelete);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[EVENT_SERVICE] Event deleted successfully: {eventToDelete.Name}");
-            return true;
+                _context.Events.Remove(eventItem);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[EVENT_SERVICE] Event '{eventItem.Name}' deleted successfully");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Error deleting event {eventId}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> RegisterUserForEventAsync(int eventId, int userId)
         {
-            Console.WriteLine($"[EVENT_SERVICE] Registering user {userId} for event {eventId}");
-            
-            // Check if user is already registered
-            var existingParticipation = await _context.EventParticipants
-                .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
-
-            if (existingParticipation != null)
+            try
             {
-                Console.WriteLine($"[EVENT_SERVICE] User {userId} already registered for event {eventId}");
-                return false; // Already registered
+                Console.WriteLine($"[EVENT_SERVICE] Registering user {userId} for event {eventId}");
+                
+                // Input validation
+                if (eventId <= 0)
+                    throw new ArgumentException("Invalid event ID", nameof(eventId));
+                
+                if (userId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(userId));
+                
+                // Verify event exists
+                var eventEntity = await _context.Events.FindAsync(eventId);
+                if (eventEntity == null)
+                    throw new InvalidOperationException($"Event with ID {eventId} not found");
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {userId} not found");
+                
+                // Check if user is already registered
+                var existingParticipation = await _context.EventParticipants
+                    .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
+
+                if (existingParticipation != null)
+                {
+                    Console.WriteLine($"[EVENT_SERVICE] User {userId} already registered for event {eventId}");
+                    return false; // Already registered
+                }
+                
+                // Check if event has reached maximum participants
+                if (eventEntity.MaxParticipants.HasValue)
+                {
+                    var currentParticipants = await _context.EventParticipants
+                        .CountAsync(ep => ep.EventID == eventId);
+                    
+                    if (currentParticipants >= eventEntity.MaxParticipants.Value)
+                        throw new InvalidOperationException($"Event '{eventEntity.Name}' has reached maximum capacity of {eventEntity.MaxParticipants} participants");
+                }
+
+                var participation = new EventParticipant
+                {
+                    EventID = eventId,
+                    UserID = userId,
+                    Status = AttendanceStatus.Registered,
+                    RegistrationDate = DateTime.Now
+                };
+
+                _context.EventParticipants.Add(participation);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[EVENT_SERVICE] User {userId} successfully registered for event {eventId}");
+                return true;
             }
-
-            var participation = new EventParticipant
+            catch (Exception ex)
             {
-                EventID = eventId,
-                UserID = userId,
-                Status = AttendanceStatus.Registered,
-                RegistrationDate = DateTime.Now
-            };
-
-            _context.EventParticipants.Add(participation);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[EVENT_SERVICE] User {userId} successfully registered for event {eventId}");
-            return true;
+                Console.WriteLine($"[EVENT_SERVICE] Error registering user {userId} for event {eventId}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> UpdateParticipantStatusAsync(int eventId, int userId, AttendanceStatus status)
         {
-            Console.WriteLine($"[EVENT_SERVICE] Updating participant status for user {userId} in event {eventId} to {status}");
-            var participation = await _context.EventParticipants
-                .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
-
-            if (participation == null) 
+            try
             {
-                Console.WriteLine($"[EVENT_SERVICE] Participation record not found for user {userId} in event {eventId}");
-                return false;
-            }
+                Console.WriteLine($"[EVENT_SERVICE] Updating participant status for user {userId} in event {eventId} to {status}");
+                
+                // Input validation
+                if (eventId <= 0)
+                    throw new ArgumentException("Invalid event ID", nameof(eventId));
+                
+                if (userId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(userId));
+                
+                // Verify event exists
+                var eventEntity = await _context.Events.FindAsync(eventId);
+                if (eventEntity == null)
+                    throw new InvalidOperationException($"Event with ID {eventId} not found");
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {userId} not found");
+                
+                var participation = await _context.EventParticipants
+                    .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
 
-            var oldStatus = participation.Status;
-            participation.Status = status;
-            if (status == AttendanceStatus.Attended)
+                if (participation == null)
+                {
+                    Console.WriteLine($"[EVENT_SERVICE] Participation record not found for user {userId} in event {eventId}");
+                    return false;
+                }
+
+                var oldStatus = participation.Status;
+                participation.Status = status;
+                if (status == AttendanceStatus.Attended)
+                {
+                    participation.AttendanceDate = DateTime.Now;
+                    Console.WriteLine($"[EVENT_SERVICE] Marked attendance time for user {userId} in event {eventId}");
+                }
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[EVENT_SERVICE] Participant status updated: user {userId} in event {eventId} changed from {oldStatus} to {status}");
+                return true;
+            }
+            catch (Exception ex)
             {
-                participation.AttendanceDate = DateTime.Now;
-                Console.WriteLine($"[EVENT_SERVICE] Marked attendance time for user {userId} in event {eventId}");
+                Console.WriteLine($"[EVENT_SERVICE] Error updating participant status: {ex.Message}");
+                throw;
             }
-
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[EVENT_SERVICE] Participant status updated: user {userId} in event {eventId} changed from {oldStatus} to {status}");
-            return true;
         }
 
         public async Task<IEnumerable<EventParticipant>> GetEventParticipantsAsync(int eventId)
@@ -338,20 +468,50 @@ namespace ClubManagementApp.Services
 
         public async Task<bool> UnregisterUserFromEventAsync(int eventId, int userId)
         {
-            Console.WriteLine($"[EVENT_SERVICE] Unregistering user {userId} from event {eventId}");
-            var participation = await _context.EventParticipants
-                .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
-
-            if (participation == null) 
+            try
             {
-                Console.WriteLine($"[EVENT_SERVICE] Participation record not found for user {userId} in event {eventId}");
-                return false;
-            }
+                Console.WriteLine($"[EVENT_SERVICE] Unregistering user {userId} from event {eventId}");
+                
+                // Input validation
+                if (eventId <= 0)
+                    throw new ArgumentException("Invalid event ID", nameof(eventId));
+                
+                if (userId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(userId));
+                
+                // Verify event exists
+                var eventEntity = await _context.Events.FindAsync(eventId);
+                if (eventEntity == null)
+                    throw new InvalidOperationException($"Event with ID {eventId} not found");
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {userId} not found");
+                
+                var participation = await _context.EventParticipants
+                    .FirstOrDefaultAsync(ep => ep.EventID == eventId && ep.UserID == userId);
 
-            _context.EventParticipants.Remove(participation);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[EVENT_SERVICE] User {userId} successfully unregistered from event {eventId}");
-            return true;
+                if (participation == null)
+                {
+                    Console.WriteLine($"[EVENT_SERVICE] User {userId} is not registered for event {eventId}");
+                    return false;
+                }
+                
+                // Check if event has already occurred
+                if (eventEntity.EventDate <= DateTime.Now)
+                    throw new InvalidOperationException($"Cannot unregister from event '{eventEntity.Name}' because it has already occurred");
+
+                _context.EventParticipants.Remove(participation);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[EVENT_SERVICE] User {userId} successfully unregistered from event {eventId}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_SERVICE] Error unregistering user {userId} from event {eventId}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Dictionary<string, object>> GetEventStatisticsAsync(int eventId)

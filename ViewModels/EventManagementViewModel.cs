@@ -341,8 +341,18 @@ namespace ClubManagementApp.ViewModels
             }
 
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] View Event command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
-            // Logic to open event details window/dialog
-            System.Diagnostics.Debug.WriteLine($"View Event: {eventItem.Name}");
+            try
+            {
+                var eventDetailsDialog = new Views.EventDetailsDialog(eventItem);
+                eventDetailsDialog.ShowDialog();
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event details dialog opened for: {eventItem.Name}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error opening event details: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening event details: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void ManageParticipants(Event? eventItem)
@@ -354,15 +364,69 @@ namespace ClubManagementApp.ViewModels
             }
 
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Manage Participants command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
-            // Logic to open participants management window/dialog
-            System.Diagnostics.Debug.WriteLine($"Manage Participants for: {eventItem.Name}");
+            try
+            {
+                var participantManagementDialog = new Views.ParticipantManagementDialog(eventItem, _eventService);
+                participantManagementDialog.ShowDialog();
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Participant management dialog opened for: {eventItem.Name}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error opening participant management: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening participant management: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         private void ExportEvents(object? parameter)
         {
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Export Events command executed - exporting {FilteredEvents.Count} events");
-            // Logic to export events to CSV/Excel
-            System.Diagnostics.Debug.WriteLine("Export Events clicked");
+            try
+            {
+                if (!FilteredEvents.Any())
+                {
+                    System.Windows.MessageBox.Show("No events to export.", "Information", 
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    return;
+                }
+
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt",
+                    DefaultExt = "csv",
+                    FileName = $"Events_Export_{DateTime.Now:yyyyMMdd}.csv"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    var csv = new System.Text.StringBuilder();
+                    csv.AppendLine("Name,Description,Date,Location,Club,Status,Max Participants,Registration Deadline,Created Date");
+
+                    foreach (var eventItem in FilteredEvents)
+                    {
+                        csv.AppendLine($"\"{eventItem.Name}\"," +
+                                     $"\"{eventItem.Description?.Replace("\"", "\"\"") ?? "N/A"}\"," +
+                                     $"\"{eventItem.EventDate:yyyy-MM-dd HH:mm}\"," +
+                                     $"\"{eventItem.Location ?? "N/A"}\"," +
+                                     $"\"{eventItem.Club?.Name ?? "N/A"}\"," +
+                                     $"\"{eventItem.Status}\"," +
+                                     $"{eventItem.MaxParticipants ?? 0}," +
+                                     $"\"{(eventItem.RegistrationDeadline?.ToString("yyyy-MM-dd") ?? "N/A")}\"," +
+                                     $"\"{eventItem.CreatedDate:yyyy-MM-dd}\"");
+                    }
+
+                    System.IO.File.WriteAllText(saveFileDialog.FileName, csv.ToString(), System.Text.Encoding.UTF8);
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Events exported successfully to: {saveFileDialog.FileName}");
+                    System.Windows.MessageBox.Show($"Events exported successfully to:\n{saveFileDialog.FileName}", "Export Complete", 
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error exporting events: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error exporting events: {ex.Message}", "Error", 
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
         }
 
         public string GetEventStatus(Event eventItem)

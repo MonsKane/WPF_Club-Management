@@ -41,32 +41,60 @@ namespace ClubManagementApp.Services
 
         public T GetValue<T>(string key, T defaultValue = default!)
         {
-            lock (_lockObject)
+            try
             {
-                if (_settings.TryGetValue(key, out var value))
+                if (string.IsNullOrWhiteSpace(key))
                 {
-                    try
-                    {
-                        if (value is JsonElement jsonElement)
-                        {
-                            return JsonSerializer.Deserialize<T>(jsonElement.GetRawText()) ?? defaultValue;
-                        }
-                        return (T)Convert.ChangeType(value, typeof(T)) ?? defaultValue;
-                    }
-                    catch
-                    {
-                        return defaultValue;
-                    }
+                    System.Diagnostics.Debug.WriteLine("Configuration key cannot be null or empty");
+                    return defaultValue;
                 }
+
+                lock (_lockObject)
+                {
+                    if (_settings.TryGetValue(key, out var value))
+                    {
+                        try
+                        {
+                            if (value is JsonElement jsonElement)
+                            {
+                                return JsonSerializer.Deserialize<T>(jsonElement.GetRawText()) ?? defaultValue;
+                            }
+                            return (T)Convert.ChangeType(value, typeof(T)) ?? defaultValue;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to convert configuration value for key '{key}': {ex.Message}");
+                            return defaultValue;
+                        }
+                    }
+                    return defaultValue;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting configuration value for key '{key}': {ex.Message}");
                 return defaultValue;
             }
         }
 
         public void SetValue<T>(string key, T value)
         {
-            lock (_lockObject)
+            try
             {
-                _settings[key] = value!;
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    System.Diagnostics.Debug.WriteLine("Configuration key cannot be null or empty");
+                    return;
+                }
+
+                lock (_lockObject)
+                {
+                    _settings[key] = value!;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting configuration value for key '{key}': {ex.Message}");
             }
         }
 
@@ -78,17 +106,43 @@ namespace ClubManagementApp.Services
 
         public bool HasKey(string key)
         {
-            lock (_lockObject)
+            try
             {
-                return _settings.ContainsKey(key);
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    return false;
+                }
+
+                lock (_lockObject)
+                {
+                    return _settings.ContainsKey(key);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error checking if configuration key exists '{key}': {ex.Message}");
+                return false;
             }
         }
 
         public void RemoveKey(string key)
         {
-            lock (_lockObject)
+            try
             {
-                _settings.Remove(key);
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    System.Diagnostics.Debug.WriteLine("Configuration key cannot be null or empty");
+                    return;
+                }
+
+                lock (_lockObject)
+                {
+                    _settings.Remove(key);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error removing configuration key '{key}': {ex.Message}");
             }
         }
 

@@ -227,6 +227,9 @@ namespace ClubManagementApp.ViewModels
             Events.Clear();
             Reports.Clear();
             Console.WriteLine("[LOGOUT] Logout completed, data cleared");
+            
+            // Navigate back to login window
+            _navigationService.NavigateToLogin();
         }
 
         public bool CanAccessAdminFeatures => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin;

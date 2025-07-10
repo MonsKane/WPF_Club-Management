@@ -413,3 +413,7 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\C
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ClubDetailsDialog.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ManageLeadershipDialog.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ManageLeadershipDialog.baml
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\EventDetailsDialog.baml
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ParticipantManagementDialog.baml
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\EventDetailsDialog.g.cs
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ParticipantManagementDialog.g.cs

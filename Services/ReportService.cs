@@ -22,94 +22,209 @@ namespace ClubManagementApp.Services
 
         public async Task<IEnumerable<Report>> GetAllReportsAsync()
         {
-            Console.WriteLine("[REPORT_SERVICE] Getting all reports from database...");
-            var reports = await _context.Reports
-                .Include(r => r.Club)
-                .Include(r => r.GeneratedByUser)
-                .OrderByDescending(r => r.GeneratedDate)
-                .ToListAsync();
-            Console.WriteLine($"[REPORT_SERVICE] Retrieved {reports.Count} reports from database");
-            return reports;
+            try
+            {
+                Console.WriteLine("[REPORT_SERVICE] Getting all reports from database...");
+                var reports = await _context.Reports
+                    .Include(r => r.Club)
+                    .Include(r => r.GeneratedByUser)
+                    .OrderByDescending(r => r.GeneratedDate)
+                    .ToListAsync();
+                Console.WriteLine($"[REPORT_SERVICE] Retrieved {reports.Count} reports from database");
+                return reports;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error getting all reports: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Report?> GetReportByIdAsync(int reportId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Getting report by ID: {reportId}");
-            var report = await _context.Reports
-                .Include(r => r.Club)
-                .Include(r => r.GeneratedByUser)
-                .FirstOrDefaultAsync(r => r.ReportID == reportId);
-            
-            if (report != null)
+            try
             {
-                Console.WriteLine($"[REPORT_SERVICE] Found report: {report.Title} ({report.Type}) generated on {report.GeneratedDate:yyyy-MM-dd}");
+                Console.WriteLine($"[REPORT_SERVICE] Getting report by ID: {reportId}");
+                
+                // Input validation
+                if (reportId <= 0)
+                    throw new ArgumentException("Invalid report ID", nameof(reportId));
+                
+                var report = await _context.Reports
+                    .Include(r => r.Club)
+                    .Include(r => r.GeneratedByUser)
+                    .FirstOrDefaultAsync(r => r.ReportID == reportId);
+                
+                if (report != null)
+                {
+                    Console.WriteLine($"[REPORT_SERVICE] Found report: {report.Title} ({report.Type}) generated on {report.GeneratedDate:yyyy-MM-dd}");
+                }
+                else
+                {
+                    Console.WriteLine($"[REPORT_SERVICE] Report not found with ID: {reportId}");
+                }
+                return report;
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"[REPORT_SERVICE] Report not found with ID: {reportId}");
+                Console.WriteLine($"[REPORT_SERVICE] Error getting report {reportId}: {ex.Message}");
+                throw;
             }
-            return report;
         }
 
         public async Task<IEnumerable<Report>> GetReportsByClubAsync(int clubId)
         {
-            return await _context.Reports
-                .Include(r => r.Club)
-                .Include(r => r.GeneratedByUser)
-                .Where(r => r.ClubID == clubId)
-                .OrderByDescending(r => r.GeneratedDate)
-                .ToListAsync();
+            try
+            {
+                // Input validation
+                if (clubId <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(clubId));
+                
+                // Verify club exists
+                var club = await _context.Clubs.FindAsync(clubId);
+                if (club == null)
+                    throw new InvalidOperationException($"Club with ID {clubId} not found");
+                
+                return await _context.Reports
+                    .Include(r => r.Club)
+                    .Include(r => r.GeneratedByUser)
+                    .Where(r => r.ClubID == clubId)
+                    .OrderByDescending(r => r.GeneratedDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error getting reports for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Report>> GetReportsByTypeAsync(ReportType type)
         {
-            return await _context.Reports
-                .Include(r => r.Club)
-                .Include(r => r.GeneratedByUser)
-                .Where(r => r.Type == type)
-                .OrderByDescending(r => r.GeneratedDate)
-                .ToListAsync();
+            try
+            {
+                if (!Enum.IsDefined(typeof(ReportType), type))
+                    throw new ArgumentException("Invalid report type", nameof(type));
+
+                return await _context.Reports
+                    .Include(r => r.Club)
+                    .Include(r => r.GeneratedByUser)
+                    .Where(r => r.Type == type)
+                    .OrderByDescending(r => r.GeneratedDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error getting reports by type {type}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Report> CreateReportAsync(Report report)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Creating new report: {report.Title} ({report.Type})");
-            Console.WriteLine($"[REPORT_SERVICE] Report for club ID: {report.ClubID}, semester: {report.Semester}");
-            
-            _context.Reports.Add(report);
-            await _context.SaveChangesAsync();
-            
-            Console.WriteLine($"[REPORT_SERVICE] Report created successfully with ID: {report.ReportID}");
-            return report;
+            try
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Creating new report: {report.Title} ({report.Type})");
+                Console.WriteLine($"[REPORT_SERVICE] Report for club ID: {report.ClubID}, semester: {report.Semester}");
+                
+                // Input validation
+                if (report == null)
+                    throw new ArgumentNullException(nameof(report), "Report cannot be null");
+                
+                if (string.IsNullOrWhiteSpace(report.Title))
+                    throw new ArgumentException("Report title is required", nameof(report));
+                
+                if (string.IsNullOrWhiteSpace(report.Semester))
+                    throw new ArgumentException("Semester is required", nameof(report));
+                
+                if (report.ClubID <= 0)
+                    throw new ArgumentException("Valid club ID is required", nameof(report));
+                
+                if (report.GeneratedByUserID <= 0)
+                    throw new ArgumentException("Valid user ID is required", nameof(report));
+                
+                // Verify club exists
+                var club = await _context.Clubs.FindAsync(report.ClubID);
+                if (club == null)
+                    throw new InvalidOperationException($"Club with ID {report.ClubID} not found");
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(report.GeneratedByUserID);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {report.GeneratedByUserID} not found");
+                
+                _context.Reports.Add(report);
+                await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"[REPORT_SERVICE] Report created successfully with ID: {report.ReportID}");
+                return report;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error creating report: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> DeleteReportAsync(int reportId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Attempting to delete report with ID: {reportId}");
-            var report = await _context.Reports.FindAsync(reportId);
-            if (report == null) 
+            try
             {
-                Console.WriteLine($"[REPORT_SERVICE] Report not found for deletion: {reportId}");
-                return false;
-            }
+                Console.WriteLine($"[REPORT_SERVICE] Attempting to delete report with ID: {reportId}");
+                
+                // Input validation
+                if (reportId <= 0)
+                    throw new ArgumentException("Invalid report ID", nameof(reportId));
+                
+                var report = await _context.Reports.FindAsync(reportId);
+                if (report == null) 
+                {
+                    Console.WriteLine($"[REPORT_SERVICE] Report not found for deletion: {reportId}");
+                    return false;
+                }
 
-            Console.WriteLine($"[REPORT_SERVICE] Deleting report: {report.Title} ({report.Type})");
-            _context.Reports.Remove(report);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[REPORT_SERVICE] Report deleted successfully: {report.Title}");
-            return true;
+                Console.WriteLine($"[REPORT_SERVICE] Deleting report: {report.Title} ({report.Type})");
+                _context.Reports.Remove(report);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[REPORT_SERVICE] Report deleted successfully: {report.Title}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error deleting report {reportId}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Report> GenerateMemberStatisticsReportAsync(int clubId, string semester, int generatedByUserId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Generating member statistics report for club {clubId}, semester {semester}");
-            var club = await _context.Clubs.Include(c => c.Members).FirstOrDefaultAsync(c => c.ClubID == clubId);
-            if (club == null) 
+            try
             {
-                Console.WriteLine($"[REPORT_SERVICE] Club not found: {clubId}");
-                throw new ArgumentException("Club not found");
-            }
-            Console.WriteLine($"[REPORT_SERVICE] Found club: {club.Name} with {club.Members.Count} members");
+                Console.WriteLine($"[REPORT_SERVICE] Generating member statistics report for club {clubId}, semester {semester}");
+                
+                // Input validation
+                if (clubId <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(clubId));
+                
+                if (string.IsNullOrWhiteSpace(semester))
+                    throw new ArgumentException("Semester is required", nameof(semester));
+                
+                if (generatedByUserId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
+                
+                var club = await _context.Clubs.Include(c => c.Members).FirstOrDefaultAsync(c => c.ClubID == clubId);
+                if (club == null) 
+                {
+                    Console.WriteLine($"[REPORT_SERVICE] Club not found: {clubId}");
+                    throw new InvalidOperationException($"Club with ID {clubId} not found");
+                }
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(generatedByUserId);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
+                
+                Console.WriteLine($"[REPORT_SERVICE] Found club: {club.Name} with {club.Members.Count} members");
 
             var memberStats = new
             {
@@ -131,16 +246,45 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
-            Console.WriteLine($"[REPORT_SERVICE] Member statistics calculated - Total: {memberStats.TotalMembers}, Active: {memberStats.ActiveMembers}, Normal: {memberStats.NormalMembers}, Inactive: {memberStats.InactiveMembers}");
-            return await CreateReportAsync(report);
+                Console.WriteLine($"[REPORT_SERVICE] Member statistics calculated - Total: {memberStats.TotalMembers}, Active: {memberStats.ActiveMembers}, Normal: {memberStats.NormalMembers}, Inactive: {memberStats.InactiveMembers}");
+                return await CreateReportAsync(report);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error generating member statistics report: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Report> GenerateEventOutcomesReportAsync(int clubId, string semester, int generatedByUserId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Generating event outcomes report for club {clubId}, semester {semester}");
-            var semesterStart = GetSemesterStartDate(semester);
-            var semesterEnd = GetSemesterEndDate(semester);
-            Console.WriteLine($"[REPORT_SERVICE] Semester period: {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
+            try
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Generating event outcomes report for club {clubId}, semester {semester}");
+                
+                // Input validation
+                if (clubId <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(clubId));
+                
+                if (string.IsNullOrWhiteSpace(semester))
+                    throw new ArgumentException("Semester is required", nameof(semester));
+                
+                if (generatedByUserId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
+                
+                // Verify club exists
+                var clubExists = await _context.Clubs.FindAsync(clubId);
+                if (clubExists == null)
+                    throw new InvalidOperationException($"Club with ID {clubId} not found");
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(generatedByUserId);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
+                
+                var semesterStart = GetSemesterStartDate(semester);
+                var semesterEnd = GetSemesterEndDate(semester);
+                Console.WriteLine($"[REPORT_SERVICE] Semester period: {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
 
             var events = await _context.Events
                 .Include(e => e.Participants)
@@ -177,16 +321,45 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
-            Console.WriteLine($"[REPORT_SERVICE] Event outcomes calculated - Total events: {eventStats.TotalEvents}, Completed: {eventStats.CompletedEvents}, Upcoming: {eventStats.UpcomingEvents}");
-            return await CreateReportAsync(report);
+                Console.WriteLine($"[REPORT_SERVICE] Event outcomes calculated - Total events: {eventStats.TotalEvents}, Completed: {eventStats.CompletedEvents}, Upcoming: {eventStats.UpcomingEvents}");
+                return await CreateReportAsync(report);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error generating event outcomes report: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Report> GenerateActivityTrackingReportAsync(int clubId, string semester, int generatedByUserId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Generating activity tracking report for club {clubId}, semester {semester}");
-            var semesterStart = GetSemesterStartDate(semester);
-            var semesterEnd = GetSemesterEndDate(semester);
-            Console.WriteLine($"[REPORT_SERVICE] Analyzing member activity from {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
+            try
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Generating activity tracking report for club {clubId}, semester {semester}");
+                
+                // Input validation
+                if (clubId <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(clubId));
+                
+                if (string.IsNullOrWhiteSpace(semester))
+                    throw new ArgumentException("Semester is required", nameof(semester));
+                
+                if (generatedByUserId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
+                
+                // Verify club exists
+                var clubExists = await _context.Clubs.FindAsync(clubId);
+                if (clubExists == null)
+                    throw new InvalidOperationException($"Club with ID {clubId} not found");
+                
+                // Verify user exists
+                var user = await _context.Users.FindAsync(generatedByUserId);
+                if (user == null)
+                    throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
+                
+                var semesterStart = GetSemesterStartDate(semester);
+                var semesterEnd = GetSemesterEndDate(semester);
+                Console.WriteLine($"[REPORT_SERVICE] Analyzing member activity from {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
 
             var members = await _context.Users
                 .Include(u => u.EventParticipations)
@@ -235,17 +408,36 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
-            Console.WriteLine($"[REPORT_SERVICE] Activity tracking calculated - Total members: {activityStats.TotalMembers}, High performers: {activityStats.HighPerformers}, Average attendance: {activityStats.AverageAttendance}%");
-            return await CreateReportAsync(report);
+                Console.WriteLine($"[REPORT_SERVICE] Activity tracking calculated - Total members: {activityStats.TotalMembers}, High performers: {activityStats.HighPerformers}, Average attendance: {activityStats.AverageAttendance}%");
+                return await CreateReportAsync(report);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error generating activity tracking report: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Report> GenerateSemesterSummaryReportAsync(int clubId, string semester, int generatedByUserId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Generating comprehensive semester summary report for club {clubId}, semester {semester}");
-            var memberReport = await GenerateMemberStatisticsReportAsync(clubId, semester, generatedByUserId);
-            var eventReport = await GenerateEventOutcomesReportAsync(clubId, semester, generatedByUserId);
-            var activityReport = await GenerateActivityTrackingReportAsync(clubId, semester, generatedByUserId);
-            Console.WriteLine($"[REPORT_SERVICE] Combined all sub-reports for semester summary");
+            try
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Generating comprehensive semester summary report for club {clubId}, semester {semester}");
+                
+                // Input validation
+                if (clubId <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(clubId));
+                
+                if (string.IsNullOrWhiteSpace(semester))
+                    throw new ArgumentException("Semester is required", nameof(semester));
+                
+                if (generatedByUserId <= 0)
+                    throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
+                
+                var memberReport = await GenerateMemberStatisticsReportAsync(clubId, semester, generatedByUserId);
+                var eventReport = await GenerateEventOutcomesReportAsync(clubId, semester, generatedByUserId);
+                var activityReport = await GenerateActivityTrackingReportAsync(clubId, semester, generatedByUserId);
+                Console.WriteLine($"[REPORT_SERVICE] Combined all sub-reports for semester summary");
 
             var summaryData = new
             {
@@ -267,18 +459,31 @@ namespace ClubManagementApp.Services
                 GeneratedByUserID = generatedByUserId
             };
 
-            return await CreateReportAsync(report);
+                return await CreateReportAsync(report);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error generating semester summary report: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<byte[]> ExportReportToPdfAsync(int reportId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to PDF format");
-            var report = await GetReportByIdAsync(reportId);
-            if (report == null) 
+            try
             {
-                Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
-                return Array.Empty<byte>();
-            }
+                Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to PDF format");
+                
+                // Input validation
+                if (reportId <= 0)
+                    throw new ArgumentException("Invalid report ID", nameof(reportId));
+                
+                var report = await GetReportByIdAsync(reportId);
+                if (report == null) 
+                {
+                    Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
+                    throw new InvalidOperationException($"Report with ID {reportId} not found");
+                }
 
             using var memoryStream = new MemoryStream();
             using var writer = new PdfWriter(memoryStream);
@@ -325,19 +530,32 @@ namespace ClubManagementApp.Services
             }
 
             document.Close();
-            Console.WriteLine($"[REPORT_SERVICE] PDF export completed for report: {report.Title}");
-            return memoryStream.ToArray();
+                Console.WriteLine($"[REPORT_SERVICE] PDF export completed for report: {report.Title}");
+                return memoryStream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error exporting report {reportId} to PDF: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<byte[]> ExportReportToExcelAsync(int reportId)
         {
-            Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to Excel format");
-            var report = await GetReportByIdAsync(reportId);
-            if (report == null) 
+            try
             {
-                Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
-                return Array.Empty<byte>();
-            }
+                Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to Excel format");
+                
+                // Input validation
+                if (reportId <= 0)
+                    throw new ArgumentException("Invalid report ID", nameof(reportId));
+                
+                var report = await GetReportByIdAsync(reportId);
+                if (report == null) 
+                {
+                    Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
+                    throw new InvalidOperationException($"Report with ID {reportId} not found");
+                }
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var package = new ExcelPackage();
@@ -380,29 +598,46 @@ namespace ClubManagementApp.Services
             // Auto-fit columns
             worksheet.Cells.AutoFitColumns();
 
-            Console.WriteLine($"[REPORT_SERVICE] Excel export completed for report: {report.Title}");
-            return package.GetAsByteArray();
+                Console.WriteLine($"[REPORT_SERVICE] Excel export completed for report: {report.Title}");
+                return package.GetAsByteArray();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error exporting report {reportId} to Excel: {ex.Message}");
+                throw;
+            }
         }
 
         private void FormatContentForPdf(Document document, Dictionary<string, object> content)
         {
-            foreach (var item in content)
+            try
             {
-                document.Add(new Paragraph(item.Key)
-                    .SetFontSize(14)
-                    .SetBold());
+                if (document == null || content == null)
+                    return;
 
-                if (item.Value is JsonElement jsonElement)
+                foreach (var item in content)
                 {
-                    FormatJsonElementForPdf(document, jsonElement);
-                }
-                else
-                {
-                    document.Add(new Paragraph(item.Value?.ToString() ?? "N/A")
-                        .SetMarginLeft(20));
-                }
+                    document.Add(new Paragraph(item.Key ?? "Unknown")
+                        .SetFontSize(14)
+                        .SetBold());
 
-                document.Add(new Paragraph("\n"));
+                    if (item.Value is JsonElement jsonElement)
+                    {
+                        FormatJsonElementForPdf(document, jsonElement);
+                    }
+                    else
+                    {
+                        document.Add(new Paragraph(item.Value?.ToString() ?? "N/A")
+                            .SetMarginLeft(20));
+                    }
+
+                    document.Add(new Paragraph("\n"));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error formatting content for PDF: {ex.Message}");
+                document?.Add(new Paragraph("Error formatting report content"));
             }
         }
 

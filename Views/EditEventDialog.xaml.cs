@@ -104,7 +104,7 @@ namespace ClubManagementApp.Views
                     }
 
                     // Set registration deadline if provided
-                    UpdatedEvent.RegistrationDeadline = RegistrationDeadlinePicker.SelectedDate.HasValue ? RegistrationDeadlinePicker.SelectedDate.Value : null;
+                    UpdatedEvent.RegistrationDeadline = RegistrationDeadlinePicker.SelectedDate;
 
                     // Copy participants from original event
                     UpdatedEvent.Participants = _originalEvent.Participants;

@@ -1,0 +1,171 @@
+<Window x:Class="ClubManagementApp.Views.EventDetailsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Event Details" 
+        WindowStartupLocation="CenterScreen"
+        Width="800" Height="600"
+        MinWidth="600" MinHeight="500"
+        ResizeMode="CanResize"
+        WindowStyle="SingleBorderWindow"
+        Background="#f8f9fa"
+        Icon="pack://application:,,,/Resources/event-icon.ico">
+    
+    <Window.Resources>
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="30"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.1" ShadowDepth="4" BlurRadius="15"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Info Label Style -->
+        <Style x:Key="InfoLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+        
+        <!-- Info Value Style -->
+        <Style x:Key="InfoValueStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#212529"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        
+        <!-- Status Badge Style -->
+        <Style x:Key="StatusBadgeStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+        
+        <!-- Close Button Style -->
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#6c757d"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#545b62"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#3d4449"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header -->
+        <TextBlock Grid.Row="0" 
+                   Text="📅 Event Details" 
+                   FontSize="28" 
+                   FontWeight="Bold" 
+                   Foreground="#2c3e50" 
+                   HorizontalAlignment="Center" 
+                   Margin="0,0,0,30"/>
+        
+        <!-- Main Content Card -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Left Column -->
+                    <StackPanel Grid.Column="0">
+                        <!-- Event Name -->
+                        <TextBlock Text="Event Name" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="EventNameText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Description -->
+                        <TextBlock Text="Description" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="DescriptionText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Event Date -->
+                        <TextBlock Text="Event Date" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="EventDateText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Location -->
+                        <TextBlock Text="Location" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="LocationText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Club -->
+                        <TextBlock Text="Club" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="ClubText" Style="{StaticResource InfoValueStyle}"/>
+                    </StackPanel>
+                    
+                    <!-- Right Column -->
+                    <StackPanel Grid.Column="2">
+                        <!-- Status -->
+                        <TextBlock Text="Status" Style="{StaticResource InfoLabelStyle}"/>
+                        <Border x:Name="StatusBorder" Style="{StaticResource StatusBadgeStyle}" Margin="0,0,0,15">
+                            <TextBlock x:Name="StatusText" FontWeight="SemiBold" FontSize="12"/>
+                        </Border>
+                        
+                        <!-- Max Participants -->
+                        <TextBlock Text="Max Participants" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="MaxParticipantsText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Current Participants -->
+                        <TextBlock Text="Current Participants" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CurrentParticipantsText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Registration Deadline -->
+                        <TextBlock Text="Registration Deadline" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="RegistrationDeadlineText" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <!-- Created Date -->
+                        <TextBlock Text="Created Date" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CreatedDateText" Style="{StaticResource InfoValueStyle}"/>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+        
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,20,0,0">
+            <Button Content="✅ Close" 
+                    Style="{StaticResource CloseButtonStyle}" 
+                    Click="CloseButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

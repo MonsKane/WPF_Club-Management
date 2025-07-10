@@ -1,5 +1,6 @@
 using ClubManagementApp.Data;
 using ClubManagementApp.Models;
+using ClubManagementApp.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,40 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (request == null)
+                    throw new ArgumentNullException(nameof(request), "Notification request cannot be null");
+                
+                if (string.IsNullOrWhiteSpace(request.Title))
+                    throw new ArgumentException("Notification title cannot be null or empty", nameof(request.Title));
+                
+                if (string.IsNullOrWhiteSpace(request.Message))
+                    throw new ArgumentException("Notification message cannot be null or empty", nameof(request.Message));
+
+                // Validate user exists if specified
+                if (request.UserId.HasValue)
+                {
+                    var userExists = await _context.Users.AnyAsync(u => u.UserID == request.UserId.Value && u.IsActive);
+                    if (!userExists)
+                        throw new ArgumentException($"User with ID {request.UserId.Value} not found or inactive", nameof(request.UserId));
+                }
+
+                // Validate club exists if specified
+                if (request.ClubId.HasValue)
+                {
+                    var clubExists = await _context.Clubs.AnyAsync(c => c.ClubID == request.ClubId.Value);
+                    if (!clubExists)
+                        throw new ArgumentException($"Club with ID {request.ClubId.Value} not found", nameof(request.ClubId));
+                }
+
+                // Validate event exists if specified
+                if (request.EventId.HasValue)
+                {
+                    var eventExists = await _context.Events.AnyAsync(e => e.EventID == request.EventId.Value);
+                    if (!eventExists)
+                        throw new ArgumentException($"Event with ID {request.EventId.Value} not found", nameof(request.EventId));
+                }
+
                 var notification = new Notification
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -97,47 +132,72 @@ namespace ClubManagementApp.Services
 
         public async Task<Notification?> GetNotificationAsync(string notificationId)
         {
-            return await _context.Notifications
-                .Include(n => n.User)
-                .Include(n => n.Club)
-                .Include(n => n.Event)
-                .FirstOrDefaultAsync(n => n.Id == notificationId && !n.IsDeleted);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(notificationId))
+                    throw new ArgumentException("Notification ID cannot be null or empty", nameof(notificationId));
+
+                return await _context.Notifications
+                    .Include(n => n.User)
+                    .Include(n => n.Club)
+                    .Include(n => n.Event)
+                    .FirstOrDefaultAsync(n => n.Id == notificationId && !n.IsDeleted);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving notification {notificationId}");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Notification>> GetUserNotificationsAsync(int userId, NotificationFilter? filter = null)
         {
-            var query = _context.Notifications
-                .Where(n => n.UserId == userId && !n.IsDeleted);
-
-            if (filter != null)
+            try
             {
-                if (filter.IsRead.HasValue)
-                    query = query.Where(n => n.IsRead == filter.IsRead.Value);
-                
-                if (filter.Type.HasValue)
-                    query = query.Where(n => n.Type == filter.Type.Value);
-                
-                if (filter.Category.HasValue)
-                    query = query.Where(n => n.Category == filter.Category.Value);
-                
-                if (filter.Priority.HasValue)
-                    query = query.Where(n => n.Priority == filter.Priority.Value);
-                
-                if (filter.FromDate.HasValue)
-                    query = query.Where(n => n.CreatedAt >= filter.FromDate.Value);
-                
-                if (filter.ToDate.HasValue)
-                    query = query.Where(n => n.CreatedAt <= filter.ToDate.Value);
+                if (userId <= 0)
+                    throw new ArgumentException("User ID must be greater than 0", nameof(userId));
+
+                // Verify user exists
+                var userExists = await _context.Users.AnyAsync(u => u.UserID == userId && u.IsActive);
+                if (!userExists)
+                    throw new ArgumentException($"User with ID {userId} not found or inactive", nameof(userId));
+
+                var query = _context.Notifications
+                    .Where(n => n.UserId == userId && !n.IsDeleted);
+
+                if (filter != null)
+                {
+                    if (filter.IsRead.HasValue)
+                        query = query.Where(n => n.IsRead == filter.IsRead.Value);
+                    
+                    if (filter.Type.HasValue)
+                        query = query.Where(n => n.Type == filter.Type.Value);
+                    
+                    if (filter.Category.HasValue)
+                        query = query.Where(n => n.Category == filter.Category.Value);
+                    
+                    if (filter.Priority.HasValue)
+                        query = query.Where(n => n.Priority == filter.Priority.Value);
+                    
+                    if (filter.FromDate.HasValue)
+                        query = query.Where(n => n.CreatedAt >= filter.FromDate.Value);
+                    
+                    if (filter.ToDate.HasValue)
+                        query = query.Where(n => n.CreatedAt <= filter.ToDate.Value);
+                }
+
+                return await query
+                    .Include(n => n.Club)
+                    .Include(n => n.Event)
+                    .OrderByDescending(n => n.CreatedAt)
+                    .Take(filter?.Limit ?? 50)
+                    .ToListAsync();
             }
-
-            return await query
-                .Include(n => n.Club)
-                .Include(n => n.Event)
-                .OrderByDescending(n => n.CreatedAt)
-                .Take(filter?.Limit ?? 50)
-                .ToListAsync();
-
-
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving notifications for user {userId}");
+                throw;
+            }
         }
 
         public async Task<bool> MarkAsReadAsync(string notificationId, int? userId = null)
@@ -197,32 +257,70 @@ namespace ClubManagementApp.Services
         // Template management
         public async Task<string> CreateTemplateAsync(CreateTemplateRequest request)
         {
-            var template = new NotificationTemplate
+            try
             {
-                Id = Guid.NewGuid().ToString(),
-                Name = request.Name,
-                Description = request.Description,
-                TitleTemplate = request.TitleTemplate,
-                MessageTemplate = request.MessageTemplate,
-                Type = request.Type,
-                Priority = request.Priority,
-                Category = request.Category,
-                Channels = request.Channels ?? new List<NotificationChannelType> { NotificationChannelType.InApp },
-                Parameters = request.Parameters ?? new List<string>(),
-                IsActive = request.IsActive,
-                CreatedAt = DateTime.UtcNow
-            };
+                // Input validation
+                if (request == null)
+                    throw new ArgumentNullException(nameof(request), "Template request cannot be null");
+                
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    throw new ArgumentException("Template name cannot be null or empty", nameof(request.Name));
+                
+                if (string.IsNullOrWhiteSpace(request.TitleTemplate))
+                    throw new ArgumentException("Title template cannot be null or empty", nameof(request.TitleTemplate));
+                
+                if (string.IsNullOrWhiteSpace(request.MessageTemplate))
+                    throw new ArgumentException("Message template cannot be null or empty", nameof(request.MessageTemplate));
 
-            _context.NotificationTemplates.Add(template);
-            await _context.SaveChangesAsync();
+                // Check for duplicate template name
+                var existingTemplate = await _context.NotificationTemplates
+                    .FirstOrDefaultAsync(t => t.Name == request.Name);
+                if (existingTemplate != null)
+                    throw new InvalidOperationException($"A template with name '{request.Name}' already exists");
 
-            return template.Id;
+                var template = new NotificationTemplate
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = request.Name,
+                    Description = request.Description,
+                    TitleTemplate = request.TitleTemplate,
+                    MessageTemplate = request.MessageTemplate,
+                    Type = request.Type,
+                    Priority = request.Priority,
+                    Category = request.Category,
+                    Channels = request.Channels ?? new List<NotificationChannelType> { NotificationChannelType.InApp },
+                    Parameters = request.Parameters ?? new List<string>(),
+                    IsActive = request.IsActive,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.NotificationTemplates.Add(template);
+                await _context.SaveChangesAsync();
+
+                return template.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating notification template");
+                throw;
+            }
         }
 
         public async Task<NotificationTemplate?> GetTemplateAsync(string templateId)
         {
-            return await _context.NotificationTemplates
-                .FirstOrDefaultAsync(t => t.Id == templateId);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(templateId))
+                    throw new ArgumentException("Template ID cannot be null or empty", nameof(templateId));
+
+                return await _context.NotificationTemplates
+                    .FirstOrDefaultAsync(t => t.Id == templateId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving template {templateId}");
+                throw;
+            }
         }
 
         public async Task<IEnumerable<NotificationTemplate>> GetTemplatesAsync(bool? isActive = null)
@@ -237,60 +335,108 @@ namespace ClubManagementApp.Services
 
         public async Task<string> CreateFromTemplateAsync(string templateId, Dictionary<string, object> parameters, CreateNotificationRequest baseRequest)
         {
-            var template = await GetTemplateAsync(templateId);
-            if (template == null || !template.IsActive)
-                throw new ArgumentException("Template not found or inactive");
-
-            var title = ProcessTemplate(template.TitleTemplate, parameters);
-            var message = ProcessTemplate(template.MessageTemplate, parameters);
-
-            var request = new CreateNotificationRequest
+            try
             {
-                Title = title,
-                Message = message,
-                Type = template.Type,
-                Priority = template.Priority,
-                Category = template.Category,
-                Channels = template.Channels,
-                UserId = baseRequest.UserId,
-                ClubId = baseRequest.ClubId,
-                EventId = baseRequest.EventId,
-                Data = baseRequest.Data,
-                ExpiresAt = baseRequest.ExpiresAt,
-                SendImmediately = baseRequest.SendImmediately
-            };
+                if (string.IsNullOrWhiteSpace(templateId))
+                    throw new ArgumentException("Template ID cannot be null or empty", nameof(templateId));
+                
+                if (parameters == null)
+                    throw new ArgumentNullException(nameof(parameters), "Parameters cannot be null");
+                
+                if (baseRequest == null)
+                    throw new ArgumentNullException(nameof(baseRequest), "Base request cannot be null");
 
-            return await CreateNotificationAsync(request);
+                var template = await GetTemplateAsync(templateId);
+                if (template == null || !template.IsActive)
+                    throw new ArgumentException("Template not found or inactive");
+
+                var title = ProcessTemplate(template.TitleTemplate, parameters);
+                var message = ProcessTemplate(template.MessageTemplate, parameters);
+
+                var request = new CreateNotificationRequest
+                {
+                    Title = title,
+                    Message = message,
+                    Type = template.Type,
+                    Priority = template.Priority,
+                    Category = template.Category,
+                    Channels = template.Channels,
+                    UserId = baseRequest.UserId,
+                    ClubId = baseRequest.ClubId,
+                    EventId = baseRequest.EventId,
+                    Data = baseRequest.Data,
+                    ExpiresAt = baseRequest.ExpiresAt,
+                    SendImmediately = baseRequest.SendImmediately
+                };
+
+                return await CreateNotificationAsync(request);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error creating notification from template {templateId}");
+                throw;
+            }
         }
 
         // Bulk operations
         public async Task<IEnumerable<string>> CreateBulkNotificationsAsync(BulkNotificationRequest request)
         {
-            var notificationIds = new List<string>();
-
-            foreach (var userId in request.UserIds)
+            try
             {
-                var notificationRequest = new CreateNotificationRequest
+                // Input validation
+                if (request == null)
+                    throw new ArgumentNullException(nameof(request), "Bulk notification request cannot be null");
+                
+                if (string.IsNullOrWhiteSpace(request.Title))
+                    throw new ArgumentException("Notification title cannot be null or empty", nameof(request.Title));
+                
+                if (string.IsNullOrWhiteSpace(request.Message))
+                    throw new ArgumentException("Notification message cannot be null or empty", nameof(request.Message));
+                
+                if (request.UserIds == null || !request.UserIds.Any())
+                    throw new ArgumentException("User IDs list cannot be null or empty", nameof(request.UserIds));
+
+                // Validate all user IDs exist
+                var validUserIds = await _context.Users
+                    .Where(u => request.UserIds.Contains(u.UserID) && u.IsActive)
+                    .Select(u => u.UserID)
+                    .ToListAsync();
+                
+                var invalidUserIds = request.UserIds.Except(validUserIds).ToList();
+                if (invalidUserIds.Any())
+                    throw new ArgumentException($"Invalid or inactive user IDs: {string.Join(", ", invalidUserIds)}");
+
+                var notificationIds = new List<string>();
+
+                foreach (var userId in request.UserIds)
                 {
-                    Title = request.Title,
-                    Message = request.Message,
-                    Type = request.Type,
-                    Priority = request.Priority,
-                    Category = request.Category,
-                    Channels = request.Channels,
-                    UserId = userId,
-                    ClubId = request.ClubId,
-                    EventId = request.EventId,
-                    Data = request.Data,
-                    ExpiresAt = request.ExpiresAt,
-                    SendImmediately = request.SendImmediately
-                };
+                    var notificationRequest = new CreateNotificationRequest
+                    {
+                        Title = request.Title,
+                        Message = request.Message,
+                        Type = request.Type,
+                        Priority = request.Priority,
+                        Category = request.Category,
+                        Channels = request.Channels,
+                        UserId = userId,
+                        ClubId = request.ClubId,
+                        EventId = request.EventId,
+                        Data = request.Data,
+                        ExpiresAt = request.ExpiresAt,
+                        SendImmediately = request.SendImmediately
+                    };
 
-                var id = await CreateNotificationAsync(notificationRequest);
-                notificationIds.Add(id);
+                    var id = await CreateNotificationAsync(notificationRequest);
+                    notificationIds.Add(id);
+                }
+
+                return notificationIds;
             }
-
-            return notificationIds;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating bulk notifications");
+                throw;
+            }
         }
 
         public async Task<int> DeleteMultipleNotificationsAsync(IEnumerable<string> notificationIds, int? userId = null)
@@ -427,6 +573,20 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(to))
+                    throw new ArgumentException("Email address cannot be null or empty", nameof(to));
+                
+                if (string.IsNullOrWhiteSpace(subject))
+                    throw new ArgumentException("Email subject cannot be null or empty", nameof(subject));
+                
+                if (string.IsNullOrWhiteSpace(body))
+                    throw new ArgumentException("Email body cannot be null or empty", nameof(body));
+
+                // Validate email format
+                if (!ValidationHelper.UserValidation.IsValidEmail(to))
+                    throw new ArgumentException($"Invalid email address format: {to}", nameof(to));
+
                 var smtpClient = ConfigureSmtpClient();
                 var mailMessage = new MailMessage
                 {
@@ -450,8 +610,31 @@ namespace ClubManagementApp.Services
 
         public async Task SendEmailToMultipleAsync(List<string> recipients, string subject, string body)
         {
-            var tasks = recipients.Select(email => SendEmailAsync(email, subject, body));
-            await Task.WhenAll(tasks);
+            try
+            {
+                // Input validation
+                if (recipients == null || !recipients.Any())
+                    throw new ArgumentException("Recipients list cannot be null or empty", nameof(recipients));
+                
+                if (string.IsNullOrWhiteSpace(subject))
+                    throw new ArgumentException("Email subject cannot be null or empty", nameof(subject));
+                
+                if (string.IsNullOrWhiteSpace(body))
+                    throw new ArgumentException("Email body cannot be null or empty", nameof(body));
+
+                // Validate all email addresses
+                var invalidEmails = recipients.Where(email => string.IsNullOrWhiteSpace(email) || !ValidationHelper.UserValidation.IsValidEmail(email)).ToList();
+                if (invalidEmails.Any())
+                    throw new ArgumentException($"Invalid email addresses: {string.Join(", ", invalidEmails)}");
+
+                var tasks = recipients.Select(email => SendEmailAsync(email, subject, body));
+                await Task.WhenAll(tasks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending emails to multiple recipients");
+                throw;
+            }
         }
 
         public async Task SendInAppNotificationAsync(int userId, string title, string message)
@@ -466,46 +649,86 @@ namespace ClubManagementApp.Services
 
         public async Task SendEventNotificationAsync(int eventId, string subject, string message, NotificationType type = NotificationType.Both)
         {
-            var eventEntity = await _context.Events
-                .Include(e => e.Participants)
-                    .ThenInclude(p => p.User)
-                .FirstOrDefaultAsync(e => e.EventID == eventId);
-
-            if (eventEntity == null) return;
-
-            var participants = eventEntity.Participants.Select(p => p.User).ToList();
-
-            foreach (var participant in participants)
+            try
             {
-                if (type == NotificationType.Email || type == NotificationType.Both)
-                {
-                    await SendEmailAsync(participant.Email, subject, message);
-                }
+                if (eventId <= 0)
+                    throw new ArgumentException("Event ID must be greater than 0", nameof(eventId));
+                
+                if (string.IsNullOrWhiteSpace(subject))
+                    throw new ArgumentException("Subject cannot be null or empty", nameof(subject));
+                
+                if (string.IsNullOrWhiteSpace(message))
+                    throw new ArgumentException("Message cannot be null or empty", nameof(message));
 
-                if (type == NotificationType.InApp || type == NotificationType.Both)
+                var eventEntity = await _context.Events
+                    .Include(e => e.Participants)
+                        .ThenInclude(p => p.User)
+                    .FirstOrDefaultAsync(e => e.EventID == eventId);
+
+                if (eventEntity == null)
+                    throw new ArgumentException($"Event with ID {eventId} not found", nameof(eventId));
+
+                var participants = eventEntity.Participants.Select(p => p.User).ToList();
+
+                foreach (var participant in participants)
                 {
-                    await SendInAppNotificationAsync(participant.UserID, subject, message);
+                    if (type == NotificationType.Email || type == NotificationType.Both)
+                    {
+                        await SendEmailAsync(participant.Email, subject, message);
+                    }
+
+                    if (type == NotificationType.InApp || type == NotificationType.Both)
+                    {
+                        await SendInAppNotificationAsync(participant.UserID, subject, message);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error sending event notification for event {eventId}");
+                throw;
             }
         }
 
         public async Task SendClubNotificationAsync(int clubId, string subject, string message, NotificationType type = NotificationType.Both)
         {
-            var clubMembers = await _context.Users
-                .Where(u => u.ClubID == clubId && u.IsActive)
-                .ToListAsync();
-
-            foreach (var member in clubMembers)
+            try
             {
-                if (type == NotificationType.Email || type == NotificationType.Both)
-                {
-                    await SendEmailAsync(member.Email, subject, message);
-                }
+                if (clubId <= 0)
+                    throw new ArgumentException("Club ID must be greater than 0", nameof(clubId));
+                
+                if (string.IsNullOrWhiteSpace(subject))
+                    throw new ArgumentException("Subject cannot be null or empty", nameof(subject));
+                
+                if (string.IsNullOrWhiteSpace(message))
+                    throw new ArgumentException("Message cannot be null or empty", nameof(message));
 
-                if (type == NotificationType.InApp || type == NotificationType.Both)
+                // Verify club exists
+                var clubExists = await _context.Clubs.AnyAsync(c => c.ClubID == clubId);
+                if (!clubExists)
+                    throw new ArgumentException($"Club with ID {clubId} not found", nameof(clubId));
+
+                var clubMembers = await _context.Users
+                    .Where(u => u.ClubID == clubId && u.IsActive)
+                    .ToListAsync();
+
+                foreach (var member in clubMembers)
                 {
-                    await SendInAppNotificationAsync(member.UserID, subject, message);
+                    if (type == NotificationType.Email || type == NotificationType.Both)
+                    {
+                        await SendEmailAsync(member.Email, subject, message);
+                    }
+
+                    if (type == NotificationType.InApp || type == NotificationType.Both)
+                    {
+                        await SendInAppNotificationAsync(member.UserID, subject, message);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error sending club notification for club {clubId}");
+                throw;
             }
         }
 
@@ -842,6 +1065,23 @@ namespace ClubManagementApp.Services
              };
              
              await CreateBulkNotificationsAsync(request);
+         }
+
+         // Helper method for email validation
+         private bool IsValidEmail(string email)
+         {
+             if (string.IsNullOrWhiteSpace(email))
+                 return false;
+
+             try
+             {
+                 var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase);
+                 return emailRegex.IsMatch(email);
+             }
+             catch
+             {
+                 return false;
+             }
          }
 
          public void Dispose()

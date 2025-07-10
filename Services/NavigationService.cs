@@ -82,7 +82,7 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task ShowManageLeadership(Club club)
+        public Task ShowManageLeadership(Club club)
         {
             try
             {
@@ -99,6 +99,30 @@ namespace ClubManagementApp.Services
             catch (Exception ex)
             {
                 ShowNotification($"Error opening leadership management: {ex.Message}");
+            }
+            
+            return Task.CompletedTask;
+        }
+
+        public void NavigateToLogin()
+        {
+            try
+            {
+                // Close the current main window
+                Application.Current.MainWindow?.Close();
+                
+                // Create and show the login window
+                var loginViewModel = _serviceProvider.GetService(typeof(LoginViewModel)) as LoginViewModel;
+                if (loginViewModel == null)
+                    throw new InvalidOperationException("Unable to resolve LoginViewModel from DI container.");
+                
+                var loginWindow = new LoginWindow(loginViewModel);
+                Application.Current.MainWindow = loginWindow;
+                loginWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error navigating to login: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

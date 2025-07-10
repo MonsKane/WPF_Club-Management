@@ -59,14 +59,22 @@ namespace ClubManagementApp.Services
         /// <returns>Collection of all clubs with members and events included</returns>
         public async Task<IEnumerable<Club>> GetAllClubsAsync()
         {
-            Console.WriteLine("[CLUB_SERVICE] Getting all clubs from database...");
-            var clubs = await _context.Clubs
-                .Include(c => c.Members)
-                .Include(c => c.Events)
-                .OrderBy(c => c.Name)
-                .ToListAsync();
-            Console.WriteLine($"[CLUB_SERVICE] Retrieved {clubs.Count} clubs from database");
-            return clubs;
+            try
+            {
+                Console.WriteLine("[CLUB_SERVICE] Getting all clubs from database...");
+                var clubs = await _context.Clubs
+                    .Include(c => c.Members)
+                    .Include(c => c.Events)
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+                Console.WriteLine($"[CLUB_SERVICE] Retrieved {clubs.Count} clubs from database");
+                return clubs;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting all clubs: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -84,21 +92,35 @@ namespace ClubManagementApp.Services
         /// <returns>Club object with relationships, or null if not found</returns>
         public async Task<Club?> GetClubByIdAsync(int clubId)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Getting club by ID: {clubId}");
-            var club = await _context.Clubs
-                .Include(c => c.Members)
-                .Include(c => c.Events)
-                .FirstOrDefaultAsync(c => c.ClubID == clubId);
-            
-            if (club != null)
+            try
             {
-                Console.WriteLine($"[CLUB_SERVICE] Found club: {club.Name} with {club.Members?.Count ?? 0} members");
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return null;
+                }
+
+                Console.WriteLine($"[CLUB_SERVICE] Getting club by ID: {clubId}");
+                var club = await _context.Clubs
+                    .Include(c => c.Members)
+                    .Include(c => c.Events)
+                    .FirstOrDefaultAsync(c => c.ClubID == clubId);
+                
+                if (club != null)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Found club: {club.Name} with {club.Members?.Count ?? 0} members");
+                }
+                else
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Club not found with ID: {clubId}");
+                }
+                return club;
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"[CLUB_SERVICE] Club not found with ID: {clubId}");
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club by ID {clubId}: {ex.Message}");
+                throw;
             }
-            return club;
         }
 
         /// <summary>
@@ -116,10 +138,24 @@ namespace ClubManagementApp.Services
         /// <returns>Club object with relationships, or null if not found</returns>
         public async Task<Club?> GetClubByNameAsync(string name)
         {
-            return await _context.Clubs
-                .Include(c => c.Members)
-                .Include(c => c.Events)
-                .FirstOrDefaultAsync(c => c.Name == name);
+            try
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    Console.WriteLine("[CLUB_SERVICE] Club name cannot be null or empty");
+                    return null;
+                }
+
+                return await _context.Clubs
+                    .Include(c => c.Members)
+                    .Include(c => c.Events)
+                    .FirstOrDefaultAsync(c => c.Name == name);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club by name '{name}': {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -143,14 +179,34 @@ namespace ClubManagementApp.Services
         /// <returns>Created club object with assigned ID and timestamps</returns>
         public async Task<Club> CreateClubAsync(Club club)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Creating new club: {club.Name}");
-            Console.WriteLine($"[CLUB_SERVICE] Club description: {club.Description}");
-            
-            _context.Clubs.Add(club);
-            await _context.SaveChangesAsync();
-            
-            Console.WriteLine($"[CLUB_SERVICE] Club created successfully with ID: {club.ClubID}");
-            return club;
+            try
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Creating new club: {club.Name}");
+                Console.WriteLine($"[CLUB_SERVICE] Club description: {club.Description}");
+                
+                // Input validation
+                if (club == null)
+                    throw new ArgumentNullException(nameof(club), "Club cannot be null");
+                
+                if (string.IsNullOrWhiteSpace(club.Name))
+                    throw new ArgumentException("Club name is required", nameof(club));
+                
+                // Check for duplicate club name
+                var existingClub = await _context.Clubs.FirstOrDefaultAsync(c => c.Name == club.Name);
+                if (existingClub != null)
+                    throw new InvalidOperationException($"Club with name '{club.Name}' already exists");
+                
+                _context.Clubs.Add(club);
+                await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"[CLUB_SERVICE] Club created successfully with ID: {club.ClubID}");
+                return club;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error creating club: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -174,11 +230,35 @@ namespace ClubManagementApp.Services
         /// <returns>Updated club object reflecting database changes</returns>
         public async Task<Club> UpdateClubAsync(Club club)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Updating club: {club.Name} (ID: {club.ClubID})");
-            _context.Clubs.Update(club);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {club.Name}");
-            return club;
+            try
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Updating club: {club.Name} (ID: {club.ClubID})");
+                
+                // Input validation
+                if (club == null)
+                    throw new ArgumentNullException(nameof(club), "Club cannot be null");
+                
+                if (club.ClubID <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(club));
+                
+                if (string.IsNullOrWhiteSpace(club.Name))
+                    throw new ArgumentException("Club name is required", nameof(club));
+                
+                // Check if club exists
+                var existingClub = await _context.Clubs.FindAsync(club.ClubID);
+                if (existingClub == null)
+                    throw new InvalidOperationException($"Club with ID {club.ClubID} not found");
+                
+                _context.Clubs.Update(club);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {club.Name}");
+                return club;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error updating club: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -202,19 +282,42 @@ namespace ClubManagementApp.Services
         /// <returns>True if deletion successful, false if club not found</returns>
         public async Task<bool> DeleteClubAsync(int clubId)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Attempting to delete club with ID: {clubId}");
-            var club = await _context.Clubs.FindAsync(clubId);
-            if (club == null) 
+            try
             {
-                Console.WriteLine($"[CLUB_SERVICE] Club not found for deletion: {clubId}");
-                return false;
-            }
+                Console.WriteLine($"[CLUB_SERVICE] Attempting to delete club with ID: {clubId}");
+                
+                if (clubId <= 0)
+                    throw new ArgumentException("Invalid club ID", nameof(clubId));
+                
+                var club = await _context.Clubs
+                    .Include(c => c.Members)
+                    .Include(c => c.Events)
+                    .FirstOrDefaultAsync(c => c.ClubID == clubId);
+                
+                if (club == null) 
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Club not found for deletion: {clubId}");
+                    return false;
+                }
+                
+                // Check if club has members or events
+                if (club.Members?.Any() == true)
+                    throw new InvalidOperationException($"Cannot delete club '{club.Name}' because it has {club.Members.Count} members");
+                
+                if (club.Events?.Any() == true)
+                    throw new InvalidOperationException($"Cannot delete club '{club.Name}' because it has {club.Events.Count} events");
 
-            Console.WriteLine($"[CLUB_SERVICE] Deleting club: {club.Name}");
-            _context.Clubs.Remove(club);
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[CLUB_SERVICE] Club deleted successfully: {club.Name}");
-            return true;
+                Console.WriteLine($"[CLUB_SERVICE] Deleting club: {club.Name}");
+                _context.Clubs.Remove(club);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[CLUB_SERVICE] Club deleted successfully: {club.Name}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error deleting club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -237,11 +340,25 @@ namespace ClubManagementApp.Services
         /// <returns>Number of active members in the club</returns>
         public async Task<int> GetMemberCountAsync(int clubId)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Getting member count for club: {clubId}");
-            var count = await _context.Users
-                .CountAsync(u => u.ClubID == clubId && u.IsActive);
-            Console.WriteLine($"[CLUB_SERVICE] Club {clubId} has {count} active members");
-            return count;
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return 0;
+                }
+
+                Console.WriteLine($"[CLUB_SERVICE] Getting member count for club: {clubId}");
+                var count = await _context.Users
+                    .CountAsync(u => u.ClubID == clubId && u.IsActive);
+                Console.WriteLine($"[CLUB_SERVICE] Club {clubId} has {count} active members");
+                return count;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting member count for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -264,13 +381,27 @@ namespace ClubManagementApp.Services
         /// <returns>Ordered collection of active club members</returns>
         public async Task<IEnumerable<User>> GetClubMembersAsync(int clubId)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Getting members for club: {clubId}");
-            var members = await _context.Users
-                .Where(u => u.ClubID == clubId && u.IsActive)
-                .OrderBy(u => u.FullName)
-                .ToListAsync();
-            Console.WriteLine($"[CLUB_SERVICE] Retrieved {members.Count} members for club {clubId}");
-            return members;
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return new List<User>();
+                }
+
+                Console.WriteLine($"[CLUB_SERVICE] Getting members for club: {clubId}");
+                var members = await _context.Users
+                    .Where(u => u.ClubID == clubId && u.IsActive)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
+                Console.WriteLine($"[CLUB_SERVICE] Retrieved {members.Count} members for club {clubId}");
+                return members;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting members for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -300,40 +431,60 @@ namespace ClubManagementApp.Services
         /// <returns>True if assignment successful, false if validation fails</returns>
         public async Task<bool> AssignClubLeadershipAsync(int clubId, int userId, UserRole role)
         {
-            Console.WriteLine($"[CLUB_SERVICE] Assigning leadership role {role} to user {userId} in club {clubId}");
-            
-            if (role != UserRole.Chairman && role != UserRole.ViceChairman && role != UserRole.TeamLeader)
+            try
             {
-                Console.WriteLine($"[CLUB_SERVICE] Invalid leadership role: {role}");
-                return false;
-            }
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null || user.ClubID != clubId) 
-            {
-                Console.WriteLine($"[CLUB_SERVICE] User {userId} not found or not member of club {clubId}");
-                return false;
-            }
-
-            var oldRole = user.Role;
-            Console.WriteLine($"[CLUB_SERVICE] Promoting {user.FullName} from {oldRole} to {role}");
-
-            // If assigning Chairman, demote current Chairman to ViceChairman
-            if (role == UserRole.Chairman)
-            {
-                var currentChairman = await _context.Users
-                    .FirstOrDefaultAsync(u => u.ClubID == clubId && u.Role == UserRole.Chairman);
-                if (currentChairman != null && currentChairman.UserID != userId)
+                if (clubId <= 0)
                 {
-                    Console.WriteLine($"[CLUB_SERVICE] Demoting current Chairman {currentChairman.FullName} to ViceChairman");
-                    currentChairman.Role = UserRole.ViceChairman;
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return false;
                 }
-            }
 
-            user.Role = role;
-            await _context.SaveChangesAsync();
-            Console.WriteLine($"[CLUB_SERVICE] Leadership assignment successful: {user.FullName} is now {role} of club {clubId}");
-            return true;
+                if (userId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid user ID: {userId}");
+                    return false;
+                }
+
+                Console.WriteLine($"[CLUB_SERVICE] Assigning leadership role {role} to user {userId} in club {clubId}");
+                
+                if (role != UserRole.Chairman && role != UserRole.ViceChairman && role != UserRole.TeamLeader)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid leadership role: {role}");
+                    return false;
+                }
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null || user.ClubID != clubId) 
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] User {userId} not found or not member of club {clubId}");
+                    return false;
+                }
+
+                var oldRole = user.Role;
+                Console.WriteLine($"[CLUB_SERVICE] Promoting {user.FullName} from {oldRole} to {role}");
+
+                // If assigning Chairman, demote current Chairman to ViceChairman
+                if (role == UserRole.Chairman)
+                {
+                    var currentChairman = await _context.Users
+                        .FirstOrDefaultAsync(u => u.ClubID == clubId && u.Role == UserRole.Chairman);
+                    if (currentChairman != null && currentChairman.UserID != userId)
+                    {
+                        Console.WriteLine($"[CLUB_SERVICE] Demoting current Chairman {currentChairman.FullName} to ViceChairman");
+                        currentChairman.Role = UserRole.ViceChairman;
+                    }
+                }
+
+                user.Role = role;
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[CLUB_SERVICE] Leadership assignment successful: {user.FullName} is now {role} of club {clubId}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error assigning leadership role {role} to user {userId} in club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -364,16 +515,36 @@ namespace ClubManagementApp.Services
         /// <returns>True if configuration successful, false if club not found</returns>
         public async Task<bool> ConfigureLeadershipRolesAsync(int clubId, Dictionary<UserRole, List<string>> rolePermissions)
         {
-            var club = await GetClubByIdAsync(clubId);
-            if (club == null) return false;
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return false;
+                }
 
-            // Store role permissions in club settings or separate table
-            // For now, we'll update the club's description to include role configuration
-            var roleConfig = System.Text.Json.JsonSerializer.Serialize(rolePermissions);
-            club.Description += $"\n[ROLE_CONFIG]{roleConfig}[/ROLE_CONFIG]";
-            
-            await UpdateClubAsync(club);
-            return true;
+                if (rolePermissions == null)
+                {
+                    Console.WriteLine("[CLUB_SERVICE] Role permissions cannot be null");
+                    return false;
+                }
+
+                var club = await GetClubByIdAsync(clubId);
+                if (club == null) return false;
+
+                // Store role permissions in club settings or separate table
+                // For now, we'll update the club's description to include role configuration
+                var roleConfig = System.Text.Json.JsonSerializer.Serialize(rolePermissions);
+                club.Description += $"\n[ROLE_CONFIG]{roleConfig}[/ROLE_CONFIG]";
+                
+                await UpdateClubAsync(club);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error configuring leadership roles for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -448,8 +619,22 @@ namespace ClubManagementApp.Services
         /// <returns>Chairman user object, or null if position vacant</returns>
         public async Task<User?> GetClubChairmanAsync(int clubId)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.ClubID == clubId && u.Role == UserRole.Chairman && u.IsActive);
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return null;
+                }
+
+                return await _context.Users
+                    .FirstOrDefaultAsync(u => u.ClubID == clubId && u.Role == UserRole.Chairman && u.IsActive);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club chairman for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -473,10 +658,24 @@ namespace ClubManagementApp.Services
         /// <returns>Ordered collection of Vice Chairman users</returns>
         public async Task<IEnumerable<User>> GetClubViceChairmenAsync(int clubId)
         {
-            return await _context.Users
-                .Where(u => u.ClubID == clubId && u.Role == UserRole.ViceChairman && u.IsActive)
-                .OrderBy(u => u.FullName)
-                .ToListAsync();
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return new List<User>();
+                }
+
+                return await _context.Users
+                    .Where(u => u.ClubID == clubId && u.Role == UserRole.ViceChairman && u.IsActive)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club vice chairmen for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -500,10 +699,24 @@ namespace ClubManagementApp.Services
         /// <returns>Ordered collection of Team Leader users</returns>
         public async Task<IEnumerable<User>> GetClubTeamLeadersAsync(int clubId)
         {
-            return await _context.Users
-                .Where(u => u.ClubID == clubId && u.Role == UserRole.TeamLeader && u.IsActive)
-                .OrderBy(u => u.FullName)
-                .ToListAsync();
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return new List<User>();
+                }
+
+                return await _context.Users
+                    .Where(u => u.ClubID == clubId && u.Role == UserRole.TeamLeader && u.IsActive)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club team leaders for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -532,10 +745,24 @@ namespace ClubManagementApp.Services
         /// <returns>Dictionary mapping each role to its member count</returns>
         public async Task<Dictionary<UserRole, int>> GetClubRoleDistributionAsync(int clubId)
         {
-            return await _context.Users
-                .Where(u => u.ClubID == clubId && u.IsActive)
-                .GroupBy(u => u.Role)
-                .ToDictionaryAsync(g => g.Key, g => g.Count());
+            try
+            {
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return new Dictionary<UserRole, int>();
+                }
+
+                return await _context.Users
+                    .Where(u => u.ClubID == clubId && u.IsActive)
+                    .GroupBy(u => u.Role)
+                    .ToDictionaryAsync(g => g.Key, g => g.Count());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club role distribution for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -567,18 +794,38 @@ namespace ClubManagementApp.Services
         /// <returns>True if demotion successful, false if user not leader or validation fails</returns>
         public async Task<bool> RemoveClubLeadershipAsync(int clubId, int userId)
         {
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null || user.ClubID != clubId) return false;
-
-            // Only demote if user has leadership role
-            if (user.Role == UserRole.Chairman || user.Role == UserRole.ViceChairman || user.Role == UserRole.TeamLeader)
+            try
             {
-                user.Role = UserRole.Member;
-                await _context.SaveChangesAsync();
-                return true;
-            }
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return false;
+                }
 
-            return false;
+                if (userId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid user ID: {userId}");
+                    return false;
+                }
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null || user.ClubID != clubId) return false;
+
+                // Only demote if user has leadership role
+                if (user.Role == UserRole.Chairman || user.Role == UserRole.ViceChairman || user.Role == UserRole.TeamLeader)
+                {
+                    user.Role = UserRole.Member;
+                    await _context.SaveChangesAsync();
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error removing leadership for user {userId} in club {clubId}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -612,28 +859,42 @@ namespace ClubManagementApp.Services
         /// <returns>Dictionary containing comprehensive club statistics and metrics</returns>
         public async Task<Dictionary<string, object>> GetClubStatisticsAsync(int clubId)
         {
-            var club = await GetClubByIdAsync(clubId);
-            if (club == null) return new Dictionary<string, object>();
-
-            var memberCount = await GetMemberCountAsync(clubId);
-            var eventCount = club.Events.Count;
-            var recentEvents = club.Events
-                .OrderByDescending(e => e.EventDate)
-                .Take(5)
-                .Select(e => new { e.Name, e.EventDate, e.Location })
-                .ToList();
-
-            var roleDistribution = await GetClubRoleDistributionAsync(clubId);
-
-            return new Dictionary<string, object>
+            try
             {
-                ["MemberCount"] = memberCount,
-                ["EventCount"] = eventCount,
-                ["RecentEvents"] = recentEvents,
-                ["RoleDistribution"] = roleDistribution,
-                ["EstablishedDate"] = club.CreatedDate,
-                ["Description"] = club.Description ?? ""
-            };
+                if (clubId <= 0)
+                {
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid club ID: {clubId}");
+                    return new Dictionary<string, object>();
+                }
+
+                var club = await GetClubByIdAsync(clubId);
+                if (club == null) return new Dictionary<string, object>();
+
+                var memberCount = await GetMemberCountAsync(clubId);
+                var eventCount = club.Events?.Count ?? 0;
+                var recentEvents = (club.Events ?? new List<Event>())
+                    .OrderByDescending(e => e.EventDate)
+                    .Take(5)
+                    .Select(e => new { e.Name, e.EventDate, e.Location })
+                    .ToList();
+
+                var roleDistribution = await GetClubRoleDistributionAsync(clubId);
+
+                return new Dictionary<string, object>
+                {
+                    ["MemberCount"] = memberCount,
+                    ["EventCount"] = eventCount,
+                    ["RecentEvents"] = recentEvents,
+                    ["RoleDistribution"] = roleDistribution,
+                    ["EstablishedDate"] = club.CreatedDate,
+                    ["Description"] = club.Description ?? ""
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CLUB_SERVICE] Error getting club statistics for club {clubId}: {ex.Message}");
+                throw;
+            }
         }
     }
 }

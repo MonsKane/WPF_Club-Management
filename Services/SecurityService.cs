@@ -208,6 +208,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+                
+                if (expiration.HasValue && expiration.Value <= TimeSpan.Zero)
+                    throw new ArgumentException("Expiration time must be positive", nameof(expiration));
+
                 var token = Guid.NewGuid().ToString("N");
                 var expirationTime = expiration ?? TimeSpan.FromHours(24);
 
@@ -238,6 +245,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(token))
+                    throw new ArgumentException("Token cannot be null or empty", nameof(token));
+                
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var securityToken = await GetTokenAsync(token);
                 
                 if (securityToken == null || 
@@ -262,6 +276,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(token))
+                    throw new ArgumentException("Token cannot be null or empty", nameof(token));
+
                 var securityToken = await GetTokenAsync(token);
                 if (securityToken != null)
                 {
@@ -285,6 +303,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var tokens = await GetUserTokensAsync(userId);
                 return tokens.Where(t => !t.IsRevoked && t.ExpiresAt > DateTime.UtcNow).ToList();
             }
@@ -320,6 +342,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+                
+                if (string.IsNullOrWhiteSpace(ipAddress))
+                    throw new ArgumentException("IP address cannot be null or empty", nameof(ipAddress));
+
                 var sessionId = Guid.NewGuid().ToString();
                 var session = new UserSession
                 {
@@ -348,6 +377,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(sessionId))
+                    throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
+                
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var session = await GetSessionAsync(sessionId);
                 
                 if (session == null || 
@@ -375,6 +411,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(sessionId))
+                    throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
+
                 var session = await GetSessionAsync(sessionId);
                 if (session != null)
                 {
@@ -398,6 +438,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var sessions = await GetUserSessionsAsync(userId);
                 return sessions.Where(s => s.IsActive && s.LastActivityAt > DateTime.UtcNow.AddHours(-24)).ToList();
             }
@@ -412,6 +456,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var sessions = await GetActiveSessionsAsync(userId);
                 foreach (var session in sessions)
                 {
@@ -430,6 +478,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+                
+                if (string.IsNullOrWhiteSpace(details))
+                    throw new ArgumentException("Details cannot be null or empty", nameof(details));
+
                 var securityEvent = new SecurityEvent
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -484,6 +539,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+                
+                if (string.IsNullOrWhiteSpace(ipAddress))
+                    throw new ArgumentException("IP address cannot be null or empty", nameof(ipAddress));
+
                 var recentEvents = await GetSecurityEventsAsync(userId, DateTime.UtcNow.AddHours(-1));
                 
                 return await CheckFailedLoginAttemptsAsync(userId, ipAddress, recentEvents) ||
@@ -562,6 +624,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var lockInfo = await GetAccountLockInfoAsync(userId);
                 return lockInfo != null && lockInfo.IsLocked && 
                        (lockInfo.LockExpiresAt == null || lockInfo.LockExpiresAt > DateTime.UtcNow);
@@ -577,6 +643,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+                
+                if (lockDuration.HasValue && lockDuration.Value <= TimeSpan.Zero)
+                    throw new ArgumentException("Lock duration must be positive", nameof(lockDuration));
+
                 var lockInfo = new AccountLockInfo
                 {
                     UserId = userId,
@@ -601,6 +674,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var lockInfo = await GetAccountLockInfoAsync(userId);
                 if (lockInfo != null)
                 {
@@ -623,6 +700,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var loginInfo = await GetLoginInfoAsync(userId);
                 return loginInfo?.FailedAttempts ?? 0;
             }
@@ -637,6 +718,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var loginInfo = await GetLoginInfoAsync(userId) ?? new LoginInfo { UserId = userId };
                 loginInfo.FailedAttempts++;
                 loginInfo.LastFailedAttempt = DateTime.UtcNow;
@@ -662,6 +747,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var loginInfo = await GetLoginInfoAsync(userId);
                 if (loginInfo != null)
                 {
@@ -680,6 +769,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var code = new Random().Next(100000, 999999).ToString();
                 var twoFactorInfo = new TwoFactorInfo
                 {
@@ -706,6 +799,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+                
+                if (string.IsNullOrWhiteSpace(code))
+                    throw new ArgumentException("Code cannot be null or empty", nameof(code));
+
                 var twoFactorInfo = await GetTwoFactorInfoAsync(userId, code);
                 
                 if (twoFactorInfo == null || 
@@ -734,6 +834,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var user = await _context.Users.FindAsync(userId);
                 return user?.TwoFactorEnabled ?? false;
             }
@@ -748,6 +852,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
@@ -767,6 +875,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrWhiteSpace(userId))
+                    throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+
                 var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
@@ -786,6 +898,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrEmpty(data))
+                    throw new ArgumentException("Data cannot be null or empty", nameof(data));
+
                 var encryptionKey = key ?? _encryptionKey;
                 using (var aes = Aes.Create())
                 {
@@ -816,6 +932,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (string.IsNullOrEmpty(encryptedData))
+                    throw new ArgumentException("Encrypted data cannot be null or empty", nameof(encryptedData));
+
                 var encryptionKey = key ?? _encryptionKey;
                 var fullCipher = Convert.FromBase64String(encryptedData);
 
@@ -888,6 +1008,13 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (configuration == null)
+                    throw new ArgumentNullException(nameof(configuration));
+                
+                if (!await ValidateSecurityConfigurationAsync(configuration))
+                    throw new ArgumentException("Invalid security configuration", nameof(configuration));
+
                 _configurationService.SetValue("Security:MinPasswordLength", configuration.MinPasswordLength);
                 _configurationService.SetValue("Security:RequireUppercase", configuration.RequireUppercase);
                 _configurationService.SetValue("Security:RequireLowercase", configuration.RequireLowercase);
@@ -915,6 +1042,10 @@ namespace ClubManagementApp.Services
         {
             try
             {
+                // Input validation
+                if (configuration == null)
+                    return false;
+
                 if (configuration.MinPasswordLength < 6 || configuration.MinPasswordLength > 128)
                     return false;
 
