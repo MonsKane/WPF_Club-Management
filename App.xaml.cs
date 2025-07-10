@@ -180,8 +180,7 @@ namespace ClubManagementApp
             // DbContext manages Entity Framework operations and database connections
             // Using AddDbContext with SQL Server for proper connection management and scoped lifetime
             services.AddDbContext<ClubManagementDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"))
-                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking), ServiceLifetime.Transient);
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Transient);
 
             // CORE BUSINESS SERVICES (Scoped)
             // These services handle business logic and data operations

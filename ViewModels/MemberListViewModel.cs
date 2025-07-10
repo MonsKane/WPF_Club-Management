@@ -197,51 +197,35 @@ namespace ClubManagementApp.ViewModels
 
         private void FilterMembers()
         {
-            if (_disposed)
-                return;
+            var filtered = Members.AsEnumerable();
 
-            try
+            // Apply search text filter
+            if (!string.IsNullOrEmpty(SearchText))
             {
-                Console.WriteLine($"[MemberListViewModel] Filtering members - Search: '{SearchText}', Role: {SelectedRole}");
-                var filtered = Members.AsEnumerable();
-
-                // Filter by search text
-                if (!string.IsNullOrWhiteSpace(SearchText))
-                {
-                    var searchTerm = SearchText.Trim();
-                    filtered = filtered.Where(m =>
-                        (m.FullName?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (m.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                        (m.Club?.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
-                }
-
-                // Filter by role
-                if (SelectedRole.HasValue)
-                {
-                    filtered = filtered.Where(m => m.Role == SelectedRole.Value);
-                }
-
-                // Filter by club
-                if (ClubFilter != null)
-                {
-                    filtered = filtered.Where(m => m.ClubID == ClubFilter.ClubID);
-                }
-
-                var filteredList = filtered.ToList();
-
-                FilteredMembers.Clear();
-                foreach (var member in filteredList)
-                {
-                    FilteredMembers.Add(member);
-                }
-
-                Console.WriteLine($"[MemberListViewModel] Filtering completed - {filteredList.Count} of {Members.Count} members displayed");
-                _logger?.LogDebug("Filtered members: {Count} of {Total}", filteredList.Count, Members.Count);
+                filtered = filtered.Where(m =>
+                    m.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    m.Email.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    m.StudentID?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) == true);
             }
-            catch (Exception ex)
+
+            // Apply role filter
+            if (SelectedRole.HasValue)
             {
-                Console.WriteLine($"[MemberListViewModel] Error filtering members: {ex.Message}");
-                _logger?.LogError(ex, "Error occurred while filtering members");
+                filtered = filtered.Where(m => m.Role == SelectedRole);
+            }
+
+            // Apply club filter
+            if (ClubFilter is not null)
+            {
+                filtered = filtered.Where(m => m.ClubID == ClubFilter.ClubID);
+            }
+
+            var result = filtered.ToList();
+
+            FilteredMembers.Clear();
+            foreach (var member in result)
+            {
+                FilteredMembers.Add(member);
             }
         }
 
@@ -250,7 +234,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 Console.WriteLine("[MemberListViewModel] Add Member command executed");
-                
+
                 var addDialog = new Views.AddUserDialog();
                 if (addDialog.ShowDialog() == true && addDialog.CreatedUser != null)
                 {
@@ -258,7 +242,7 @@ namespace ClubManagementApp.ViewModels
                     IsLoading = true;
 
                     var createdUser = await _userService.CreateUserAsync(addDialog.CreatedUser);
-                    
+
                     // Update UI on main thread
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -298,30 +282,37 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 Console.WriteLine($"[MemberListViewModel] Edit Member command executed for: {member.FullName} (ID: {member.UserID})");
-                
+
                 // Create and show the edit dialog
                 var editDialog = new Views.EditUserDialog(member);
                 Console.WriteLine($"[MemberListViewModel] EditUserDialog created successfully for {member.FullName}");
-                
+
                 var dialogResult = editDialog.ShowDialog();
                 Console.WriteLine($"[MemberListViewModel] Dialog result: {dialogResult}");
-                
+
                 if (dialogResult == true && editDialog.UpdatedUser != null)
                 {
                     Console.WriteLine($"[MemberListViewModel] Updating member: {editDialog.UpdatedUser.FullName}");
                     IsLoading = true;
 
-                    await _userService.UpdateUserAsync(editDialog.UpdatedUser);
-                    
-                    // Update the member in the collection
-                    var index = Members.IndexOf(member);
-                    if (index >= 0)
+                    var updatedUser = await _userService.UpdateUserAsync(editDialog.UpdatedUser);
+
+                    // Refresh the member from database to ensure we have the latest data
+                    var refreshedUser = await _userService.GetUserByIdAsync(editDialog.UpdatedUser.UserID);
+
+                    if (refreshedUser != null)
                     {
-                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        // Find the member in the collection and update it
+                        var index = Members.ToList().FindIndex(m => m.UserID == editDialog.UpdatedUser.UserID);
+                        if (index >= 0)
                         {
-                            Members[index] = editDialog.UpdatedUser;
-                            FilterMembers();
-                        });
+                            await Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                // Direct assignment works correctly with tracking enabled
+                                Members[index] = refreshedUser;
+                                FilterMembers();
+                            });
+                        }
                     }
 
                     Console.WriteLine($"[MemberListViewModel] Member {editDialog.UpdatedUser.FullName} updated successfully");

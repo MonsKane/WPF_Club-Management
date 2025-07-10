@@ -304,11 +304,12 @@ namespace ClubManagementApp.Services
         /// Data Flow:
         /// 1. Receive updated user entity from UI
         /// 2. Find existing entity in database
-        /// 3. Update properties to avoid tracking conflicts
-        /// 4. Save changes to update database record
-        /// 5. Return updated user entity
+        /// 3. Update properties manually to work with tracking
+        /// 4. Hash password if it's being updated
+        /// 5. Save changes to update database record
+        /// 6. Return updated user entity
         /// 
-        /// Note: Password updates should be handled separately for security
+        /// Security: Password is hashed before database storage if updated
         /// Used by: User profile editing, admin user management
         /// </summary>
         /// <param name="user">User entity with updated information</param>
@@ -349,10 +350,12 @@ namespace ClubManagementApp.Services
                 existingUser.StudentID = user.StudentID;
                 existingUser.TwoFactorEnabled = user.TwoFactorEnabled;
                 
-                // Only update password if it's provided and different
+                // Update password if it's different from the existing one (indicating a new password)
+                // Only hash if it's a new password (not already hashed)
                 if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
                 {
-                    existingUser.Password = user.Password;
+                    Console.WriteLine("[USER_SERVICE] Password update detected, hashing new password");
+                    existingUser.Password = HashPassword(user.Password);
                 }
                 
                 await _context.SaveChangesAsync();
