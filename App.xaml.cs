@@ -109,6 +109,7 @@ namespace ClubManagementApp
 
                 // STEP 4: Create and display login window
                 // The login window is the entry point for user authentication
+                Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 Console.WriteLine("Creating login window...");
                 var loginViewModel = _serviceProvider.GetRequiredService<LoginViewModel>();
                 var loginWindow = new LoginWindow(loginViewModel);
@@ -224,7 +225,7 @@ namespace ClubManagementApp
             services.AddScoped<IBackupService, BackupService>();
 
             // UI navigation: Window management, view transitions
-            services.AddTransient<INavigationService, NavigationService>();
+            services.AddSingleton<INavigationService, NavigationService>();
 
             // INFRASTRUCTURE SERVICES (Singleton)
             // These services maintain state and configuration throughout the application
@@ -268,6 +269,11 @@ namespace ClubManagementApp
 
             // Report generation and viewing
             services.AddTransient<ReportsViewModel>();
+
+            services.AddTransient<ReportsView>();
+            services.AddTransient<EventManagementView>();
+            services.AddTransient<MemberListView>();
+            services.AddTransient<ClubManagementView>();
         }
 
         /// <summary>
@@ -297,12 +303,17 @@ namespace ClubManagementApp
                     // STEP 2: Initialize main application context
                     // Create MainViewModel and establish user session with their profile and permissions
                     var mainViewModel = _serviceProvider!.GetRequiredService<MainViewModel>();
+
                     // Set the current user directly since authentication is already complete
                     mainViewModel.CurrentUser = currentUser;
 
                     // STEP 3: Create and display main application window
                     // The MainWindow contains the primary UI with navigation, dashboard, and all features
+                    await mainViewModel.LoadAsync();
                     var mainWindow = new MainWindow(mainViewModel);
+
+                    Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                    Application.Current.MainWindow = mainWindow;
                     mainWindow.Show();
 
                     // STEP 4: Close login window

@@ -1,7 +1,7 @@
 using ClubManagementApp.Commands;
+using ClubManagementApp.DTOs;
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
-using ClubManagementApp.DTOs;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 
@@ -21,7 +21,7 @@ namespace ClubManagementApp.ViewModels
         private bool _isLoading;
         private Report? _selectedReport;
 
-        public ReportsViewModel(IReportService reportService, IUserService userService, 
+        public ReportsViewModel(IReportService reportService, IUserService userService,
                               IEventService eventService, IClubService clubService)
         {
             _reportService = reportService;
@@ -29,7 +29,6 @@ namespace ClubManagementApp.ViewModels
             _eventService = eventService;
             _clubService = clubService;
             InitializeCommands();
-            _ = LoadReportsAsync();
         }
 
         public ObservableCollection<Report> Reports
@@ -124,13 +123,13 @@ namespace ClubManagementApp.ViewModels
             {
                 IsLoading = true;
                 var reports = await _reportService.GetAllReportsAsync();
-                
+
                 Reports.Clear();
                 foreach (var report in reports.OrderByDescending(r => r.GeneratedDate))
                 {
                     Reports.Add(report);
                 }
-                
+
                 FilterReports();
             }
             catch (Exception ex)
@@ -150,7 +149,7 @@ namespace ClubManagementApp.ViewModels
             // Filter by search text
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filtered = filtered.Where(r => 
+                filtered = filtered.Where(r =>
                     r.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     r.Type.ToString().Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     (r.GeneratedByUser?.FullName?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
@@ -187,7 +186,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 var reportDto = new ReportDto
                 {
                     Title = $"Membership Report - {DateTime.Now:yyyy-MM-dd}",
@@ -197,7 +196,7 @@ namespace ClubManagementApp.ViewModels
 
                 var users = await _userService.GetAllUsersAsync();
                 var clubs = await _clubService.GetAllClubsAsync();
-                
+
                 // Generate report content
                 var reportContent = GenerateMembershipReportContent(users, clubs);
                 reportDto.Content = reportContent;
@@ -212,7 +211,7 @@ namespace ClubManagementApp.ViewModels
                     ClubID = reportDto.ClubID,
                     GeneratedByUserID = (await _userService.GetCurrentUserAsync())?.UserID ?? 1
                 };
-                
+
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
@@ -242,7 +241,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 var reportDto = new ReportDto
                 {
                     Title = $"Event Report - {DateTime.Now:yyyy-MM-dd}",
@@ -251,7 +250,7 @@ namespace ClubManagementApp.ViewModels
                 };
 
                 var events = await _eventService.GetAllEventsAsync();
-                
+
                 // Generate report content
                 var reportContent = GenerateEventReportContent(events);
                 reportDto.Content = reportContent;
@@ -266,7 +265,7 @@ namespace ClubManagementApp.ViewModels
                     ClubID = reportDto.ClubID,
                     GeneratedByUserID = (await _userService.GetCurrentUserAsync())?.UserID ?? 1
                 };
-                
+
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
@@ -296,7 +295,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 var reportDto = new ReportDto
                 {
                     Title = $"Financial Report - {DateTime.Now:yyyy-MM-dd}",
@@ -318,7 +317,7 @@ namespace ClubManagementApp.ViewModels
                     ClubID = reportDto.ClubID,
                     GeneratedByUserID = (await _userService.GetCurrentUserAsync())?.UserID ?? 1
                 };
-                
+
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
@@ -348,7 +347,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 var reportDto = new ReportDto
                 {
                     Title = $"Activity Report - {DateTime.Now:yyyy-MM-dd}",
@@ -358,7 +357,7 @@ namespace ClubManagementApp.ViewModels
 
                 var events = await _eventService.GetAllEventsAsync();
                 var users = await _userService.GetAllUsersAsync();
-                
+
                 // Generate activity report content
                 var reportContent = GenerateActivityReportContent(events, users);
                 reportDto.Content = reportContent;
@@ -373,7 +372,7 @@ namespace ClubManagementApp.ViewModels
                     ClubID = reportDto.ClubID,
                     GeneratedByUserID = (await _userService.GetCurrentUserAsync())?.UserID ?? 1
                 };
-                
+
                 var createdReport = await _reportService.CreateReportAsync(report);
                 Reports.Insert(0, createdReport);
                 FilterReports();
@@ -404,21 +403,21 @@ namespace ClubManagementApp.ViewModels
             content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n\n";
             content += $"Total Users: {users.Count()}\n";
             content += $"Total Clubs: {clubs.Count()}\n\n";
-            
+
             content += "USERS BY ROLE:\n";
             var usersByRole = users.GroupBy(u => u.Role);
             foreach (var group in usersByRole)
             {
                 content += $"- {group.Key}: {group.Count()}\n";
             }
-            
+
             content += "\nCLUBS SUMMARY:\n";
             foreach (var club in clubs)
             {
                 var memberCount = users.Count(u => u.ClubID == club.ClubID);
                 content += $"- {club.Name}: {memberCount} members\n";
             }
-            
+
             return content;
         }
 
@@ -427,23 +426,23 @@ namespace ClubManagementApp.ViewModels
             var content = $"EVENT REPORT\n";
             content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n\n";
             content += $"Total Events: {events.Count()}\n\n";
-            
+
             var now = DateTime.Now;
             var upcoming = events.Count(e => e.EventDate > now);
             var ongoing = events.Count(e => e.EventDate.Date == now.Date);
             var completed = events.Count(e => e.EventDate < now);
-            
+
             content += "EVENTS BY STATUS:\n";
             content += $"- Upcoming: {upcoming}\n";
             content += $"- Ongoing: {ongoing}\n";
             content += $"- Completed: {completed}\n\n";
-            
+
             content += "RECENT EVENTS:\n";
             foreach (var eventItem in events.OrderByDescending(e => e.EventDate).Take(10))
             {
                 content += $"- {eventItem.Name} ({eventItem.EventDate:yyyy-MM-dd})\n";
             }
-            
+
             return content;
         }
 
@@ -451,26 +450,26 @@ namespace ClubManagementApp.ViewModels
         {
             var content = $"ACTIVITY REPORT\n";
             content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n\n";
-            
+
             var recentEvents = events.Where(e => e.EventDate >= DateTime.Now.AddDays(-30));
             content += $"Events in Last 30 Days: {recentEvents.Count()}\n";
-            
+
             var recentUsers = users.Where(u => u.JoinDate >= DateTime.Now.AddDays(-30));
             content += $"New Users in Last 30 Days: {recentUsers.Count()}\n\n";
-            
+
             content += "RECENT ACTIVITY:\n";
             foreach (var eventItem in recentEvents.OrderByDescending(e => e.EventDate).Take(5))
             {
                 content += $"- Event: {eventItem.Name} ({eventItem.EventDate:yyyy-MM-dd})\n";
             }
-            
+
             return content;
         }
 
         private void ViewReport(Report? report)
         {
             if (report == null) return;
-            
+
             // Logic to open report viewer window/dialog
             System.Diagnostics.Debug.WriteLine($"View Report: {report.Title}");
         }
@@ -478,7 +477,7 @@ namespace ClubManagementApp.ViewModels
         private void DownloadReport(Report? report)
         {
             if (report == null) return;
-            
+
             // Logic to download/export report
             System.Diagnostics.Debug.WriteLine($"Download Report: {report.Title}");
         }
@@ -486,7 +485,7 @@ namespace ClubManagementApp.ViewModels
         private void EmailReport(Report? report)
         {
             if (report == null) return;
-            
+
             // Logic to email report
             System.Diagnostics.Debug.WriteLine($"Email Report: {report.Title}");
         }
@@ -518,6 +517,11 @@ namespace ClubManagementApp.ViewModels
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
             }
+        }
+
+        public override Task LoadAsync()
+        {
+            return LoadReportsAsync();
         }
     }
 }

@@ -1,7 +1,5 @@
 using ClubManagementApp.Commands;
 using ClubManagementApp.Services;
-using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace ClubManagementApp.ViewModels
 {
@@ -65,7 +63,7 @@ namespace ClubManagementApp.ViewModels
         private async Task LoginAsync()
         {
             Console.WriteLine($"[LOGIN] Attempting login for email: {Email}");
-            
+
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
                 Console.WriteLine("[LOGIN] FAILED - Missing email or password");
@@ -82,7 +80,7 @@ namespace ClubManagementApp.ViewModels
             {
                 var isValid = await _userService.ValidateUserCredentialsAsync(Email, Password);
                 Console.WriteLine($"[LOGIN] Credential validation result: {isValid}");
-                
+
                 if (isValid)
                 {
                     var user = await _userService.GetUserByEmailAsync(Email);
@@ -90,10 +88,10 @@ namespace ClubManagementApp.ViewModels
                     {
                         Console.WriteLine($"[LOGIN] SUCCESS - User authenticated: {user.FullName} ({user.Role})");
                         _userService.SetCurrentUser(user);
-                        
+
                         // Show success dialog
                         System.Windows.MessageBox.Show($"Đăng nhập thành công!\nChào mừng {user.FullName}", "Đăng nhập thành công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                        
+
                         LoginSuccessful?.Invoke(this, EventArgs.Empty);
                     }
                     else
@@ -134,6 +132,11 @@ namespace ClubManagementApp.ViewModels
         {
             ErrorMessage = string.Empty;
             HasError = false;
+        }
+
+        public override Task LoadAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

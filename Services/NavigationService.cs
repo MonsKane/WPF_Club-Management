@@ -1,56 +1,61 @@
-using ClubManagementApp.Services;
-using ClubManagementApp.Views;
 using ClubManagementApp.ViewModels;
+using ClubManagementApp.Views;
 using System.Windows;
 
 namespace ClubManagementApp.Services
 {
     public class NavigationService : INavigationService
     {
-        private readonly IUserService _userService;
-        private readonly IClubService _clubService;
-        private readonly IEventService _eventService;
-        private readonly IReportService _reportService;
-        
-        // Event for notification instead of direct dependency on MainViewModel
+        private readonly IServiceProvider _serviceProvider;
+
         public event Action<string>? NotificationRequested;
 
-        public NavigationService(IUserService userService, IClubService clubService, 
-                               IEventService eventService, IReportService reportService)
+        public NavigationService(IServiceProvider serviceProvider)
         {
-            _userService = userService;
-            _clubService = clubService;
-            _eventService = eventService;
-            _reportService = reportService;
+            _serviceProvider = serviceProvider;
         }
 
-        public void OpenMemberListWindow()
+        public async void OpenMemberListWindow()
         {
-            var memberListWindow = new MemberListView();
-            memberListWindow.Show();
+            await ShowWindowAsync<MemberListView, MemberListViewModel>();
         }
 
-        public void OpenEventManagementWindow()
+        public async void OpenEventManagementWindow()
         {
-            var eventManagementWindow = new EventManagementView();
-            eventManagementWindow.Show();
+            await ShowWindowAsync<EventManagementView, EventManagementViewModel>();
         }
 
-        public void OpenClubManagementWindow()
+        public async void OpenClubManagementWindow()
         {
-            var clubManagementWindow = new ClubManagementView();
-            clubManagementWindow.Show();
+            await ShowWindowAsync<ClubManagementView, ClubManagementViewModel>();
         }
 
-        public void OpenReportsWindow()
+        public async void OpenReportsWindow()
         {
-            var reportsWindow = new ReportsView();
-            reportsWindow.Show();
+            await ShowWindowAsync<ReportsView, ReportsViewModel>();
         }
 
         public void ShowNotification(string message)
         {
             NotificationRequested?.Invoke(message);
+        }
+
+        private async Task ShowWindowAsync<TWindow, TViewModel>()
+            where TWindow : Window
+            where TViewModel : class
+        {
+            var view = _serviceProvider.GetService(typeof(TWindow)) as TWindow;
+            var viewModel = _serviceProvider.GetService(typeof(TViewModel)) as TViewModel;
+
+            if (view == null || viewModel == null)
+                throw new InvalidOperationException("Unable to resolve window or view model from DI container.");
+
+            view.DataContext = viewModel;
+
+            if (viewModel is BaseViewModel loadable)
+                await loadable.LoadAsync();
+
+            view.Show();
         }
     }
 }

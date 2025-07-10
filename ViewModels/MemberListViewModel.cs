@@ -3,10 +3,8 @@ using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 
@@ -19,7 +17,7 @@ namespace ClubManagementApp.ViewModels
         private readonly INotificationService _notificationService;
         private readonly ILogger<MemberListViewModel>? _logger;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
-        
+
         private ObservableCollection<User> _members = new();
         private ObservableCollection<User> _filteredMembers = new();
         private string _searchText = string.Empty;
@@ -29,7 +27,7 @@ namespace ClubManagementApp.ViewModels
         private bool _disposed;
 
         public MemberListViewModel(
-            IUserService userService, 
+            IUserService userService,
             IClubService clubService,
             INotificationService notificationService,
             ILogger<MemberListViewModel>? logger = null)
@@ -38,11 +36,8 @@ namespace ClubManagementApp.ViewModels
             _clubService = clubService ?? throw new ArgumentNullException(nameof(clubService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _logger = logger;
-            
+
             InitializeCommands();
-            
-            // Properly handle async initialization
-            Task.Run(async () => await InitializeAsync());
         }
 
         public ObservableCollection<User> Members
@@ -110,11 +105,11 @@ namespace ClubManagementApp.ViewModels
         }
 
         private bool CanExecuteCommand() => !IsLoading && !_disposed;
-        
+
         private bool CanEditMember(User? member) => member != null && CanExecuteCommand();
-        
+
         private bool CanDeleteMember(User? member) => member != null && CanExecuteCommand();
-        
+
         private bool CanExportMembers() => FilteredMembers.Any() && CanExecuteCommand();
 
         private async Task InitializeAsync()
@@ -137,9 +132,9 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 var members = await _userService.GetAllUsersAsync();
-                
+
                 if (_cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
@@ -153,7 +148,7 @@ namespace ClubManagementApp.ViewModels
                     }
                     FilterMembers();
                 });
-                
+
                 _logger?.LogInformation("Successfully loaded {Count} members", members.Count());
             }
             catch (OperationCanceledException)
@@ -189,7 +184,7 @@ namespace ClubManagementApp.ViewModels
                 if (!string.IsNullOrWhiteSpace(SearchText))
                 {
                     var searchTerm = SearchText.Trim();
-                    filtered = filtered.Where(m => 
+                    filtered = filtered.Where(m =>
                         (m.FullName?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
                         (m.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
                         (m.Club?.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
@@ -202,13 +197,13 @@ namespace ClubManagementApp.ViewModels
                 }
 
                 var filteredList = filtered.ToList();
-                
+
                 FilteredMembers.Clear();
                 foreach (var member in filteredList)
                 {
                     FilteredMembers.Add(member);
                 }
-                
+
                 _logger?.LogDebug("Filtered members: {Count} of {Total}", filteredList.Count, Members.Count);
             }
             catch (Exception ex)
@@ -225,12 +220,12 @@ namespace ClubManagementApp.ViewModels
                 // For now, show a simple input dialog for demonstration
                 var newMemberName = Microsoft.VisualBasic.Interaction.InputBox(
                     "Enter new member's full name:", "Add New Member", "");
-                
+
                 if (!string.IsNullOrWhiteSpace(newMemberName))
                 {
                     var newMemberEmail = Microsoft.VisualBasic.Interaction.InputBox(
                         "Enter new member's email:", "Add New Member", "");
-                    
+
                     if (!string.IsNullOrWhiteSpace(newMemberEmail))
                     {
                         var newUser = new User
@@ -242,7 +237,7 @@ namespace ClubManagementApp.ViewModels
                             IsActive = true,
                             Password = "DefaultPassword123" // Should be changed on first login
                         };
-                        
+
                         var createdUser = await _userService.CreateUserAsync(newUser);
                         Members.Add(createdUser);
                         FilterMembers();
@@ -264,13 +259,13 @@ namespace ClubManagementApp.ViewModels
                 await ShowNotificationAsync("Please select a member to edit");
                 return;
             }
-            
+
             try
             {
                 // Simple edit functionality using input dialogs
                 var newName = Microsoft.VisualBasic.Interaction.InputBox(
                     "Edit member's full name:", "Edit Member", member.FullName);
-                
+
                 if (!string.IsNullOrWhiteSpace(newName) && newName != member.FullName)
                 {
                     member.FullName = newName.Trim();
@@ -306,9 +301,9 @@ namespace ClubManagementApp.ViewModels
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
                     IsLoading = true;
-                    
+
                     await _userService.DeleteUserAsync(member.UserID);
-                    
+
                     // Update UI on main thread
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -319,7 +314,7 @@ namespace ClubManagementApp.ViewModels
                         }
                         FilterMembers();
                     });
-                    
+
                     await ShowNotificationAsync($"Member {member.FullName} has been deleted successfully");
                     _logger?.LogInformation("Successfully deleted member {UserId}: {FullName}", member.UserID, member.FullName);
                 }
@@ -351,17 +346,17 @@ namespace ClubManagementApp.ViewModels
                     DefaultExt = "csv",
                     FileName = $"Members_Export_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
                 };
-                
+
                 if (saveFileDialog.ShowDialog() == true)
                 {
                     var csvContent = new StringBuilder();
                     csvContent.AppendLine("Full Name,Email,Role,Club,Join Date,Status");
-                    
+
                     foreach (var member in FilteredMembers)
                     {
                         csvContent.AppendLine($"{member.FullName},{member.Email},{member.Role},{member.Club?.Name ?? "N/A"},{member.JoinDate:yyyy-MM-dd},{(member.IsActive ? "Active" : "Inactive")}");
                     }
-                    
+
                     await File.WriteAllTextAsync(saveFileDialog.FileName, csvContent.ToString());
                     await ShowNotificationAsync($"Successfully exported {FilteredMembers.Count} members to {Path.GetFileName(saveFileDialog.FileName)}");
                 }
@@ -376,7 +371,7 @@ namespace ClubManagementApp.ViewModels
         private async Task HandleErrorAsync(string message, Exception ex)
         {
             _logger?.LogError(ex, "{Message}: {ErrorMessage}", message, ex.Message);
-            
+
             var errorMessage = $"{message}: {ex.Message}";
             await ShowNotificationAsync(errorMessage);
         }
@@ -392,7 +387,7 @@ namespace ClubManagementApp.ViewModels
             {
                 _logger?.LogError(ex, "Failed to show notification: {Message}", message);
                 // Fallback to MessageBox if notification service fails
-                System.Windows.MessageBox.Show(message, "Member Management", 
+                System.Windows.MessageBox.Show(message, "Member Management",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
         }
@@ -411,6 +406,11 @@ namespace ClubManagementApp.ViewModels
                 _cancellationTokenSource?.Dispose();
                 _disposed = true;
             }
+        }
+
+        public override Task LoadAsync()
+        {
+            return InitializeAsync();
         }
     }
 }

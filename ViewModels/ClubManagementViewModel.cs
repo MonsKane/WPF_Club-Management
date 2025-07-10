@@ -23,7 +23,6 @@ namespace ClubManagementApp.ViewModels
             _userService = userService;
             _eventService = eventService;
             InitializeCommands();
-            _ = LoadClubsAsync();
         }
 
         public ObservableCollection<Club> Clubs
@@ -90,7 +89,7 @@ namespace ClubManagementApp.ViewModels
             {
                 IsLoading = true;
                 var clubs = await _clubService.GetAllClubsAsync();
-                
+
                 Clubs.Clear();
                 foreach (var club in clubs)
                 {
@@ -98,7 +97,7 @@ namespace ClubManagementApp.ViewModels
                     await LoadClubStatistics(club);
                     Clubs.Add(club);
                 }
-                
+
                 FilterClubs();
             }
             catch (Exception ex)
@@ -136,7 +135,7 @@ namespace ClubManagementApp.ViewModels
             // Filter by search text
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filtered = filtered.Where(c => 
+                filtered = filtered.Where(c =>
                     c.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     (c.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
             }
@@ -157,7 +156,7 @@ namespace ClubManagementApp.ViewModels
         private void EditClub(Club? club)
         {
             if (club == null) return;
-            
+
             // Logic to open edit club window/dialog
             System.Diagnostics.Debug.WriteLine($"Edit Club: {club.Name}");
         }
@@ -205,7 +204,7 @@ namespace ClubManagementApp.ViewModels
         private void ViewClubDetails(Club? club)
         {
             if (club == null) return;
-            
+
             SelectedClub = club;
             // Logic to open club details window/dialog
             System.Diagnostics.Debug.WriteLine($"View Club Details: {club.Name}");
@@ -214,7 +213,7 @@ namespace ClubManagementApp.ViewModels
         private void ManageLeadership(Club? club)
         {
             if (club == null) return;
-            
+
             // Logic to open leadership management window/dialog
             System.Diagnostics.Debug.WriteLine($"Manage Leadership for: {club.Name}");
         }
@@ -222,7 +221,7 @@ namespace ClubManagementApp.ViewModels
         private void ViewMembers(Club? club)
         {
             if (club == null) return;
-            
+
             // Logic to navigate to members view filtered by this club
             System.Diagnostics.Debug.WriteLine($"View Members for: {club.Name}");
         }
@@ -230,7 +229,7 @@ namespace ClubManagementApp.ViewModels
         private void ViewEvents(Club? club)
         {
             if (club == null) return;
-            
+
             // Logic to navigate to events view filtered by this club
             System.Diagnostics.Debug.WriteLine($"View Events for: {club.Name}");
         }
@@ -239,7 +238,7 @@ namespace ClubManagementApp.ViewModels
         {
             var memberCount = club.Members?.Count ?? 0;
             var eventCount = club.Events?.Count ?? 0;
-            
+
             if (memberCount == 0)
                 return "No Members";
             else if (eventCount == 0)
@@ -252,13 +251,18 @@ namespace ClubManagementApp.ViewModels
         {
             var memberCount = club.Members?.Count ?? 0;
             var eventCount = club.Events?.Count ?? 0;
-            
+
             if (memberCount == 0)
                 return "#e74c3c"; // Red
             else if (eventCount == 0)
                 return "#f39c12"; // Orange
             else
                 return "#27ae60"; // Green
+        }
+
+        public override Task LoadAsync()
+        {
+            return LoadClubsAsync();
         }
     }
 }

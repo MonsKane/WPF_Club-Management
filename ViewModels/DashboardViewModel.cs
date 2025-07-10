@@ -22,7 +22,7 @@ namespace ClubManagementApp.ViewModels
         private bool _isLoading;
         private ObservableCollection<Event> _recentEvents = new();
 
-        public DashboardViewModel(IUserService userService, IClubService clubService, 
+        public DashboardViewModel(IUserService userService, IClubService clubService,
                                 IEventService eventService, IReportService reportService)
         {
             _userService = userService;
@@ -30,7 +30,6 @@ namespace ClubManagementApp.ViewModels
             _eventService = eventService;
             _reportService = reportService;
             InitializeCommands();
-            _ = LoadDashboardDataAsync();
         }
 
         public int TotalUsers
@@ -205,6 +204,11 @@ namespace ClubManagementApp.ViewModels
         {
             // Logic to navigate to reports view
             System.Diagnostics.Debug.WriteLine("View All Reports clicked from Dashboard");
+        }
+
+        public override Task LoadAsync()
+        {
+            return LoadDashboardDataAsync();
         }
     }
 }

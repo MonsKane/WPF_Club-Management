@@ -21,5 +21,14 @@ namespace ClubManagementApp.ViewModels
             OnPropertyChanged(propertyName);
             return true;
         }
+
+        public abstract Task LoadAsync();
+
+        private bool _isLoading;
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
     }
 }

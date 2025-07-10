@@ -10,8 +10,7 @@ namespace ClubManagementApp
         public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();
-            ViewModel = viewModel;
-            DataContext = ViewModel;
+            DataContext = viewModel;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

@@ -31,7 +31,7 @@ namespace ClubManagementApp.ViewModels
         public ClubManagementViewModel? ClubManagementViewModel { get; private set; }
         public ReportsViewModel? ReportsViewModel { get; private set; }
 
-        public MainViewModel(IUserService userService, IClubService clubService, 
+        public MainViewModel(IUserService userService, IClubService clubService,
                            IEventService eventService, IReportService reportService,
                            INavigationService navigationService, INotificationService notificationService)
         {
@@ -44,7 +44,6 @@ namespace ClubManagementApp.ViewModels
 
             InitializeCommands();
             InitializeChildViewModels();
-            _ = LoadDataAsync();
         }
 
         public User? CurrentUser
@@ -201,6 +200,11 @@ namespace ClubManagementApp.ViewModels
         {
             HasNotifications = false;
             NotificationMessage = string.Empty;
+        }
+
+        public override Task LoadAsync()
+        {
+            return LoadDataAsync();
         }
     }
 }

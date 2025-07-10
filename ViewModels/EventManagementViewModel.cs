@@ -26,7 +26,6 @@ namespace ClubManagementApp.ViewModels
             _clubService = clubService;
             _userService = userService;
             InitializeCommands();
-            _ = LoadDataAsync();
         }
 
         public ObservableCollection<Event> Events
@@ -120,7 +119,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 // Load events
                 var events = await _eventService.GetAllEventsAsync();
                 Events.Clear();
@@ -156,7 +155,7 @@ namespace ClubManagementApp.ViewModels
             // Filter by search text
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filtered = filtered.Where(e => 
+                filtered = filtered.Where(e =>
                     e.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     (e.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                     (e.Location?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
@@ -179,7 +178,7 @@ namespace ClubManagementApp.ViewModels
             if (SelectedDate.HasValue)
             {
                 var selectedDate = SelectedDate.Value.Date;
-                filtered = filtered.Where(e => 
+                filtered = filtered.Where(e =>
                     e.EventDate.Date <= selectedDate && e.EventDate.Date >= selectedDate);
             }
 
@@ -199,7 +198,7 @@ namespace ClubManagementApp.ViewModels
         private void EditEvent(Event? eventItem)
         {
             if (eventItem == null) return;
-            
+
             // Logic to open edit event window/dialog
             System.Diagnostics.Debug.WriteLine($"Edit Event: {eventItem.Name}");
         }
@@ -236,7 +235,7 @@ namespace ClubManagementApp.ViewModels
         private void ViewEvent(Event? eventItem)
         {
             if (eventItem == null) return;
-            
+
             // Logic to open event details window/dialog
             System.Diagnostics.Debug.WriteLine($"View Event: {eventItem.Name}");
         }
@@ -244,7 +243,7 @@ namespace ClubManagementApp.ViewModels
         private void ManageParticipants(Event? eventItem)
         {
             if (eventItem == null) return;
-            
+
             // Logic to open participants management window/dialog
             System.Diagnostics.Debug.WriteLine($"Manage Participants for: {eventItem.Name}");
         }
@@ -264,6 +263,11 @@ namespace ClubManagementApp.ViewModels
                 return "Ongoing";
             else
                 return "Completed";
+        }
+
+        public override Task LoadAsync()
+        {
+            return LoadDataAsync();
         }
     }
 }

@@ -1,14 +1,13 @@
 using ClubManagementApp.Data;
 using ClubManagementApp.Models;
-using Microsoft.EntityFrameworkCore;
-using System.IO;
-using System.Text.Json;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using System.IO;
+using System.Text.Json;
 
 namespace ClubManagementApp.Services
 {
@@ -248,11 +247,11 @@ namespace ClubManagementApp.Services
             document.Add(new Paragraph($"Generated: {report.GeneratedDate:yyyy-MM-dd HH:mm}")
                 .SetFontSize(10)
                 .SetTextAlignment(TextAlignment.RIGHT));
-            
+
             document.Add(new Paragraph($"Club: {report.Club?.Name ?? "All Clubs"}")
                 .SetFontSize(10)
                 .SetTextAlignment(TextAlignment.RIGHT));
-            
+
             document.Add(new Paragraph($"Semester: {report.Semester}")
                 .SetFontSize(10)
                 .SetTextAlignment(TextAlignment.RIGHT));
@@ -347,7 +346,7 @@ namespace ClubManagementApp.Services
                     document.Add(new Paragraph(item.Value?.ToString() ?? "N/A")
                         .SetMarginLeft(20));
                 }
-                
+
                 document.Add(new Paragraph("\n"));
             }
         }
@@ -380,12 +379,12 @@ namespace ClubManagementApp.Services
         private void FormatContentForExcel(ExcelWorksheet worksheet, Dictionary<string, object> content, int startRow)
         {
             int currentRow = startRow;
-            
+
             foreach (var item in content)
             {
                 worksheet.Cells[currentRow, 1].Value = item.Key;
                 worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
-                
+
                 if (item.Value is JsonElement jsonElement)
                 {
                     currentRow = FormatJsonElementForExcel(worksheet, jsonElement, currentRow, 2);
@@ -395,7 +394,7 @@ namespace ClubManagementApp.Services
                     worksheet.Cells[currentRow, 2].Value = item.Value?.ToString() ?? "N/A";
                     currentRow++;
                 }
-                
+
                 currentRow++; // Add spacing
             }
         }
@@ -403,7 +402,7 @@ namespace ClubManagementApp.Services
         private int FormatJsonElementForExcel(ExcelWorksheet worksheet, JsonElement element, int startRow, int startCol)
         {
             int currentRow = startRow;
-            
+
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
@@ -426,7 +425,7 @@ namespace ClubManagementApp.Services
                     currentRow++;
                     break;
             }
-            
+
             return currentRow;
         }
 
