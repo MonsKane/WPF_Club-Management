@@ -6,7 +6,7 @@
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
         Background="#f8f9fa"
-        Icon="pack://application:,,,/Resources/club-icon.ico">
+        >
     <Window.Resources>
         <!-- Modern Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">

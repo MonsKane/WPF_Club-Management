@@ -452,15 +452,18 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
-                // Use notification service for better user experience
-                await _notificationService.SendInAppNotificationAsync(0, "Member Management", message);
+                // Use MessageBox for immediate user feedback
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    System.Windows.MessageBox.Show(message, "Member Management",
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                });
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Failed to show notification: {Message}", message);
-                // Fallback to MessageBox if notification service fails
-                System.Windows.MessageBox.Show(message, "Member Management",
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                // Final fallback
+                Console.WriteLine($"[MemberListViewModel] Notification: {message}");
             }
         }
 
