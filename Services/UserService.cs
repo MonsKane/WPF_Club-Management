@@ -210,11 +210,12 @@ namespace ClubManagementApp.Services
         /// Data Flow:
         /// 1. Receive updated user entity from UI
         /// 2. Find existing entity in database
-        /// 3. Update properties to avoid tracking conflicts
-        /// 4. Save changes to update database record
-        /// 5. Return updated user entity
+        /// 3. Update properties manually to work with tracking
+        /// 4. Hash password if it's being updated
+        /// 5. Save changes to update database record
+        /// 6. Return updated user entity
         /// 
-        /// Note: Password updates should be handled separately for security
+        /// Security: Password is hashed before database storage if updated
         /// Used by: User profile editing, admin user management
         /// </summary>
         /// <param name="user">User entity with updated information</param>
@@ -223,28 +224,29 @@ namespace ClubManagementApp.Services
         {
             Console.WriteLine($"[USER_SERVICE] Updating user: {user.FullName} (ID: {user.UserID})");
             
-            // Find the existing entity to avoid tracking conflicts
+            // Find existing user in database (will be tracked by EF)
             var existingUser = await _context.Users.FindAsync(user.UserID);
             if (existingUser == null)
             {
-                throw new InvalidOperationException($"User with ID {user.UserID} not found");
+                throw new InvalidOperationException($"User with ID {user.UserID} not found.");
             }
             
-            // Update properties manually to avoid entity tracking issues
+            // Update properties manually (works with tracking enabled)
             existingUser.FullName = user.FullName;
             existingUser.Email = user.Email;
-            existingUser.Role = user.Role;
             existingUser.PhoneNumber = user.PhoneNumber;
-            existingUser.IsActive = user.IsActive;
+            existingUser.Role = user.Role;
             existingUser.ClubID = user.ClubID;
+            existingUser.IsActive = user.IsActive;
             existingUser.ActivityLevel = user.ActivityLevel;
-            existingUser.StudentID = user.StudentID;
             existingUser.TwoFactorEnabled = user.TwoFactorEnabled;
             
-            // Only update password if it's provided and different
+            // Update password if it's different from the existing one (indicating a new password)
+            // Only hash if it's a new password (not already hashed)
             if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
             {
-                existingUser.Password = user.Password;
+                Console.WriteLine("[USER_SERVICE] Password update detected, hashing new password");
+                existingUser.Password = HashPassword(user.Password);
             }
             
             await _context.SaveChangesAsync();

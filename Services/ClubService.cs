@@ -89,7 +89,7 @@ namespace ClubManagementApp.Services
                 .Include(c => c.Members)
                 .Include(c => c.Events)
                 .FirstOrDefaultAsync(c => c.ClubID == clubId);
-            
+
             if (club != null)
             {
                 Console.WriteLine($"[CLUB_SERVICE] Found club: {club.Name} with {club.Members?.Count ?? 0} members");
@@ -145,10 +145,10 @@ namespace ClubManagementApp.Services
         {
             Console.WriteLine($"[CLUB_SERVICE] Creating new club: {club.Name}");
             Console.WriteLine($"[CLUB_SERVICE] Club description: {club.Description}");
-            
+
             _context.Clubs.Add(club);
             await _context.SaveChangesAsync();
-            
+
             Console.WriteLine($"[CLUB_SERVICE] Club created successfully with ID: {club.ClubID}");
             return club;
         }
@@ -159,9 +159,10 @@ namespace ClubManagementApp.Services
         /// 
         /// Data Flow:
         /// 1. Receive updated club object from ViewModel
-        /// 2. Mark entity as modified in DbContext
-        /// 3. Persist changes to database
-        /// 4. Return updated club object
+        /// 2. Find existing entity in database
+        /// 3. Update properties manually to work with tracking
+        /// 4. Persist changes to database
+        /// 5. Return updated club object
         /// 
         /// Business Logic:
         /// - Maintains existing member and event relationships
@@ -175,10 +176,23 @@ namespace ClubManagementApp.Services
         public async Task<Club> UpdateClubAsync(Club club)
         {
             Console.WriteLine($"[CLUB_SERVICE] Updating club: {club.Name} (ID: {club.ClubID})");
-            _context.Clubs.Update(club);
+
+            // Find existing club in database (will be tracked by EF)
+            var existingClub = await _context.Clubs.FindAsync(club.ClubID);
+            if (existingClub == null)
+            {
+                throw new InvalidOperationException($"Club with ID {club.ClubID} not found.");
+            }
+
+            // Update properties manually (works with tracking enabled)
+            existingClub.Name = club.Name;
+            existingClub.Description = club.Description;
+            existingClub.FoundedDate = club.FoundedDate;
+            existingClub.IsActive = club.IsActive;
+
             await _context.SaveChangesAsync();
-            Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {club.Name}");
-            return club;
+            Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {existingClub.Name}");
+            return existingClub;
         }
 
         /// <summary>
@@ -204,7 +218,7 @@ namespace ClubManagementApp.Services
         {
             Console.WriteLine($"[CLUB_SERVICE] Attempting to delete club with ID: {clubId}");
             var club = await _context.Clubs.FindAsync(clubId);
-            if (club == null) 
+            if (club == null)
             {
                 Console.WriteLine($"[CLUB_SERVICE] Club not found for deletion: {clubId}");
                 return false;
@@ -301,7 +315,7 @@ namespace ClubManagementApp.Services
         public async Task<bool> AssignClubLeadershipAsync(int clubId, int userId, UserRole role)
         {
             Console.WriteLine($"[CLUB_SERVICE] Assigning leadership role {role} to user {userId} in club {clubId}");
-            
+
             if (role != UserRole.Chairman && role != UserRole.ViceChairman && role != UserRole.TeamLeader)
             {
                 Console.WriteLine($"[CLUB_SERVICE] Invalid leadership role: {role}");
@@ -309,7 +323,7 @@ namespace ClubManagementApp.Services
             }
 
             var user = await _context.Users.FindAsync(userId);
-            if (user == null || user.ClubID != clubId) 
+            if (user == null || user.ClubID != clubId)
             {
                 Console.WriteLine($"[CLUB_SERVICE] User {userId} not found or not member of club {clubId}");
                 return false;
@@ -371,7 +385,7 @@ namespace ClubManagementApp.Services
             // For now, we'll update the club's description to include role configuration
             var roleConfig = System.Text.Json.JsonSerializer.Serialize(rolePermissions);
             club.Description += $"\n[ROLE_CONFIG]{roleConfig}[/ROLE_CONFIG]";
-            
+
             await UpdateClubAsync(club);
             return true;
         }

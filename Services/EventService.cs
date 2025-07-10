@@ -177,10 +177,26 @@ namespace ClubManagementApp.Services
         public async Task<Event> UpdateEventAsync(Event eventItem)
         {
             Console.WriteLine($"[EVENT_SERVICE] Updating event: {eventItem.Name} (ID: {eventItem.EventID})");
-            _context.Events.Update(eventItem);
+            
+            // Find existing event in database (will be tracked by EF)
+            var existingEvent = await _context.Events.FindAsync(eventItem.EventID);
+            if (existingEvent == null)
+            {
+                throw new InvalidOperationException($"Event with ID {eventItem.EventID} not found.");
+            }
+            
+            // Update properties manually (works with tracking enabled)
+            existingEvent.Name = eventItem.Name;
+            existingEvent.Description = eventItem.Description;
+            existingEvent.EventDate = eventItem.EventDate;
+            existingEvent.Location = eventItem.Location;
+            existingEvent.MaxParticipants = eventItem.MaxParticipants;
+            existingEvent.Status = eventItem.Status;
+            existingEvent.ClubID = eventItem.ClubID;
+            
             await _context.SaveChangesAsync();
-            Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {eventItem.Name}");
-            return eventItem;
+            Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {existingEvent.Name}");
+            return existingEvent;
         }
 
         public async Task<bool> UpdateEventStatusAsync(int eventId, EventStatus status)

@@ -232,7 +232,9 @@ namespace ClubManagementApp.ViewModels
                         // Load statistics for the updated club
                         await LoadClubStatistics(updatedClub);
                         
-                        Clubs[index] = updatedClub;
+                        // Remove the old club and insert the updated one to trigger proper notifications
+                        Clubs.RemoveAt(index);
+                        Clubs.Insert(index, updatedClub);
                         FilterClubs();
                         
                         System.Windows.MessageBox.Show(

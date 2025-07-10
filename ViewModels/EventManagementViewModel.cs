@@ -274,7 +274,9 @@ namespace ClubManagementApp.ViewModels
                     var index = Events.IndexOf(eventItem);
                     if (index >= 0)
                     {
-                        Events[index] = updatedEvent;
+                        // Remove the old event and insert the updated one to trigger proper notifications
+                        Events.RemoveAt(index);
+                        Events.Insert(index, updatedEvent);
                     }
                     FilterEvents();
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event updated successfully: {updatedEvent.Name}");
