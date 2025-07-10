@@ -310,26 +310,85 @@
 
             <!-- Header -->
             <StackPanel Grid.Row="0" Margin="0,60,0,40" HorizontalAlignment="Center">
-                <Ellipse Width="80" Height="80" Margin="0,0,0,20">
-                    <Ellipse.Fill>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="#667eea" Offset="0"/>
-                            <GradientStop Color="#764ba2" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Ellipse.Fill>
-                </Ellipse>
+                <!-- Club Icon -->
+                <Border Width="100" Height="100" Margin="0,0,0,25" CornerRadius="20" Background="White" Padding="8">
+                    <Border.Effect>
+                        <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" Opacity="0.3" BlurRadius="15"/>
+                    </Border.Effect>
+                    <Viewbox>
+                        <Canvas Width="100" Height="100">
+                            <!-- Background circle -->
+                            <Ellipse Canvas.Left="5" Canvas.Top="5" Width="90" Height="90" Fill="#3B82F6" Stroke="#1E40AF" StrokeThickness="2"/>
+
+                            <!-- Club building/house shape -->
+                            <Canvas Canvas.Left="50" Canvas.Top="50">
+                                <!-- Main building -->
+                                <Rectangle Canvas.Left="-18" Canvas.Top="-5" Width="36" Height="25" Fill="#FFFFFF" RadiusX="2" RadiusY="2"/>
+
+                                <!-- Roof -->
+                                <Polygon Points="-22,-5 0,-20 22,-5" Fill="#EF4444" Stroke="#DC2626" StrokeThickness="1"/>
+
+                                <!-- Door -->
+                                <Rectangle Canvas.Left="-4" Canvas.Top="8" Width="8" Height="12" Fill="#8B5CF6" RadiusX="1" RadiusY="1"/>
+                                <Ellipse Canvas.Left="1.2" Canvas.Top="13.2" Width="1.6" Height="1.6" Fill="#FFFFFF"/>
+
+                                <!-- Windows -->
+                                <Rectangle Canvas.Left="-14" Canvas.Top="-1" Width="6" Height="6" Fill="#60A5FA" RadiusX="1" RadiusY="1"/>
+                                <Rectangle Canvas.Left="8" Canvas.Top="-1" Width="6" Height="6" Fill="#60A5FA" RadiusX="1" RadiusY="1"/>
+
+                                <!-- Window frames -->
+                                <Line X1="-11" Y1="-1" X2="-11" Y2="5" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                <Line X1="-14" Y1="2" X2="-8" Y2="2" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                <Line X1="11" Y1="-1" X2="11" Y2="5" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                <Line X1="8" Y1="2" X2="14" Y2="2" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+
+                                <!-- People icons (representing club members) -->
+                                <Canvas Canvas.Left="-8" Canvas.Top="-25">
+                                    <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                    <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#10B981"/>
+                                </Canvas>
+
+                                <Canvas Canvas.Left="0" Canvas.Top="-25">
+                                    <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                    <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#F59E0B"/>
+                                </Canvas>
+
+                                <Canvas Canvas.Left="8" Canvas.Top="-25">
+                                    <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                    <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#EF4444"/>
+                                </Canvas>
+                            </Canvas>
+
+                            <!-- Decorative elements -->
+                            <Ellipse Canvas.Left="18" Canvas.Top="23" Width="4" Height="4" Fill="#FBBF24" Opacity="0.7"/>
+                            <Ellipse Canvas.Left="77" Canvas.Top="28" Width="3" Height="3" Fill="#34D399" Opacity="0.7"/>
+                            <Ellipse Canvas.Left="21.4" Canvas.Top="71.4" Width="3.6" Height="3.6" Fill="#F472B6" Opacity="0.7"/>
+                            <Ellipse Canvas.Left="70.6" Canvas.Top="65.6" Width="4.4" Height="4.4" Fill="#A78BFA" Opacity="0.7"/>
+                        </Canvas>
+                    </Viewbox>
+                </Border>
+
+                <!-- Welcome Text -->
                 <TextBlock Text="Hệ Thống Quản Lý Câu Lạc Bộ"
-                           FontSize="28"
-                           FontWeight="Light"
+                           FontSize="32"
+                           FontWeight="Bold"
                            FontFamily="Segoe UI"
                            Foreground="White"
-                           HorizontalAlignment="Center"/>
-                <TextBlock Text="Đăng nhập để tiếp tục"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="Chào mừng bạn đến với hệ thống quản lý câu lạc bộ hiện đại"
+                           FontSize="16"
+                           FontFamily="Segoe UI"
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           Opacity="0.9"
+                           Margin="0,0,0,5"/>
+                <TextBlock Text="Đăng nhập để tiếp tục và khám phá các tính năng tuyệt vời"
                            FontSize="14"
                            FontFamily="Segoe UI"
-                           Foreground="Black"
+                           Foreground="White"
                            HorizontalAlignment="Center"
-                           Margin="0,5,0,0"/>
+                           Opacity="0.8"/>
             </StackPanel>
 
             <!-- Login Form -->

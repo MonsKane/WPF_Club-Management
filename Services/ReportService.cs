@@ -45,16 +45,16 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Getting report by ID: {reportId}");
-                
+
                 // Input validation
                 if (reportId <= 0)
                     throw new ArgumentException("Invalid report ID", nameof(reportId));
-                
+
                 var report = await _context.Reports
                     .Include(r => r.Club)
                     .Include(r => r.GeneratedByUser)
                     .FirstOrDefaultAsync(r => r.ReportID == reportId);
-                
+
                 if (report != null)
                 {
                     Console.WriteLine($"[REPORT_SERVICE] Found report: {report.Title} ({report.Type}) generated on {report.GeneratedDate:yyyy-MM-dd}");
@@ -79,12 +79,12 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (clubId <= 0)
                     throw new ArgumentException("Invalid club ID", nameof(clubId));
-                
+
                 // Verify club exists
                 var club = await _context.Clubs.FindAsync(clubId);
                 if (club == null)
                     throw new InvalidOperationException($"Club with ID {clubId} not found");
-                
+
                 return await _context.Reports
                     .Include(r => r.Club)
                     .Include(r => r.GeneratedByUser)
@@ -126,36 +126,36 @@ namespace ClubManagementApp.Services
             {
                 Console.WriteLine($"[REPORT_SERVICE] Creating new report: {report.Title} ({report.Type})");
                 Console.WriteLine($"[REPORT_SERVICE] Report for club ID: {report.ClubID}, semester: {report.Semester}");
-                
+
                 // Input validation
                 if (report == null)
                     throw new ArgumentNullException(nameof(report), "Report cannot be null");
-                
+
                 if (string.IsNullOrWhiteSpace(report.Title))
                     throw new ArgumentException("Report title is required", nameof(report));
-                
+
                 if (string.IsNullOrWhiteSpace(report.Semester))
                     throw new ArgumentException("Semester is required", nameof(report));
-                
+
                 if (report.ClubID <= 0)
                     throw new ArgumentException("Valid club ID is required", nameof(report));
-                
+
                 if (report.GeneratedByUserID <= 0)
                     throw new ArgumentException("Valid user ID is required", nameof(report));
-                
+
                 // Verify club exists
                 var club = await _context.Clubs.FindAsync(report.ClubID);
                 if (club == null)
                     throw new InvalidOperationException($"Club with ID {report.ClubID} not found");
-                
+
                 // Verify user exists
                 var user = await _context.Users.FindAsync(report.GeneratedByUserID);
                 if (user == null)
                     throw new InvalidOperationException($"User with ID {report.GeneratedByUserID} not found");
-                
+
                 _context.Reports.Add(report);
                 await _context.SaveChangesAsync();
-                
+
                 Console.WriteLine($"[REPORT_SERVICE] Report created successfully with ID: {report.ReportID}");
                 return report;
             }
@@ -171,13 +171,13 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Attempting to delete report with ID: {reportId}");
-                
+
                 // Input validation
                 if (reportId <= 0)
                     throw new ArgumentException("Invalid report ID", nameof(reportId));
-                
+
                 var report = await _context.Reports.FindAsync(reportId);
-                if (report == null) 
+                if (report == null)
                 {
                     Console.WriteLine($"[REPORT_SERVICE] Report not found for deletion: {reportId}");
                     return false;
@@ -201,29 +201,29 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Generating member statistics report for club {clubId}, semester {semester}");
-                
+
                 // Input validation
                 if (clubId <= 0)
                     throw new ArgumentException("Invalid club ID", nameof(clubId));
-                
+
                 if (string.IsNullOrWhiteSpace(semester))
                     throw new ArgumentException("Semester is required", nameof(semester));
-                
+
                 if (generatedByUserId <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
-                
+
                 var club = await _context.Clubs.Include(c => c.Members).FirstOrDefaultAsync(c => c.ClubID == clubId);
-                if (club == null) 
+                if (club == null)
                 {
                     Console.WriteLine($"[REPORT_SERVICE] Club not found: {clubId}");
                     throw new InvalidOperationException($"Club with ID {clubId} not found");
                 }
-                
+
                 // Verify user exists
                 var user = await _context.Users.FindAsync(generatedByUserId);
                 if (user == null)
                     throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
-                
+
                 Console.WriteLine($"[REPORT_SERVICE] Found club: {club.Name} with {club.Members.Count} members");
 
             var memberStats = new
@@ -261,27 +261,27 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Generating event outcomes report for club {clubId}, semester {semester}");
-                
+
                 // Input validation
                 if (clubId <= 0)
                     throw new ArgumentException("Invalid club ID", nameof(clubId));
-                
+
                 if (string.IsNullOrWhiteSpace(semester))
                     throw new ArgumentException("Semester is required", nameof(semester));
-                
+
                 if (generatedByUserId <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
-                
+
                 // Verify club exists
                 var clubExists = await _context.Clubs.FindAsync(clubId);
                 if (clubExists == null)
                     throw new InvalidOperationException($"Club with ID {clubId} not found");
-                
+
                 // Verify user exists
                 var user = await _context.Users.FindAsync(generatedByUserId);
                 if (user == null)
                     throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
-                
+
                 var semesterStart = GetSemesterStartDate(semester);
                 var semesterEnd = GetSemesterEndDate(semester);
                 Console.WriteLine($"[REPORT_SERVICE] Semester period: {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
@@ -336,27 +336,27 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Generating activity tracking report for club {clubId}, semester {semester}");
-                
+
                 // Input validation
                 if (clubId <= 0)
                     throw new ArgumentException("Invalid club ID", nameof(clubId));
-                
+
                 if (string.IsNullOrWhiteSpace(semester))
                     throw new ArgumentException("Semester is required", nameof(semester));
-                
+
                 if (generatedByUserId <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
-                
+
                 // Verify club exists
                 var clubExists = await _context.Clubs.FindAsync(clubId);
                 if (clubExists == null)
                     throw new InvalidOperationException($"Club with ID {clubId} not found");
-                
+
                 // Verify user exists
                 var user = await _context.Users.FindAsync(generatedByUserId);
                 if (user == null)
                     throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
-                
+
                 var semesterStart = GetSemesterStartDate(semester);
                 var semesterEnd = GetSemesterEndDate(semester);
                 Console.WriteLine($"[REPORT_SERVICE] Analyzing member activity from {semesterStart:yyyy-MM-dd} to {semesterEnd:yyyy-MM-dd}");
@@ -423,17 +423,17 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Generating comprehensive semester summary report for club {clubId}, semester {semester}");
-                
+
                 // Input validation
                 if (clubId <= 0)
                     throw new ArgumentException("Invalid club ID", nameof(clubId));
-                
+
                 if (string.IsNullOrWhiteSpace(semester))
                     throw new ArgumentException("Semester is required", nameof(semester));
-                
+
                 if (generatedByUserId <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
-                
+
                 var memberReport = await GenerateMemberStatisticsReportAsync(clubId, semester, generatedByUserId);
                 var eventReport = await GenerateEventOutcomesReportAsync(clubId, semester, generatedByUserId);
                 var activityReport = await GenerateActivityTrackingReportAsync(clubId, semester, generatedByUserId);
@@ -473,13 +473,13 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to PDF format");
-                
+
                 // Input validation
                 if (reportId <= 0)
                     throw new ArgumentException("Invalid report ID", nameof(reportId));
-                
+
                 var report = await GetReportByIdAsync(reportId);
-                if (report == null) 
+                if (report == null)
                 {
                     Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
                     throw new InvalidOperationException($"Report with ID {reportId} not found");
@@ -545,13 +545,13 @@ namespace ClubManagementApp.Services
             try
             {
                 Console.WriteLine($"[REPORT_SERVICE] Exporting report {reportId} to Excel format");
-                
+
                 // Input validation
                 if (reportId <= 0)
                     throw new ArgumentException("Invalid report ID", nameof(reportId));
-                
+
                 var report = await GetReportByIdAsync(reportId);
-                if (report == null) 
+                if (report == null)
                 {
                     Console.WriteLine($"[REPORT_SERVICE] Cannot export - report {reportId} not found");
                     throw new InvalidOperationException($"Report with ID {reportId} not found");
@@ -739,6 +739,29 @@ namespace ClubManagementApp.Services
         {
             var startDate = GetSemesterStartDate(semester);
             return startDate.AddMonths(4).AddDays(-1);
+        }
+
+        /// <summary>
+        /// Gets the total count of reports in the database efficiently.
+        ///
+        /// Performance:
+        /// - Uses COUNT query instead of loading all records
+        /// - Optimized for dashboard statistics display
+        ///
+        /// Used by: Dashboard statistics, admin overview
+        /// </summary>
+        /// <returns>Total number of reports in the system</returns>
+        public async Task<int> GetTotalReportsCountAsync()
+        {
+            try
+            {
+                return await _context.Reports.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error getting total reports count: {ex.Message}");
+                throw;
+            }
         }
     }
 }

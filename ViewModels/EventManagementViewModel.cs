@@ -197,7 +197,7 @@ namespace ClubManagementApp.ViewModels
                 filtered = SelectedStatus switch
                 {
                     "Upcoming" => filtered.Where(e => e.EventDate > now),
-                    "Ongoing" => filtered.Where(e => e.EventDate <= now && e.EventDate >= now),
+                    "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date),
                     "Completed" => filtered.Where(e => e.EventDate < now),
                     _ => filtered
                 };
@@ -208,8 +208,7 @@ namespace ClubManagementApp.ViewModels
             if (SelectedDate.HasValue)
             {
                 var selectedDate = SelectedDate.Value.Date;
-                filtered = filtered.Where(e =>
-                    e.EventDate.Date <= selectedDate && e.EventDate.Date >= selectedDate);
+                filtered = filtered.Where(e => e.EventDate.Date == selectedDate);
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied date filter: {SelectedDate.Value:yyyy-MM-dd}");
             }
 
@@ -241,21 +240,21 @@ namespace ClubManagementApp.ViewModels
                     Events.Add(createdEvent);
                     FilterEvents();
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event created successfully: {createdEvent.Name}");
-                    System.Windows.MessageBox.Show($"Event '{createdEvent.Name}' created successfully!", "Success", 
+                    System.Windows.MessageBox.Show($"Event '{createdEvent.Name}' created successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error creating event: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error creating event: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error creating event: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
         private async void EditEvent(Event? eventItem)
         {
-            if (eventItem == null) 
+            if (eventItem == null)
             {
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] Edit Event command called with null event");
                 return;
@@ -269,7 +268,7 @@ namespace ClubManagementApp.ViewModels
                 {
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Updating event: {editEventDialog.UpdatedEvent.Name}");
                     var updatedEvent = await _eventService.UpdateEventAsync(editEventDialog.UpdatedEvent);
-                    
+
                     // Update the event in the collection
                     var index = Events.IndexOf(eventItem);
                     if (index >= 0)
@@ -280,21 +279,21 @@ namespace ClubManagementApp.ViewModels
                     }
                     FilterEvents();
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event updated successfully: {updatedEvent.Name}");
-                    System.Windows.MessageBox.Show($"Event '{updatedEvent.Name}' updated successfully!", "Success", 
+                    System.Windows.MessageBox.Show($"Event '{updatedEvent.Name}' updated successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error updating event {eventItem.Name}: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error updating event: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error updating event: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
         private async void DeleteEvent(Event? eventItem)
         {
-            if (eventItem == null) 
+            if (eventItem == null)
             {
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] Delete Event command called with null event");
                 return;
@@ -336,7 +335,7 @@ namespace ClubManagementApp.ViewModels
 
         private void ViewEvent(Event? eventItem)
         {
-            if (eventItem == null) 
+            if (eventItem == null)
             {
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] View Event command called with null event");
                 return;
@@ -352,14 +351,14 @@ namespace ClubManagementApp.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error opening event details: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error opening event details: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error opening event details: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
         private void ManageParticipants(Event? eventItem)
         {
-            if (eventItem == null) 
+            if (eventItem == null)
             {
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] Manage Participants command called with null event");
                 return;
@@ -375,7 +374,7 @@ namespace ClubManagementApp.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error opening participant management: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error opening participant management: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error opening participant management: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -387,7 +386,7 @@ namespace ClubManagementApp.ViewModels
             {
                 if (!FilteredEvents.Any())
                 {
-                    System.Windows.MessageBox.Show("No events to export.", "Information", 
+                    System.Windows.MessageBox.Show("No events to export.", "Information",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     return;
                 }
@@ -419,14 +418,14 @@ namespace ClubManagementApp.ViewModels
 
                     System.IO.File.WriteAllText(saveFileDialog.FileName, csv.ToString(), System.Text.Encoding.UTF8);
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Events exported successfully to: {saveFileDialog.FileName}");
-                    System.Windows.MessageBox.Show($"Events exported successfully to:\n{saveFileDialog.FileName}", "Export Complete", 
+                    System.Windows.MessageBox.Show($"Events exported successfully to:\n{saveFileDialog.FileName}", "Export Complete",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error exporting events: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error exporting events: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error exporting events: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }

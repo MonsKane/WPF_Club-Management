@@ -12,6 +12,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IClubService _clubService;
         private readonly IEventService _eventService;
         private readonly IReportService _reportService;
+        private readonly INavigationService _navigationService;
         private int _totalUsers;
         private int _totalClubs;
         private int _totalEvents;
@@ -23,13 +24,15 @@ namespace ClubManagementApp.ViewModels
         private ObservableCollection<Event> _recentEvents = new();
 
         public DashboardViewModel(IUserService userService, IClubService clubService,
-                                IEventService eventService, IReportService reportService)
+                                IEventService eventService, IReportService reportService,
+                                INavigationService navigationService)
         {
             Console.WriteLine("[DashboardViewModel] Initializing DashboardViewModel with services");
             _userService = userService;
             _clubService = clubService;
             _eventService = eventService;
             _reportService = reportService;
+            _navigationService = navigationService;
             InitializeCommands();
             Console.WriteLine("[DashboardViewModel] DashboardViewModel initialization completed");
         }
@@ -37,13 +40,21 @@ namespace ClubManagementApp.ViewModels
         public int TotalUsers
         {
             get => _totalUsers;
-            set => SetProperty(ref _totalUsers, value);
+            set
+            {
+                Console.WriteLine($"[DashboardViewModel] Setting TotalUsers to: {value}");
+                SetProperty(ref _totalUsers, value);
+            }
         }
 
         public int TotalClubs
         {
             get => _totalClubs;
-            set => SetProperty(ref _totalClubs, value);
+            set
+            {
+                Console.WriteLine($"[DashboardViewModel] Setting TotalClubs to: {value}");
+                SetProperty(ref _totalClubs, value);
+            }
         }
 
         public int TotalEvents
@@ -99,6 +110,14 @@ namespace ClubManagementApp.ViewModels
         public ICommand ViewAllReportsCommand { get; private set; } = null!;
         public ICommand RefreshCommand { get; private set; } = null!;
 
+        // Enhanced Quick Actions Commands
+        public ICommand QuickSearchCommand { get; private set; } = null!;
+        public ICommand ExportDataCommand { get; private set; } = null!;
+        public ICommand BackupDataCommand { get; private set; } = null!;
+        public ICommand ViewNotificationsCommand { get; private set; } = null!;
+        public ICommand SettingsCommand { get; private set; } = null!;
+        public ICommand ViewUpcomingEventsCommand { get; private set; } = null!;
+
         private void InitializeCommands()
         {
             AddMemberCommand = new RelayCommand(AddMember);
@@ -109,7 +128,19 @@ namespace ClubManagementApp.ViewModels
             ViewAllClubsCommand = new RelayCommand(ViewAllClubs);
             ViewAllEventsCommand = new RelayCommand(ViewAllEvents);
             ViewAllReportsCommand = new RelayCommand(ViewAllReports);
-            RefreshCommand = new RelayCommand(async () => await LoadDashboardDataAsync());
+            RefreshCommand = new RelayCommand(async () => {
+                Console.WriteLine("[DashboardViewModel] RefreshCommand executed - starting refresh");
+                await LoadDashboardDataAsync();
+                Console.WriteLine("[DashboardViewModel] RefreshCommand completed");
+            });
+
+            // Enhanced Quick Actions Commands
+            QuickSearchCommand = new RelayCommand(QuickSearch);
+            ExportDataCommand = new RelayCommand(ExportData);
+            BackupDataCommand = new RelayCommand(BackupData);
+            ViewNotificationsCommand = new RelayCommand(ViewNotifications);
+            SettingsCommand = new RelayCommand(OpenSettings);
+            ViewUpcomingEventsCommand = new RelayCommand(ViewUpcomingEvents);
         }
 
         private async Task LoadDashboardDataAsync()
@@ -119,31 +150,25 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine("[DashboardViewModel] Starting to load dashboard data");
                 IsLoading = true;
 
-                // Load statistics
-                var users = await _userService.GetAllUsersAsync();
-                var clubs = await _clubService.GetAllClubsAsync();
-                var events = await _eventService.GetAllEventsAsync();
-                var reports = await _reportService.GetAllReportsAsync();
-                Console.WriteLine($"[DashboardViewModel] Retrieved data - Users: {users.Count()}, Clubs: {clubs.Count()}, Events: {events.Count()}, Reports: {reports.Count()}");
+                // Load statistics efficiently using count methods
+                TotalUsers = await _userService.GetTotalUsersCountAsync();
+                TotalClubs = await _clubService.GetTotalClubsCountAsync();
+                TotalEvents = await _eventService.GetTotalEventsCountAsync();
+                TotalReports = await _reportService.GetTotalReportsCountAsync();
+                Console.WriteLine($"[DashboardViewModel] Retrieved counts - Users: {TotalUsers}, Clubs: {TotalClubs}, Events: {TotalEvents}, Reports: {TotalReports}");
 
-                TotalUsers = users.Count();
-                TotalClubs = clubs.Count();
-                TotalEvents = events.Count();
-                TotalReports = reports.Count();
-
-                // Calculate event statistics
-                var now = DateTime.Now;
-                ActiveEvents = events.Count(e => e.EventDate <= now && e.EventDate >= now);
-                UpcomingEvents = events.Count(e => e.EventDate > now);
+                // Calculate event statistics efficiently
+                ActiveEvents = await _eventService.GetActiveEventsCountAsync();
+                UpcomingEvents = await _eventService.GetUpcomingEventsCountAsync();
                 Console.WriteLine($"[DashboardViewModel] Event statistics - Active: {ActiveEvents}, Upcoming: {UpcomingEvents}");
 
-                // Calculate new members this month
-                var startOfMonth = new DateTime(now.Year, now.Month, 1);
-                NewMembersThisMonth = users.Count(u => u.JoinDate >= startOfMonth);
+                // Calculate new members this month efficiently
+                NewMembersThisMonth = await _userService.GetNewMembersThisMonthCountAsync();
                 Console.WriteLine($"[DashboardViewModel] New members this month: {NewMembersThisMonth}");
 
-                // Load recent events
-                var recentEventsList = events
+                // Load recent events (still need full data for display)
+                var allEvents = await _eventService.GetAllEventsAsync();
+                var recentEventsList = allEvents
                     .OrderByDescending(e => e.CreatedDate)
                     .Take(5)
                     .ToList();
@@ -170,29 +195,61 @@ namespace ClubManagementApp.ViewModels
         private void AddMember(object? parameter)
         {
             Console.WriteLine("[DashboardViewModel] Add Member command executed from Dashboard");
-            // Logic to navigate to add member view or open dialog
-            System.Diagnostics.Debug.WriteLine("Add Member clicked from Dashboard");
+            try
+            {
+                _navigationService.OpenMemberListWindow();
+                Console.WriteLine("[DashboardViewModel] Successfully opened Member List window");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error opening Member List window: {ex.Message}");
+                _navigationService.ShowNotification("Không thể mở cửa sổ quản lý thành viên");
+            }
         }
 
         private void CreateEvent(object? parameter)
         {
             Console.WriteLine("[DashboardViewModel] Create Event command executed from Dashboard");
-            // Logic to navigate to create event view or open dialog
-            System.Diagnostics.Debug.WriteLine("Create Event clicked from Dashboard");
+            try
+            {
+                _navigationService.OpenEventManagementWindow();
+                Console.WriteLine("[DashboardViewModel] Successfully opened Event Management window");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error opening Event Management window: {ex.Message}");
+                _navigationService.ShowNotification("Không thể mở cửa sổ quản lý sự kiện");
+            }
         }
 
         private void AddClub(object? parameter)
         {
             Console.WriteLine("[DashboardViewModel] Add Club command executed from Dashboard");
-            // Logic to navigate to add club view or open dialog
-            System.Diagnostics.Debug.WriteLine("Add Club clicked from Dashboard");
+            try
+            {
+                _navigationService.OpenClubManagementWindow();
+                Console.WriteLine("[DashboardViewModel] Successfully opened Club Management window");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error opening Club Management window: {ex.Message}");
+                _navigationService.ShowNotification("Không thể mở cửa sổ quản lý câu lạc bộ");
+            }
         }
 
         private void GenerateReport(object? parameter)
         {
             Console.WriteLine("[DashboardViewModel] Generate Report command executed from Dashboard");
-            // Logic to navigate to reports view or open report generation dialog
-            System.Diagnostics.Debug.WriteLine("Generate Report clicked from Dashboard");
+            try
+            {
+                _navigationService.OpenReportsWindow();
+                Console.WriteLine("[DashboardViewModel] Successfully opened Reports window");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error opening Reports window: {ex.Message}");
+                _navigationService.ShowNotification("Không thể mở cửa sổ báo cáo");
+            }
         }
 
         private void ViewAllUsers(object? parameter)
@@ -221,6 +278,97 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine("[DashboardViewModel] View All Reports command executed from Dashboard");
             // Logic to navigate to reports view
             System.Diagnostics.Debug.WriteLine("View All Reports clicked from Dashboard");
+        }
+
+        // Enhanced Quick Actions Methods
+        private void QuickSearch(object? parameter)
+        {
+            Console.WriteLine("[DashboardViewModel] Quick Search command executed from Dashboard");
+            try
+            {
+                _navigationService.ShowNotification("Tính năng tìm kiếm nhanh sẽ được triển khai sớm!");
+                // TODO: Implement global search functionality
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error in Quick Search: {ex.Message}");
+                _navigationService.ShowNotification("Lỗi khi thực hiện tìm kiếm");
+            }
+        }
+
+        private void ExportData(object? parameter)
+        {
+            Console.WriteLine("[DashboardViewModel] Export Data command executed from Dashboard");
+            try
+            {
+                _navigationService.ShowNotification("Đang xuất dữ liệu... Tính năng sẽ được hoàn thiện sớm!");
+                // TODO: Implement data export functionality
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error in Export Data: {ex.Message}");
+                _navigationService.ShowNotification("Lỗi khi xuất dữ liệu");
+            }
+        }
+
+        private void BackupData(object? parameter)
+        {
+            Console.WriteLine("[DashboardViewModel] Backup Data command executed from Dashboard");
+            try
+            {
+                _navigationService.ShowNotification("Đang sao lưu dữ liệu... Tính năng sẽ được hoàn thiện sớm!");
+                // TODO: Implement backup functionality
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error in Backup Data: {ex.Message}");
+                _navigationService.ShowNotification("Lỗi khi sao lưu dữ liệu");
+            }
+        }
+
+        private void ViewNotifications(object? parameter)
+        {
+            Console.WriteLine("[DashboardViewModel] View Notifications command executed from Dashboard");
+            try
+            {
+                _navigationService.ShowNotification("Hiển thị thông báo... Tính năng sẽ được hoàn thiện sớm!");
+                // TODO: Implement notifications view
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error in View Notifications: {ex.Message}");
+                _navigationService.ShowNotification("Lỗi khi hiển thị thông báo");
+            }
+        }
+
+        private void OpenSettings(object? parameter)
+        {
+            Console.WriteLine("[DashboardViewModel] Open Settings command executed from Dashboard");
+            try
+            {
+                _navigationService.ShowNotification("Mở cài đặt... Tính năng sẽ được hoàn thiện sớm!");
+                // TODO: Implement settings window
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error in Open Settings: {ex.Message}");
+                _navigationService.ShowNotification("Lỗi khi mở cài đặt");
+            }
+        }
+
+        private void ViewUpcomingEvents(object? parameter)
+        {
+            Console.WriteLine("[DashboardViewModel] View Upcoming Events command executed from Dashboard");
+            try
+            {
+                _navigationService.OpenEventManagementWindow();
+                Console.WriteLine("[DashboardViewModel] Successfully opened Event Management window for upcoming events");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error opening Event Management window: {ex.Message}");
+                _navigationService.ShowNotification("Không thể mở cửa sổ sự kiện sắp tới");
+            }
         }
 
         public override Task LoadAsync()

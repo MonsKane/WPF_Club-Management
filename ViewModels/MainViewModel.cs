@@ -25,7 +25,16 @@ namespace ClubManagementApp.ViewModels
         private string _notificationMessage = string.Empty;
 
         // Child ViewModels
-        public DashboardViewModel? DashboardViewModel { get; private set; }
+        private DashboardViewModel _dashboardViewModel = null!;
+        public DashboardViewModel DashboardViewModel
+        {
+            get => _dashboardViewModel;
+            private set
+            {
+                Console.WriteLine($"[MainViewModel] Setting DashboardViewModel: {value != null}");
+                SetProperty(ref _dashboardViewModel, value);
+            }
+        }
         public MemberListViewModel? MemberListViewModel { get; private set; }
         public EventManagementViewModel? EventManagementViewModel { get; private set; }
         public ClubManagementViewModel? ClubManagementViewModel { get; private set; }
@@ -108,9 +117,12 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            NavigateToDashboardCommand = new RelayCommand(() => {
+            NavigateToDashboardCommand = new RelayCommand(async () => {
                 Console.WriteLine("[NAVIGATION] Navigating to Dashboard");
                 CurrentView = "Dashboard";
+                // Load dashboard statistics when navigating to dashboard
+                await DashboardViewModel.LoadAsync();
+                Console.WriteLine("[NAVIGATION] Dashboard statistics refreshed");
             });
             OpenMemberListCommand = new RelayCommand(() => {
                 Console.WriteLine("[NAVIGATION] Opening Member List Window");
@@ -139,7 +151,9 @@ namespace ClubManagementApp.ViewModels
         private void InitializeChildViewModels()
         {
             Console.WriteLine("[MainViewModel] Initializing child ViewModels");
-            DashboardViewModel = new DashboardViewModel(_userService, _clubService, _eventService, _reportService);
+            DashboardViewModel = new DashboardViewModel(_userService, _clubService, _eventService, _reportService, _navigationService);
+            Console.WriteLine($"[MainViewModel] DashboardViewModel created: {DashboardViewModel != null}");
+            Console.WriteLine($"[MainViewModel] DashboardViewModel.RefreshCommand created: {DashboardViewModel.RefreshCommand != null}");
             MemberListViewModel = new MemberListViewModel(_userService, _clubService, _notificationService, null);
             EventManagementViewModel = new EventManagementViewModel(_eventService, _clubService, _userService);
             ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService);
@@ -179,7 +193,12 @@ namespace ClubManagementApp.ViewModels
                 foreach (var report in reports)
                     Reports.Add(report);
                 Console.WriteLine($"[DATA] Loaded {reports.Count()} reports");
-                
+
+                // Load dashboard statistics
+                Console.WriteLine("[DATA] Loading dashboard statistics...");
+                await DashboardViewModel.LoadAsync();
+                Console.WriteLine("[DATA] Dashboard statistics loaded");
+
                 Console.WriteLine("[DATA] All data loaded successfully");
             }
             catch (Exception ex)
@@ -200,7 +219,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine("[MAIN_LOGIN] Credentials validated, getting user details...");
                     CurrentUser = await _userService.GetUserByEmailAsync(email);
                     Console.WriteLine($"[MAIN_LOGIN] User set: {CurrentUser?.FullName} ({CurrentUser?.Role})");
-                    
+
                     Console.WriteLine("[MAIN_LOGIN] Loading initial data...");
                     await LoadDataAsync();
                     Console.WriteLine("[MAIN_LOGIN] Login process completed successfully");
@@ -227,7 +246,7 @@ namespace ClubManagementApp.ViewModels
             Events.Clear();
             Reports.Clear();
             Console.WriteLine("[LOGOUT] Logout completed, data cleared");
-            
+
             // Navigate back to login window
             _navigationService.NavigateToLogin();
         }

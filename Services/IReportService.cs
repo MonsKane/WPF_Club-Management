@@ -16,5 +16,6 @@ namespace ClubManagementApp.Services
         Task<Report> GenerateSemesterSummaryReportAsync(int clubId, string semester, int generatedByUserId);
         Task<byte[]> ExportReportToPdfAsync(int reportId);
         Task<byte[]> ExportReportToExcelAsync(int reportId);
+        Task<int> GetTotalReportsCountAsync();
     }
 }

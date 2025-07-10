@@ -23,5 +23,7 @@ namespace ClubManagementApp.Services
         Task<IEnumerable<User>> GetClubLeadershipAsync(int clubId);
         Task<User?> GetCurrentUserAsync();
         void SetCurrentUser(User? user);
+        Task<int> GetTotalUsersCountAsync();
+        Task<int> GetNewMembersThisMonthCountAsync();
     }
 }

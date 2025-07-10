@@ -21,5 +21,8 @@ namespace ClubManagementApp.Services
         Task<bool> UnregisterUserFromEventAsync(int eventId, int userId);
         Task<Dictionary<string, object>> GetEventStatisticsAsync(int eventId);
         Task<IEnumerable<EventParticipant>> GetUserEventHistoryAsync(int userId);
+        Task<int> GetTotalEventsCountAsync();
+        Task<int> GetActiveEventsCountAsync();
+        Task<int> GetUpcomingEventsCountAsync();
     }
 }

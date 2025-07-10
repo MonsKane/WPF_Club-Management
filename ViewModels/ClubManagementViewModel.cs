@@ -182,19 +182,19 @@ namespace ClubManagementApp.ViewModels
                 {
                     Console.WriteLine($"[ClubManagementViewModel] Creating new club: {dialog.CreatedClub.Name}");
                     var createdClub = await _clubService.CreateClubAsync(dialog.CreatedClub);
-                    
+
                     // Load statistics for the new club
                     await LoadClubStatistics(createdClub);
-                    
+
                     Clubs.Add(createdClub);
                     FilterClubs();
-                    
+
                     System.Windows.MessageBox.Show(
                         $"Club '{createdClub.Name}' has been created successfully!",
                         "Club Created",
                         System.Windows.MessageBoxButton.OK,
                         System.Windows.MessageBoxImage.Information);
-                    
+
                     Console.WriteLine($"[ClubManagementViewModel] Club created successfully: {createdClub.Name}");
                 }
             }
@@ -224,25 +224,25 @@ namespace ClubManagementApp.ViewModels
                 {
                     Console.WriteLine($"[ClubManagementViewModel] Updating club: {dialog.UpdatedClub.Name}");
                     var updatedClub = await _clubService.UpdateClubAsync(dialog.UpdatedClub);
-                    
+
                     // Find and replace the club in the collection
                     var index = Clubs.ToList().FindIndex(c => c.ClubID == updatedClub.ClubID);
                     if (index >= 0)
                     {
                         // Load statistics for the updated club
                         await LoadClubStatistics(updatedClub);
-                        
+
                         // Remove the old club and insert the updated one to trigger proper notifications
                         Clubs.RemoveAt(index);
                         Clubs.Insert(index, updatedClub);
                         FilterClubs();
-                        
+
                         System.Windows.MessageBox.Show(
                             $"Club '{updatedClub.Name}' has been updated successfully!",
                             "Club Updated",
                             System.Windows.MessageBoxButton.OK,
                             System.Windows.MessageBoxImage.Information);
-                        
+
                         Console.WriteLine($"[ClubManagementViewModel] Club updated successfully: {updatedClub.Name}");
                     }
                 }
@@ -320,24 +320,24 @@ namespace ClubManagementApp.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"[ClubManagementViewModel] Error showing club details: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error opening club details: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error opening club details: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
-        private async void ManageLeadership(Club? club)
+        private void ManageLeadership(Club? club)
         {
             if (club == null) return;
 
             Console.WriteLine($"[ClubManagementViewModel] Manage Leadership command executed for: {club.Name} (ID: {club.ClubID})");
             try
             {
-                await _navigationService.ShowManageLeadership(club);
+                _navigationService.ShowManageLeadership(club);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ClubManagementViewModel] Error opening leadership management: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error opening leadership management: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error opening leadership management: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -354,7 +354,7 @@ namespace ClubManagementApp.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"[ClubManagementViewModel] Error opening member list: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error opening member list: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error opening member list: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
@@ -371,7 +371,7 @@ namespace ClubManagementApp.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"[ClubManagementViewModel] Error opening event management: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error opening event management: {ex.Message}", "Error", 
+                System.Windows.MessageBox.Show($"Error opening event management: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }

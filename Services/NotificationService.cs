@@ -649,86 +649,46 @@ namespace ClubManagementApp.Services
 
         public async Task SendEventNotificationAsync(int eventId, string subject, string message, NotificationType type = NotificationType.Both)
         {
-            try
+            var eventEntity = await _context.Events
+                .Include(e => e.Participants)
+                    .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(e => e.EventID == eventId);
+
+            if (eventEntity == null) return;
+
+            var participants = eventEntity.Participants.Select(p => p.User).ToList();
+
+            foreach (var participant in participants)
             {
-                if (eventId <= 0)
-                    throw new ArgumentException("Event ID must be greater than 0", nameof(eventId));
-                
-                if (string.IsNullOrWhiteSpace(subject))
-                    throw new ArgumentException("Subject cannot be null or empty", nameof(subject));
-                
-                if (string.IsNullOrWhiteSpace(message))
-                    throw new ArgumentException("Message cannot be null or empty", nameof(message));
-
-                var eventEntity = await _context.Events
-                    .Include(e => e.Participants)
-                        .ThenInclude(p => p.User)
-                    .FirstOrDefaultAsync(e => e.EventID == eventId);
-
-                if (eventEntity == null)
-                    throw new ArgumentException($"Event with ID {eventId} not found", nameof(eventId));
-
-                var participants = eventEntity.Participants.Select(p => p.User).ToList();
-
-                foreach (var participant in participants)
+                if (type == NotificationType.Email || type == NotificationType.Both)
                 {
-                    if (type == NotificationType.Email || type == NotificationType.Both)
-                    {
-                        await SendEmailAsync(participant.Email, subject, message);
-                    }
-
-                    if (type == NotificationType.InApp || type == NotificationType.Both)
-                    {
-                        await SendInAppNotificationAsync(participant.UserID, subject, message);
-                    }
+                    await SendEmailAsync(participant.Email, subject, message);
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error sending event notification for event {eventId}");
-                throw;
+
+                if (type == NotificationType.InApp || type == NotificationType.Both)
+                {
+                    await SendInAppNotificationAsync(participant.UserID, subject, message);
+                }
             }
         }
 
         public async Task SendClubNotificationAsync(int clubId, string subject, string message, NotificationType type = NotificationType.Both)
         {
-            try
+            var clubMembers = await _context.Users
+                .Where(u => u.ClubID == clubId && u.IsActive)
+                .ToListAsync();
+
+            foreach (var member in clubMembers)
             {
-                if (clubId <= 0)
-                    throw new ArgumentException("Club ID must be greater than 0", nameof(clubId));
-                
-                if (string.IsNullOrWhiteSpace(subject))
-                    throw new ArgumentException("Subject cannot be null or empty", nameof(subject));
-                
-                if (string.IsNullOrWhiteSpace(message))
-                    throw new ArgumentException("Message cannot be null or empty", nameof(message));
-
-                // Verify club exists
-                var clubExists = await _context.Clubs.AnyAsync(c => c.ClubID == clubId);
-                if (!clubExists)
-                    throw new ArgumentException($"Club with ID {clubId} not found", nameof(clubId));
-
-                var clubMembers = await _context.Users
-                    .Where(u => u.ClubID == clubId && u.IsActive)
-                    .ToListAsync();
-
-                foreach (var member in clubMembers)
+                if (type == NotificationType.Email || type == NotificationType.Both)
                 {
-                    if (type == NotificationType.Email || type == NotificationType.Both)
-                    {
-                        await SendEmailAsync(member.Email, subject, message);
-                    }
-
-                    if (type == NotificationType.InApp || type == NotificationType.Both)
-                    {
-                        await SendInAppNotificationAsync(member.UserID, subject, message);
-                    }
+                    await SendEmailAsync(member.Email, subject, message);
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error sending club notification for club {clubId}");
-                throw;
+
+                if (type == NotificationType.InApp || type == NotificationType.Both)
+                {
+                    await SendInAppNotificationAsync(member.UserID, subject, message);
+                }
             }
         }
 
@@ -1065,23 +1025,6 @@ namespace ClubManagementApp.Services
              };
              
              await CreateBulkNotificationsAsync(request);
-         }
-
-         // Helper method for email validation
-         private bool IsValidEmail(string email)
-         {
-             if (string.IsNullOrWhiteSpace(email))
-                 return false;
-
-             try
-             {
-                 var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase);
-                 return emailRegex.IsMatch(email);
-             }
-             catch
-             {
-                 return false;
-             }
          }
 
          public void Dispose()

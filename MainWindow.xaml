@@ -8,7 +8,7 @@
         xmlns:vm="clr-namespace:ClubManagementApp.ViewModels"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Ứng Dụng Quản Lý Câu Lạc Bộ" 
+        Title="Ứng Dụng Quản Lý Câu Lạc Bộ"
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         AllowsTransparency="True"
@@ -34,11 +34,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
+                        <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
-                                          VerticalAlignment="Center" 
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"
                                           Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -68,12 +68,12 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                            BorderBrush="{TemplateBinding BorderBrush}" 
+                        <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="8" Margin="8,2">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
-                                          VerticalAlignment="Center" 
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"
                                           Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -112,19 +112,125 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Bảng Điều Khiển" FontSize="32" FontWeight="Bold" 
-                                   Foreground="Black" Margin="0,0,0,5"/>
-                            <TextBlock Text="Chào mừng trở lại! Đây là những gì đang diễn ra với các câu lạc bộ của bạn." 
-                                   FontSize="16" Foreground="Black"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <!-- Dashboard Icon -->
+                            <Border Width="60" Height="60" Margin="0,0,20,0" CornerRadius="12" Background="White" Padding="6">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.1" BlurRadius="8"/>
+                                </Border.Effect>
+                                <Viewbox>
+                                    <Canvas Width="100" Height="100">
+                                        <!-- Background circle -->
+                                        <Ellipse Canvas.Left="5" Canvas.Top="5" Width="90" Height="90" Fill="#3B82F6" Stroke="#1E40AF" StrokeThickness="2"/>
+                                        
+                                        <!-- Club building/house shape -->
+                                        <Canvas Canvas.Left="50" Canvas.Top="50">
+                                            <!-- Main building -->
+                                            <Rectangle Canvas.Left="-18" Canvas.Top="-5" Width="36" Height="25" Fill="#FFFFFF" RadiusX="2" RadiusY="2"/>
+                                            
+                                            <!-- Roof -->
+                                            <Polygon Points="-22,-5 0,-20 22,-5" Fill="#EF4444" Stroke="#DC2626" StrokeThickness="1"/>
+                                            
+                                            <!-- Door -->
+                                            <Rectangle Canvas.Left="-4" Canvas.Top="8" Width="8" Height="12" Fill="#8B5CF6" RadiusX="1" RadiusY="1"/>
+                                            <Ellipse Canvas.Left="1.2" Canvas.Top="13.2" Width="1.6" Height="1.6" Fill="#FFFFFF"/>
+                                            
+                                            <!-- Windows -->
+                                            <Rectangle Canvas.Left="-14" Canvas.Top="-1" Width="6" Height="6" Fill="#60A5FA" RadiusX="1" RadiusY="1"/>
+                                            <Rectangle Canvas.Left="8" Canvas.Top="-1" Width="6" Height="6" Fill="#60A5FA" RadiusX="1" RadiusY="1"/>
+                                            
+                                            <!-- Window frames -->
+                                            <Line X1="-11" Y1="-1" X2="-11" Y2="5" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                            <Line X1="-14" Y1="2" X2="-8" Y2="2" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                            <Line X1="11" Y1="-1" X2="11" Y2="5" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                            <Line X1="8" Y1="2" X2="14" Y2="2" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                            
+                                            <!-- People icons (representing club members) -->
+                                            <Canvas Canvas.Left="-8" Canvas.Top="-25">
+                                                <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                                <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#10B981"/>
+                                            </Canvas>
+                                            
+                                            <Canvas Canvas.Left="0" Canvas.Top="-25">
+                                                <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                                <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#F59E0B"/>
+                                            </Canvas>
+                                            
+                                            <Canvas Canvas.Left="8" Canvas.Top="-25">
+                                                <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                                <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#EF4444"/>
+                                            </Canvas>
+                                        </Canvas>
+                                        
+                                        <!-- Decorative elements -->
+                                        <Ellipse Canvas.Left="18" Canvas.Top="23" Width="4" Height="4" Fill="#FBBF24" Opacity="0.7"/>
+                                        <Ellipse Canvas.Left="77" Canvas.Top="28" Width="3" Height="3" Fill="#34D399" Opacity="0.7"/>
+                                        <Ellipse Canvas.Left="21.4" Canvas.Top="71.4" Width="3.6" Height="3.6" Fill="#F472B6" Opacity="0.7"/>
+                                        <Ellipse Canvas.Left="70.6" Canvas.Top="65.6" Width="4.4" Height="4.4" Fill="#A78BFA" Opacity="0.7"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                            
+                            <!-- Dashboard Text -->
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Bảng Điều Khiển" FontSize="32" FontWeight="Bold"
+                                       Foreground="Black" Margin="0,0,0,5"/>
+                                <TextBlock Text="Chào mừng trở lại! Đây là những gì đang diễn ra với các câu lạc bộ của bạn."
+                                       FontSize="16" Foreground="Black"/>
+                            </StackPanel>
                         </StackPanel>
 
-                        <Border Grid.Column="1" Background="#3B82F6" CornerRadius="12" Padding="15,10">
+                        <Button Grid.Column="1"
+                                Command="{Binding DashboardViewModel.RefreshCommand}"
+                                Background="#2E86AB"
+                                Foreground="White"
+                                BorderThickness="1"
+                                BorderBrush="#1E5F7A"
+                                Padding="16,10"
+                                FontWeight="SemiBold"
+                                FontSize="14"
+                                Cursor="Hand"
+                                ToolTip="Refresh dashboard data from database">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="#2E86AB"/>
+                                    <Setter Property="BorderBrush" Value="#1E5F7A"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        CornerRadius="12"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#3A9BC1"/>
+                                            <Setter Property="BorderBrush" Value="#2E86AB"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter Property="Background" Value="#1E5F7A"/>
+                                            <Setter Property="BorderBrush" Value="#0F3A4A"/>
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Background" Value="#CCCCCC"/>
+                                            <Setter Property="BorderBrush" Value="#999999"/>
+                                            <Setter Property="Foreground" Value="#666666"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="🔄" FontSize="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Làm Mới" FontSize="14" FontWeight="Medium" Foreground="White"/>
+                                <TextBlock Text="🔄" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Làm Mới" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
                             </StackPanel>
-                        </Border>
+                        </Button>
                     </Grid>
 
                     <!-- Modern Stats Cards -->
@@ -152,9 +258,9 @@
                                     <TextBlock Text="👥" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalUsers}" FontSize="36" FontWeight="Bold" 
+                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalUsers}" FontSize="36" FontWeight="Bold"
                                        Foreground="Black" Margin="0,16,0,4"/>
-                                <TextBlock Grid.Row="2" Text="Tổng Người Dùng" FontSize="14" FontWeight="Medium" 
+                                <TextBlock Grid.Row="2" Text="Tổng Người Dùng" FontSize="14" FontWeight="Medium"
                                        Foreground="Black"/>
                             </Grid>
                         </Border>
@@ -175,9 +281,9 @@
                                     <TextBlock Text="🏛️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalClubs}" FontSize="36" FontWeight="Bold" 
+                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalClubs}" FontSize="36" FontWeight="Bold"
                                        Foreground="Black" Margin="0,16,0,4"/>
-                                <TextBlock Grid.Row="2" Text="Tổng Câu Lạc Bộ" FontSize="14" FontWeight="Medium" 
+                                <TextBlock Grid.Row="2" Text="Tổng Câu Lạc Bộ" FontSize="14" FontWeight="Medium"
                                        Foreground="Black"/>
                             </Grid>
                         </Border>
@@ -198,9 +304,9 @@
                                     <TextBlock Text="📅" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalEvents}" FontSize="36" FontWeight="Bold" 
+                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalEvents}" FontSize="36" FontWeight="Bold"
                                        Foreground="Black" Margin="0,16,0,4"/>
-                                <TextBlock Grid.Row="2" Text="Tổng Sự Kiện" FontSize="14" FontWeight="Medium" 
+                                <TextBlock Grid.Row="2" Text="Tổng Sự Kiện" FontSize="14" FontWeight="Medium"
                                        Foreground="Black"/>
                             </Grid>
                         </Border>
@@ -221,9 +327,9 @@
                                     <TextBlock Text="📈" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
-                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalReports}" FontSize="36" FontWeight="Bold" 
+                                <TextBlock Grid.Row="1" Text="{Binding DashboardViewModel.TotalReports}" FontSize="36" FontWeight="Bold"
                                        Foreground="Black" Margin="0,16,0,4"/>
-                                <TextBlock Grid.Row="2" Text="Tổng Báo Cáo" FontSize="14" FontWeight="Medium" 
+                                <TextBlock Grid.Row="2" Text="Tổng Báo Cáo" FontSize="14" FontWeight="Medium"
                                        Foreground="Black"/>
                             </Grid>
                         </Border>
@@ -248,21 +354,21 @@
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                                    <TextBlock Text="Sự Kiện Gần Đây" FontSize="20" FontWeight="Bold" 
+                                    <TextBlock Text="Sự Kiện Gần Đây" FontSize="20" FontWeight="Bold"
                                            Foreground="Black" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Các sự kiện mới nhất từ câu lạc bộ của bạn" 
+                                    <TextBlock Text="Các sự kiện mới nhất từ câu lạc bộ của bạn"
                                            FontSize="14" Foreground="Black"/>
                                 </StackPanel>
 
-                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="500">
                                     <ItemsControl ItemsSource="{Binding DashboardViewModel.RecentEvents}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,12">
                                                     <StackPanel>
-                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16" 
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="16"
                                                                Foreground="Black" Margin="0,0,0,4"/>
-                                                        <TextBlock Text="{Binding EventDate, StringFormat='Date: {0:MMM dd, yyyy}'}" 
+                                                        <TextBlock Text="{Binding EventDate, StringFormat='Date: {0:MMM dd, yyyy}'}"
                                                                FontSize="14" Foreground="Black"/>
                                                     </StackPanel>
                                                 </Border>
@@ -273,8 +379,8 @@
                             </Grid>
                         </Border>
 
-                        <!-- Quick Actions -->
-                        <Border Grid.Column="1" Background="White" CornerRadius="16" Padding="32" Margin="15,0,0,0">
+                        <!-- Enhanced Quick Actions -->
+                        <Border Grid.Column="1" Background="White" CornerRadius="16" Padding="24" Margin="15,0,0,0">
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="12"/>
                             </Border.Effect>
@@ -284,42 +390,127 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                                    <TextBlock Text="Thao Tác Nhanh" FontSize="20" FontWeight="Bold" 
+                                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                                    <TextBlock Text="Thao Tác Nhanh" FontSize="20" FontWeight="Bold"
                                            Foreground="Black" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Các tác vụ thông thường và phím tắt" 
-                                           FontSize="14" Foreground="Black"/>
+                                    <TextBlock Text="Các tác vụ thông thường và tiện ích hữu ích"
+                                           FontSize="14" Foreground="#64748B"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Row="1">
-                                    <Button Background="#3B82F6" Foreground="White" BorderThickness="0" 
-                                        Padding="16,12" Margin="0,0,0,12" 
-                                        Command="{Binding DashboardViewModel.CreateEventCommand}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="➕" FontSize="16" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Thêm Sự Kiện Mới" FontSize="14" FontWeight="Medium"/>
-                                        </StackPanel>
-                                    </Button>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
 
-                                    <Button Background="#10B981" Foreground="White" BorderThickness="0" 
-                                        Padding="16,12" Margin="0,0,0,12" 
-                                        Command="{Binding DashboardViewModel.AddMemberCommand}"
-                                        Visibility="{Binding CanAccessAdminFeatures, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="👥" FontSize="16" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Quản Lý Người Dùng" FontSize="14" FontWeight="Medium"/>
-                                        </StackPanel>
-                                    </Button>
+                                        <!-- Primary Actions -->
+                                        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                                            <TextBlock Text="Tác Vụ Chính" FontSize="14" FontWeight="SemiBold" 
+                                                   Foreground="#374151" Margin="0,0,0,8"/>
+                                            
+                                            <!-- Create Event Card -->
+                                            <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,8"
+                                                BorderBrush="#E2E8F0" BorderThickness="1">
+                                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                                    Command="{Binding DashboardViewModel.CreateEventCommand}"
+                                                    HorizontalContentAlignment="Stretch">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <Border Grid.Column="0" Background="#3B82F6" CornerRadius="8" 
+                                                            Width="32" Height="32" Margin="0,0,12,0">
+                                                            <TextBlock Text="📅" FontSize="16" HorizontalAlignment="Center" 
+                                                                   VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="Tạo Sự Kiện Mới" FontSize="14" FontWeight="Medium" 
+                                                                   Foreground="#1F2937"/>
+                                                            <TextBlock Text="Thêm sự kiện cho câu lạc bộ" FontSize="12" 
+                                                                   Foreground="#6B7280"/>
+                                                        </StackPanel>
+                                                        
+                                                        <TextBlock Grid.Column="2" Text="→" FontSize="16" 
+                                                               Foreground="#9CA3AF" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                            </Border>
 
-                                    <Button Background="#8B5CF6" Foreground="White" BorderThickness="0" 
-                                        Padding="16,12" 
-                                        Command="{Binding DashboardViewModel.GenerateReportCommand}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0"/>
-                                            <TextBlock Text="Tạo Báo Cáo" FontSize="14" FontWeight="Medium"/>
+                                            <!-- Add Club Card -->
+                                            <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,8"
+                                                BorderBrush="#E2E8F0" BorderThickness="1">
+                                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                                    Command="{Binding DashboardViewModel.AddClubCommand}"
+                                                    HorizontalContentAlignment="Stretch">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <Border Grid.Column="0" Background="#10B981" CornerRadius="8" 
+                                                            Width="32" Height="32" Margin="0,0,12,0">
+                                                            <TextBlock Text="🏛️" FontSize="16" HorizontalAlignment="Center" 
+                                                                   VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="Thêm Câu Lạc Bộ" FontSize="14" FontWeight="Medium" 
+                                                                   Foreground="#1F2937"/>
+                                                            <TextBlock Text="Tạo câu lạc bộ mới" FontSize="12" 
+                                                                   Foreground="#6B7280"/>
+                                                        </StackPanel>
+                                                        
+                                                        <TextBlock Grid.Column="2" Text="→" FontSize="16" 
+                                                               Foreground="#9CA3AF" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                            </Border>
+
+                                            <!-- User Management Card -->
+                                            <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,8"
+                                                BorderBrush="#E2E8F0" BorderThickness="1"
+                                                Visibility="{Binding CanAccessAdminFeatures, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                                    Command="{Binding DashboardViewModel.AddMemberCommand}"
+                                                    HorizontalContentAlignment="Stretch">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <Border Grid.Column="0" Background="#8B5CF6" CornerRadius="8" 
+                                                            Width="32" Height="32" Margin="0,0,12,0">
+                                                            <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Center" 
+                                                                   VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="Quản Lý Người Dùng" FontSize="14" FontWeight="Medium" 
+                                                                   Foreground="#1F2937"/>
+                                                            <TextBlock Text="Thêm và quản lý thành viên" FontSize="12" 
+                                                                   Foreground="#6B7280"/>
+                                                        </StackPanel>
+                                                        
+                                                        <TextBlock Grid.Column="2" Text="→" FontSize="16" 
+                                                               Foreground="#9CA3AF" VerticalAlignment="Center"/>
+                                                    </Grid>
+                                                </Button>
+                                            </Border>
                                         </StackPanel>
-                                    </Button>
-                                </StackPanel>
+
+
+
+
+                                    </Grid>
+                                </ScrollViewer>
                             </Grid>
                         </Border>
                     </Grid>
@@ -345,13 +536,13 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Quản Lý Người Dùng" FontSize="32" FontWeight="Bold" 
+                            <TextBlock Text="Quản Lý Người Dùng" FontSize="32" FontWeight="Bold"
                                    Foreground="Black" Margin="0,0,0,5"/>
-                            <TextBlock Text="Quản lý người dùng, vai trò và quyền hạn trong tổ chức của bạn." 
+                            <TextBlock Text="Quản lý người dùng, vai trò và quyền hạn trong tổ chức của bạn."
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#3B82F6" Foreground="White" BorderThickness="0" 
+                        <Button Grid.Column="1" Background="#3B82F6" Foreground="White" BorderThickness="0"
                             Padding="20,12" FontWeight="Medium">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="➕" FontSize="16" Margin="0,0,8,0"/>
@@ -382,8 +573,8 @@
                                 <Border Grid.Column="0" Background="#F1F5F9" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                     <TextBlock Text="🔍" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBox Grid.Column="1" Name="SearchBox" BorderThickness="0" Background="Transparent" 
-                                     VerticalAlignment="Center" FontSize="16" 
+                                <TextBox Grid.Column="1" Name="SearchBox" BorderThickness="0" Background="Transparent"
+                                     VerticalAlignment="Center" FontSize="16"
                                      Foreground="Black" FontWeight="Medium"/>
                             </Grid>
                         </Border>
@@ -393,7 +584,7 @@
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
-                            <ComboBox Background="Transparent" BorderThickness="0" FontSize="16" 
+                            <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
                                   Foreground="Black" FontWeight="Medium">
                                 <ComboBoxItem Content="Tất Cả Vai Trò"/>
                                 <ComboBoxItem Content="Quản Trị Viên"/>
@@ -479,12 +670,12 @@
                                                     <TextBlock Grid.Column="4" Text="{Binding JoinDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Button Background="#3B82F6" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#3B82F6" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="0,0,8,0" ToolTip="Edit">
                                                             <TextBlock Text="✏️" FontSize="12"/>
                                                         </Button>
 
-                                                        <Button Background="#EF4444" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#EF4444" Foreground="White" BorderThickness="0"
                                                             Padding="8" ToolTip="Delete">
                                                             <TextBlock Text="🗑️" FontSize="12"/>
                                                         </Button>
@@ -520,13 +711,13 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Báo Cáo &amp; Phân Tích" FontSize="32" FontWeight="Bold" 
+                            <TextBlock Text="Báo Cáo &amp; Phân Tích" FontSize="32" FontWeight="Bold"
                                    Foreground="Black" Margin="0,0,0,5"/>
-                            <TextBlock Text="Tạo thông tin chi tiết và theo dõi hiệu suất trong tổ chức của bạn." 
+                            <TextBlock Text="Tạo thông tin chi tiết và theo dõi hiệu suất trong tổ chức của bạn."
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#10B981" Foreground="White" BorderThickness="0" 
+                        <Button Grid.Column="1" Background="#10B981" Foreground="White" BorderThickness="0"
                             Padding="20,12" FontWeight="Medium">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0"/>
@@ -619,8 +810,8 @@
                                 <Border Grid.Column="0" Background="#F1F5F9" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                     <TextBlock Text="🔍" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBox Grid.Column="1" Name="ReportSearchBox" BorderThickness="0" Background="Transparent" 
-                                     VerticalAlignment="Center" FontSize="16" 
+                                <TextBox Grid.Column="1" Name="ReportSearchBox" BorderThickness="0" Background="Transparent"
+                                     VerticalAlignment="Center" FontSize="16"
                                      Foreground="Black" FontWeight="Medium"/>
                             </Grid>
                         </Border>
@@ -630,7 +821,7 @@
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
-                            <ComboBox Background="Transparent" BorderThickness="0" FontSize="16" 
+                            <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
                                   Foreground="Black" FontWeight="Medium">
                                 <ComboBoxItem Content="Tất Cả Loại"/>
                                 <ComboBoxItem Content="Thành Viên"/>
@@ -645,7 +836,7 @@
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
-                            <DatePicker Background="Transparent" BorderThickness="0" FontSize="16" 
+                            <DatePicker Background="Transparent" BorderThickness="0" FontSize="16"
                                     Foreground="Black" FontWeight="Medium"/>
                         </Border>
                     </Grid>
@@ -706,22 +897,22 @@
                                                     <TextBlock Grid.Column="3" Text="{Binding GeneratedByUser.FullName}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
 
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Button Background="#3B82F6" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#3B82F6" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="0,0,4,0" ToolTip="View">
                                                             <TextBlock Text="👁️" FontSize="12"/>
                                                         </Button>
 
-                                                        <Button Background="#10B981" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#10B981" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="2,0" ToolTip="Download">
                                                             <TextBlock Text="⬇️" FontSize="12"/>
                                                         </Button>
 
-                                                        <Button Background="#F59E0B" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#F59E0B" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="2,0" ToolTip="Email">
                                                             <TextBlock Text="📧" FontSize="12"/>
                                                         </Button>
 
-                                                        <Button Background="#EF4444" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#EF4444" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="4,0,0,0" ToolTip="Delete">
                                                             <TextBlock Text="🗑️" FontSize="12"/>
                                                         </Button>
@@ -756,13 +947,13 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Quản Lý Câu Lạc Bộ" FontSize="32" FontWeight="Bold" 
+                            <TextBlock Text="Quản Lý Câu Lạc Bộ" FontSize="32" FontWeight="Bold"
                                    Foreground="Black" Margin="0,0,0,5"/>
-                            <TextBlock Text="Quản lý và tổ chức tất cả câu lạc bộ của bạn ở một nơi." 
+                            <TextBlock Text="Quản lý và tổ chức tất cả câu lạc bộ của bạn ở một nơi."
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#EF4444" Foreground="White" BorderThickness="0" 
+                        <Button Grid.Column="1" Background="#EF4444" Foreground="White" BorderThickness="0"
                             Padding="20,12" FontWeight="Medium">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="➕" FontSize="16" Margin="0,0,8,0"/>
@@ -785,8 +976,8 @@
                             <Border Grid.Column="0" Background="#F1F5F9" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                 <TextBlock Text="🔍" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBox Grid.Column="1" Name="ClubSearchBox" BorderThickness="0" Background="Transparent" 
-                                 VerticalAlignment="Center" FontSize="16" 
+                            <TextBox Grid.Column="1" Name="ClubSearchBox" BorderThickness="0" Background="Transparent"
+                                 VerticalAlignment="Center" FontSize="16"
                                  Foreground="Black" FontWeight="Medium"/>
                         </Grid>
                     </Border>
@@ -817,18 +1008,18 @@
                                             </Grid.RowDefinitions>
 
                                             <!-- Club Icon -->
-                                            <Border Grid.Row="0" Background="#F0F9FF" CornerRadius="12" Width="48" Height="48" 
+                                            <Border Grid.Row="0" Background="#F0F9FF" CornerRadius="12" Width="48" Height="48"
                                                 HorizontalAlignment="Left" Margin="0,0,0,16">
                                                 <TextBlock Text="🏛️" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
 
                                             <!-- Club Name -->
-                                            <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="20" FontWeight="Bold" 
+                                            <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="20" FontWeight="Bold"
                                                    Foreground="Black" Margin="0,0,0,8" TextTrimming="CharacterEllipsis"/>
 
                                             <!-- Club Description -->
-                                            <TextBlock Grid.Row="2" Text="{Binding Description}" FontSize="14" 
-                                                   Foreground="Black" TextWrapping="Wrap" 
+                                            <TextBlock Grid.Row="2" Text="{Binding Description}" FontSize="14"
+                                                   Foreground="Black" TextWrapping="Wrap"
                                                    Margin="0,0,0,20" MaxHeight="60" TextTrimming="WordEllipsis"/>
 
                                             <!-- Stats -->
@@ -840,18 +1031,18 @@
 
                                                 <Border Grid.Column="0" Background="#F0F9FF" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
                                                     <StackPanel>
-                                                        <TextBlock Text="{Binding Users.Count}" FontSize="18" FontWeight="Bold" 
+                                                        <TextBlock Text="{Binding Users.Count}" FontSize="18" FontWeight="Bold"
                                                                Foreground="Black" HorizontalAlignment="Center"/>
-                                                        <TextBlock Text="Thành Viên" FontSize="12" Foreground="Black" 
+                                                        <TextBlock Text="Thành Viên" FontSize="12" Foreground="Black"
                                                                HorizontalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
 
                                                 <Border Grid.Column="1" Background="#FEF3F2" CornerRadius="8" Padding="12,8" Margin="8,0,0,0">
                                                     <StackPanel>
-                                                        <TextBlock Text="{Binding Events.Count}" FontSize="18" FontWeight="Bold" 
+                                                        <TextBlock Text="{Binding Events.Count}" FontSize="18" FontWeight="Bold"
                                                                Foreground="Black" HorizontalAlignment="Center"/>
-                                                        <TextBlock Text="Sự Kiện" FontSize="12" Foreground="Black" 
+                                                        <TextBlock Text="Sự Kiện" FontSize="12" Foreground="Black"
                                                                HorizontalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
@@ -864,12 +1055,12 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <Button Grid.Column="0" Background="#3B82F6" Foreground="White" BorderThickness="0" 
+                                                <Button Grid.Column="0" Background="#3B82F6" Foreground="White" BorderThickness="0"
                                                     Padding="12,8" FontWeight="Medium" Margin="0,0,8,0">
                                                     <TextBlock Text="Xem Chi Tiết" FontSize="14"/>
                                                 </Button>
 
-                                                <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0" 
+                                                <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0"
                                                     Padding="12,8" FontWeight="Medium">
                                                     <TextBlock Text="✏️" FontSize="14"/>
                                                 </Button>
@@ -902,13 +1093,13 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="Quản Lý Sự Kiện" FontSize="32" FontWeight="Bold" 
+                            <TextBlock Text="Quản Lý Sự Kiện" FontSize="32" FontWeight="Bold"
                                    Foreground="Black" Margin="0,0,0,5"/>
-                            <TextBlock Text="Lập kế hoạch, tổ chức và theo dõi tất cả sự kiện một cách liền mạch." 
+                            <TextBlock Text="Lập kế hoạch, tổ chức và theo dõi tất cả sự kiện một cách liền mạch."
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0" 
+                        <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0"
                             Padding="20,12" FontWeight="Medium">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="📅" FontSize="16" Margin="0,0,8,0"/>
@@ -939,8 +1130,8 @@
                                 <Border Grid.Column="0" Background="#F1F5F9" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                     <TextBlock Text="🔍" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBox Grid.Column="1" Name="EventSearchBox" BorderThickness="0" Background="Transparent" 
-                                     VerticalAlignment="Center" FontSize="16" 
+                                <TextBox Grid.Column="1" Name="EventSearchBox" BorderThickness="0" Background="Transparent"
+                                     VerticalAlignment="Center" FontSize="16"
                                      Foreground="Black" FontWeight="Medium"/>
                             </Grid>
                         </Border>
@@ -950,7 +1141,7 @@
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
-                            <ComboBox Background="Transparent" BorderThickness="0" FontSize="16" 
+                            <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
                                   Foreground="Black" FontWeight="Medium">
                                 <ComboBoxItem Content="Tất Cả Sự Kiện"/>
                                 <ComboBoxItem Content="Sắp Tới"/>
@@ -964,7 +1155,7 @@
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
-                            <DatePicker Background="Transparent" BorderThickness="0" FontSize="16" 
+                            <DatePicker Background="Transparent" BorderThickness="0" FontSize="16"
                                     Foreground="Black" FontWeight="Medium"/>
                         </Border>
                     </Grid>
@@ -1032,17 +1223,17 @@
                                                     </Border>
 
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Button Background="#3B82F6" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#3B82F6" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="0,0,4,0" ToolTip="View">
                                                             <TextBlock Text="👁️" FontSize="12"/>
                                                         </Button>
 
-                                                        <Button Background="#F59E0B" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#F59E0B" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="2,0" ToolTip="Edit">
                                                             <TextBlock Text="✏️" FontSize="12"/>
                                                         </Button>
 
-                                                        <Button Background="#EF4444" Foreground="White" BorderThickness="0" 
+                                                        <Button Background="#EF4444" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="4,0,0,0" ToolTip="Delete">
                                                             <TextBlock Text="🗑️" FontSize="12"/>
                                                         </Button>
@@ -1061,14 +1252,14 @@
 
 
 
-        <converters:ViewTemplateSelector x:Key="ViewTemplateSelector"
-                                     DashboardTemplate="{StaticResource DashboardTemplate}"
-                                     UsersTemplate="{StaticResource UsersTemplate}"
-                                     ClubsTemplate="{StaticResource ClubsTemplate}"
-                                     EventsTemplate="{StaticResource EventsTemplate}"
-                                     ReportsTemplate="{StaticResource ReportsTemplate}"/>
+        <converters:ViewTemplateConverter x:Key="ViewTemplateConverter"
+                                          DashboardTemplate="{StaticResource DashboardTemplate}"
+                                          UsersTemplate="{StaticResource UsersTemplate}"
+                                          ClubsTemplate="{StaticResource ClubsTemplate}"
+                                          EventsTemplate="{StaticResource EventsTemplate}"
+                                          ReportsTemplate="{StaticResource ReportsTemplate}"/>
     </Window.Resources>
-    
+
     <!-- Main Container with Modern Design -->
     <Border CornerRadius="12" Background="White" BorderThickness="1" BorderBrush="#E0E6ED">
         <Border.Effect>
@@ -1099,18 +1290,66 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- App Icon and Title -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Ellipse Width="32" Height="32" Margin="0,0,12,0">
-                            <Ellipse.Fill>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#FF6B6B" Offset="0"/>
-                                    <GradientStop Color="#4ECDC4" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
-                        <StackPanel>
-                            <TextBlock Text="Quản Lý Câu Lạc Bộ" FontSize="16" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="{Binding CurrentUser.Club.Name}" FontSize="11" Foreground="White" Opacity="0.8"/>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
+                        <Border Width="40" Height="40" Margin="0,0,12,0" CornerRadius="8" Background="White" Padding="4">
+                            <Border.Effect>
+                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.2" BlurRadius="6"/>
+                            </Border.Effect>
+                            <Viewbox>
+                                <Canvas Width="100" Height="100">
+                                    <!-- Background circle -->
+                                    <Ellipse Canvas.Left="5" Canvas.Top="5" Width="90" Height="90" Fill="#3B82F6" Stroke="#1E40AF" StrokeThickness="2"/>
+                                    
+                                    <!-- Club building/house shape -->
+                                    <Canvas Canvas.Left="50" Canvas.Top="50">
+                                        <!-- Main building -->
+                                        <Rectangle Canvas.Left="-18" Canvas.Top="-5" Width="36" Height="25" Fill="#FFFFFF" RadiusX="2" RadiusY="2"/>
+                                        
+                                        <!-- Roof -->
+                                        <Polygon Points="-22,-5 0,-20 22,-5" Fill="#EF4444" Stroke="#DC2626" StrokeThickness="1"/>
+                                        
+                                        <!-- Door -->
+                                        <Rectangle Canvas.Left="-4" Canvas.Top="8" Width="8" Height="12" Fill="#8B5CF6" RadiusX="1" RadiusY="1"/>
+                                        <Ellipse Canvas.Left="1.2" Canvas.Top="13.2" Width="1.6" Height="1.6" Fill="#FFFFFF"/>
+                                        
+                                        <!-- Windows -->
+                                        <Rectangle Canvas.Left="-14" Canvas.Top="-1" Width="6" Height="6" Fill="#60A5FA" RadiusX="1" RadiusY="1"/>
+                                        <Rectangle Canvas.Left="8" Canvas.Top="-1" Width="6" Height="6" Fill="#60A5FA" RadiusX="1" RadiusY="1"/>
+                                        
+                                        <!-- Window frames -->
+                                        <Line X1="-11" Y1="-1" X2="-11" Y2="5" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                        <Line X1="-14" Y1="2" X2="-8" Y2="2" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                        <Line X1="11" Y1="-1" X2="11" Y2="5" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                        <Line X1="8" Y1="2" X2="14" Y2="2" Stroke="#FFFFFF" StrokeThickness="0.5"/>
+                                        
+                                        <!-- People icons (representing club members) -->
+                                        <Canvas Canvas.Left="-8" Canvas.Top="-25">
+                                            <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                            <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#10B981"/>
+                                        </Canvas>
+                                        
+                                        <Canvas Canvas.Left="0" Canvas.Top="-25">
+                                            <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                            <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#F59E0B"/>
+                                        </Canvas>
+                                        
+                                        <Canvas Canvas.Left="8" Canvas.Top="-25">
+                                            <Ellipse Canvas.Left="-2.5" Canvas.Top="-2.5" Width="5" Height="5" Fill="#FCD34D"/>
+                                            <Ellipse Canvas.Left="-3" Canvas.Top="2" Width="6" Height="8" Fill="#EF4444"/>
+                                        </Canvas>
+                                    </Canvas>
+                                    
+                                    <!-- Decorative elements -->
+                                    <Ellipse Canvas.Left="18" Canvas.Top="23" Width="4" Height="4" Fill="#FBBF24" Opacity="0.7"/>
+                                    <Ellipse Canvas.Left="77" Canvas.Top="28" Width="3" Height="3" Fill="#34D399" Opacity="0.7"/>
+                                    <Ellipse Canvas.Left="21.4" Canvas.Top="71.4" Width="3.6" Height="3.6" Fill="#F472B6" Opacity="0.7"/>
+                                    <Ellipse Canvas.Left="70.6" Canvas.Top="65.6" Width="4.4" Height="4.4" Fill="#A78BFA" Opacity="0.7"/>
+                                </Canvas>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+                            <TextBlock Text="Quản Lý Câu Lạc Bộ" FontSize="16" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            <TextBlock Text="{Binding CurrentUser.Club.Name}" FontSize="11" Foreground="White" Opacity="0.8" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -1118,8 +1357,28 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
                         <Border Background="#FFFFFF20" CornerRadius="20" Padding="12,6">
                             <StackPanel Orientation="Horizontal">
-                                <Ellipse Width="24" Height="24" Fill="#4ECDC4" Margin="0,0,8,0"/>
-                                <TextBlock Text="{Binding CurrentUser.FullName}" FontSize="13" FontWeight="Medium" Foreground="White" VerticalAlignment="Center"/>
+                                <TextBlock Text="😊" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding CurrentUser.FullName}" FontSize="13" FontWeight="Medium" Foreground="Black" VerticalAlignment="Center"/>
+                                <Button Content="↪" Width="24" Height="24" Background="Transparent" Foreground="Black" BorderThickness="0" FontSize="16" Margin="8,0,0,0" Command="{Binding LogoutCommand}" Cursor="Hand" ToolTip="Sign Out">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#40FFFFFF"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -1261,28 +1520,6 @@
                             <!-- Divider -->
                             <Border Height="1" Background="#E2E8F0" Margin="0,10,0,20"/>
 
-                            <!-- Quick Actions Header -->
-                            <TextBlock Text="THAO TÁC NHANH" FontSize="12" FontWeight="SemiBold" Foreground="Black" Margin="0,0,0,15"/>
-
-                            <!-- Refresh Data -->
-                            <Button Command="{Binding RefreshDataCommand}" Style="{StaticResource ModernNavButtonStyle}" Margin="0,0,0,8">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Background="#6B7280" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
-                                        <TextBlock Text="🔄" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Làm Mới Dữ Liệu" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
-                                </StackPanel>
-                            </Button>
-
-                            <!-- Logout Button -->
-                            <Button Command="{Binding LogoutCommand}" Style="{StaticResource ModernNavButtonStyle}" Margin="0,0,0,8">
-                                <StackPanel Orientation="Horizontal">
-                                    <Border Background="#DC2626" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
-                                        <TextBlock Text="🚪" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Đăng Xuất" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"/>
-                                </StackPanel>
-                            </Button>
 
                         </StackPanel>
                     </ScrollViewer>
@@ -1320,21 +1557,21 @@
                             </Border>
                             <TextBlock Grid.Column="1" Text="{Binding NotificationMessage}" FontSize="14" FontWeight="Medium"
                                        Foreground="Black" VerticalAlignment="Center"/>
-                            <Button Grid.Column="2" Content="✕" Background="#F59E0B" Foreground="White" BorderThickness="0" 
+                            <Button Grid.Column="2" Content="✕" Background="#F59E0B" Foreground="White" BorderThickness="0"
                                     FontWeight="Bold" Padding="8" Width="32" Height="32"
                                     Command="{Binding DismissNotificationCommand}"/>
                         </Grid>
                     </Border>
 
                     <!-- Modern Main Content -->
-                    <Border Grid.Row="1" Background="White" Margin="30,15,30,30" CornerRadius="16" 
+                    <Border Grid.Row="1" Background="White" Margin="30,15,30,30" CornerRadius="16"
                             BorderBrush="#E2E8F0" BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" Opacity="0.08" BlurRadius="16"/>
                         </Border.Effect>
 
-                        <ContentControl Content="{Binding CurrentView}" 
-                                        ContentTemplateSelector="{StaticResource ViewTemplateSelector}"
+                        <ContentControl Content="{Binding}"
+                                        ContentTemplate="{Binding CurrentView, Converter={StaticResource ViewTemplateConverter}}"
                                         Margin="0"/>
                     </Border>
                 </Grid>

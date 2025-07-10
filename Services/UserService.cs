@@ -11,7 +11,7 @@ namespace ClubManagementApp.Services
     /// <summary>
     /// UserService handles all user-related business logic and data operations.
     /// This service acts as the primary interface between the presentation layer and user data.
-    /// 
+    ///
     /// Key Responsibilities:
     /// 1. User CRUD operations (Create, Read, Update, Delete)
     /// 2. Authentication and credential validation
@@ -19,10 +19,10 @@ namespace ClubManagementApp.Services
     /// 4. Club membership management
     /// 5. Role-based user management
     /// 6. Participation history and statistics
-    /// 
+    ///
     /// Data Flow:
     /// ViewModels -> UserService -> DbContext -> Database
-    /// 
+    ///
     /// Security Features:
     /// - Password hashing using SHA256
     /// - Current user session management
@@ -49,12 +49,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves all users from the database with their associated club information.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query Users table with Club navigation property
         /// 2. Order results alphabetically by full name
         /// 3. Return complete user list for administrative views
-        /// 
+        ///
         /// Used by: Admin panels, user management screens, reporting
         /// </summary>
         /// <returns>Collection of all users with club details, ordered by name</returns>
@@ -79,13 +79,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves a specific user by ID with complete profile information.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query Users table by primary key
         /// 2. Include Club navigation for membership details
         /// 3. Include EventParticipations with nested Event data for activity history
         /// 4. Return full user profile or null if not found
-        /// 
+        ///
         /// Used by: User profile views, detailed user information displays
         /// </summary>
         /// <param name="userId">Unique identifier of the user</param>
@@ -106,7 +106,7 @@ namespace ClubManagementApp.Services
                     .Include(u => u.EventParticipations) // User's event participation history
                         .ThenInclude(ep => ep.Event) // Event details for each participation
                     .FirstOrDefaultAsync(u => u.UserID == userId);
-                
+
                 if (user != null)
                 {
                     _loggingService.LogInfo($"Found user: {user.FullName} ({user.Email})");
@@ -126,12 +126,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves a user by their email address for authentication and lookup purposes.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query Users table by email (unique identifier)
         /// 2. Include Club navigation for membership context
         /// 3. Return user profile or null if email not found
-        /// 
+        ///
         /// Used by: Login authentication, password reset, user lookup
         /// </summary>
         /// <param name="email">User's email address</param>
@@ -150,7 +150,7 @@ namespace ClubManagementApp.Services
                 var user = await _context.Users
                     .Include(u => u.Club) // Club context for authenticated user
                     .FirstOrDefaultAsync(u => u.Email == email);
-                
+
                 if (user != null)
                 {
                     _loggingService.LogInfo($"Found user: {user.FullName} (ID: {user.UserID}, Role: {user.Role})");
@@ -170,13 +170,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves all members of a specific club for club management operations.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Filter Users by ClubID foreign key
         /// 2. Include Club navigation for context
         /// 3. Order by name for organized display
         /// 4. Return club membership list
-        /// 
+        ///
         /// Used by: Club management screens, member lists, club statistics
         /// </summary>
         /// <param name="clubId">Unique identifier of the club</param>
@@ -206,13 +206,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Searches users by name or email using partial string matching.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Apply LIKE query on FullName and Email fields
         /// 2. Include Club navigation for search result context
         /// 3. Order results alphabetically
         /// 4. Return matching users for search functionality
-        /// 
+        ///
         /// Used by: User search features, admin lookup, member finding
         /// </summary>
         /// <param name="searchTerm">Partial name or email to search for</param>
@@ -242,14 +242,14 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Creates a new user account with secure password hashing.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Receive user data from registration form
         /// 2. Hash the plain text password using SHA256
         /// 3. Add user entity to database context
         /// 4. Save changes to persist the new user
         /// 5. Return the created user with generated ID
-        /// 
+        ///
         /// Security: Password is hashed before database storage
         /// Used by: User registration, admin user creation
         /// </summary>
@@ -261,30 +261,30 @@ namespace ClubManagementApp.Services
             {
                 _loggingService.LogInfo($"Creating new user: {user.FullName} ({user.Email})");
                 _loggingService.LogInfo($"User role: {user.Role}, Club ID: {user.ClubID}");
-                
+
                 // Input validation
                 if (user == null)
                     throw new ArgumentNullException(nameof(user), "User cannot be null");
-                
+
                 if (string.IsNullOrWhiteSpace(user.FullName))
                     throw new ArgumentException("Full name is required", nameof(user));
-                
+
                 if (string.IsNullOrWhiteSpace(user.Email))
                     throw new ArgumentException("Email is required", nameof(user));
-                
+
                 if (string.IsNullOrWhiteSpace(user.Password))
                     throw new ArgumentException("Password is required", nameof(user));
-                
+
                 // Check for duplicate email
                 var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
                 if (existingUser != null)
                     throw new InvalidOperationException($"User with email {user.Email} already exists");
-                
+
                 // SECURITY: Hash password before database storage
                 // This ensures plain text passwords are never stored in the database
                 user.Password = HashPassword(user.Password);
                 _loggingService.LogInfo("Password hashed successfully");
-                
+
                 // Add user to database context and persist changes
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
@@ -300,7 +300,7 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Updates an existing user's information in the database.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Receive updated user entity from UI
         /// 2. Find existing entity in database
@@ -308,7 +308,7 @@ namespace ClubManagementApp.Services
         /// 4. Hash password if it's being updated
         /// 5. Save changes to update database record
         /// 6. Return updated user entity
-        /// 
+        ///
         /// Security: Password is hashed before database storage if updated
         /// Used by: User profile editing, admin user management
         /// </summary>
@@ -320,25 +320,25 @@ namespace ClubManagementApp.Services
             {
                 if (user == null)
                     throw new ArgumentNullException(nameof(user), "User cannot be null");
-                
+
                 if (user.UserID <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(user));
-                
+
                 if (string.IsNullOrWhiteSpace(user.FullName))
                     throw new ArgumentException("Full name is required", nameof(user));
-                
+
                 if (string.IsNullOrWhiteSpace(user.Email))
                     throw new ArgumentException("Email is required", nameof(user));
 
                 _loggingService.LogInfo($"Updating user: {user.FullName} (ID: {user.UserID})");
-                
+
                 // Find the existing entity to avoid tracking conflicts
                 var existingUser = await _context.Users.FindAsync(user.UserID);
                 if (existingUser == null)
                 {
                     throw new InvalidOperationException($"User with ID {user.UserID} not found");
                 }
-                
+
                 // Update properties manually to avoid entity tracking issues
                 existingUser.FullName = user.FullName;
                 existingUser.Email = user.Email;
@@ -349,7 +349,7 @@ namespace ClubManagementApp.Services
                 existingUser.ActivityLevel = user.ActivityLevel;
                 existingUser.StudentID = user.StudentID;
                 existingUser.TwoFactorEnabled = user.TwoFactorEnabled;
-                
+
                 // Update password if it's different from the existing one (indicating a new password)
                 // Only hash if it's a new password (not already hashed)
                 if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
@@ -357,7 +357,7 @@ namespace ClubManagementApp.Services
                     Console.WriteLine("[USER_SERVICE] Password update detected, hashing new password");
                     existingUser.Password = HashPassword(user.Password);
                 }
-                
+
                 await _context.SaveChangesAsync();
                 _loggingService.LogInfo($"User updated successfully: {existingUser.FullName}");
                 return existingUser;
@@ -371,13 +371,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Deletes a user account from the database.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Find user by ID in database
         /// 2. If user exists, remove from context
         /// 3. Save changes to delete from database
         /// 4. Return success/failure status
-        /// 
+        ///
         /// Considerations: This is a hard delete - consider soft delete for audit trails
         /// Used by: Admin user management, account deactivation
         /// </summary>
@@ -388,12 +388,12 @@ namespace ClubManagementApp.Services
             try
             {
                 _loggingService.LogInfo($"Attempting to delete user with ID: {userId}");
-                
+
                 if (userId <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(userId));
-                
+
                 var user = await _context.Users.FindAsync(userId);
-                if (user == null) 
+                if (user == null)
                 {
                     _loggingService.LogWarning($"User not found for deletion: {userId}");
                     return false; // User not found
@@ -415,12 +415,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Validates user login credentials for authentication.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Look up user by email address
         /// 2. If user found, verify provided password against stored hash
         /// 3. Return authentication result
-        /// 
+        ///
         /// Security: Uses secure password hashing verification
         /// Used by: Login process, password verification
         /// </summary>
@@ -432,35 +432,35 @@ namespace ClubManagementApp.Services
             try
             {
                 _loggingService.LogInfo($"Validating credentials for email: {email}");
-                
+
                 // Input validation
                 if (string.IsNullOrWhiteSpace(email))
                     throw new ArgumentException("Email is required", nameof(email));
-                
+
                 if (string.IsNullOrWhiteSpace(password))
                     throw new ArgumentException("Password is required", nameof(password));
-                
+
                 // Look up user by email
                 var user = await GetUserByEmailAsync(email);
-                if (user == null) 
+                if (user == null)
                 {
                     _loggingService.LogWarning($"User not found in database: {email}");
                     return false; // User not found
                 }
 
                 _loggingService.LogInfo($"User found: {user.FullName} (ID: {user.UserID}, Active: {user.IsActive})");
-                
+
                 // Check if user is active
                 if (!user.IsActive)
                 {
                     _loggingService.LogWarning($"User account is inactive: {email}");
                     return false;
                 }
-                
+
                 // Verify password against stored hash
                 var passwordValid = VerifyPassword(password, user.Password);
                 _loggingService.LogInfo($"Password verification result: {passwordValid}");
-                
+
                 return passwordValid;
             }
             catch (Exception ex)
@@ -472,12 +472,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Manually updates a user's activity level for administrative purposes.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Find user by ID in database
         /// 2. Update ActivityLevel property
         /// 3. Save changes to persist the update
-        /// 
+        ///
         /// Used by: Admin overrides, manual activity level adjustments
         /// </summary>
         /// <param name="userId">Unique identifier of the user</param>
@@ -520,7 +520,7 @@ namespace ClubManagementApp.Services
         /// <summary>
         /// Automatically calculates and updates activity levels for users based on event attendance.
         /// This method implements the business logic for member engagement tracking.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query active users with their event participation history
         /// 2. For each user, calculate attendance rate from participation data
@@ -530,7 +530,7 @@ namespace ClubManagementApp.Services
         ///    - Inactive: <50% attendance rate
         /// 4. Update all user activity levels in batch
         /// 5. Save changes to persist updates
-        /// 
+        ///
         /// Business Logic: Activity levels drive engagement strategies and reporting
         /// Used by: Scheduled jobs, club management, engagement analysis
         /// </summary>
@@ -563,7 +563,7 @@ namespace ClubManagementApp.Services
                 {
                     var totalEvents = user.EventParticipations.Count;
                     var attendedEvents = user.EventParticipations.Count(ep => ep.Status == AttendanceStatus.Attended);
-                    
+
                     // STEP 3: Apply business rules for activity level determination
                     if (totalEvents == 0)
                     {
@@ -574,7 +574,7 @@ namespace ClubManagementApp.Services
                     {
                         // Calculate attendance percentage
                         var attendanceRate = (double)attendedEvents / totalEvents * 100;
-                        
+
                         // Apply tiered activity level logic
                         user.ActivityLevel = attendanceRate switch
                         {
@@ -598,13 +598,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Generates activity level statistics for reporting and dashboard displays.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query users table with optional club filtering
         /// 2. Group users by their ActivityLevel enum values
         /// 3. Count members in each activity category
         /// 4. Return dictionary mapping activity levels to member counts
-        /// 
+        ///
         /// Used by: Dashboard widgets, club statistics, engagement reports
         /// </summary>
         /// <param name="clubId">Optional club ID to limit statistics to specific club</param>
@@ -620,7 +620,7 @@ namespace ClubManagementApp.Services
                 }
 
                 var query = _context.Users.AsQueryable();
-                
+
                 // Filter by club if specified for club-specific statistics
                 if (clubId.HasValue)
                     query = query.Where(u => u.ClubID == clubId.Value);
@@ -639,14 +639,14 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves users filtered by their role for role-based management operations.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query users with specified role and active status
         /// 2. Include club navigation for context
         /// 3. Apply optional club filtering
         /// 4. Order results alphabetically
         /// 5. Return role-specific user list
-        /// 
+        ///
         /// Used by: Leadership management, role assignment, organizational charts
         /// </summary>
         /// <param name="role">User role to filter by (Chairman, ViceChairman, etc.)</param>
@@ -688,19 +688,19 @@ namespace ClubManagementApp.Services
         /// <summary>
         /// Generates comprehensive participation history and statistics for a specific user.
         /// This method provides detailed analytics for user engagement tracking.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query user with complete event participation history
         /// 2. Calculate participation statistics (totals, rates, trends)
         /// 3. Generate recent events summary for quick overview
         /// 4. Return structured data for UI display and reporting
-        /// 
+        ///
         /// Analytics Provided:
         /// - Total events participated in
         /// - Attendance vs registration rates
         /// - Recent event activity summary
         /// - Engagement trends over time
-        /// 
+        ///
         /// Used by: User profile pages, performance reviews, engagement analysis
         /// </summary>
         /// <param name="userId">Unique identifier of the user</param>
@@ -752,13 +752,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Assigns a user to a specific club, establishing club membership.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Find user by ID in database
         /// 2. Update user's ClubID foreign key
         /// 3. Save changes to establish membership
         /// 4. Return success/failure status
-        /// 
+        ///
         /// Used by: Club enrollment, membership management, user transfers
         /// </summary>
         /// <param name="userId">Unique identifier of the user</param>
@@ -782,7 +782,7 @@ namespace ClubManagementApp.Services
 
                 _loggingService.LogInfo($"Assigning user {userId} to club {clubId}");
                 var user = await _context.Users.FindAsync(userId);
-                if (user == null) 
+                if (user == null)
                 {
                     _loggingService.LogWarning($"User not found for club assignment: {userId}");
                     return false; // User not found
@@ -804,13 +804,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Removes a user from their current club, ending club membership.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Find user by ID in database
         /// 2. Clear user's ClubID foreign key (set to null)
         /// 3. Save changes to remove membership
         /// 4. Return success/failure status
-        /// 
+        ///
         /// Used by: Club departures, membership termination, user transfers
         /// </summary>
         /// <param name="userId">Unique identifier of the user</param>
@@ -826,7 +826,7 @@ namespace ClubManagementApp.Services
                 }
 
                 var user = await _context.Users.FindAsync(userId);
-                if (user == null) 
+                if (user == null)
                 {
                     await _loggingService.LogWarningAsync($"User not found for club removal: {userId}");
                     return false; // User not found
@@ -847,13 +847,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Updates a user's role within the organization or club.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Find user by ID in database
         /// 2. Update user's Role property
         /// 3. Save changes to apply new role
         /// 4. Return success/failure status
-        /// 
+        ///
         /// Used by: Role promotions, leadership changes, organizational restructuring
         /// </summary>
         /// <param name="userId">Unique identifier of the user</param>
@@ -877,7 +877,7 @@ namespace ClubManagementApp.Services
 
                 Console.WriteLine($"[USER_SERVICE] Updating role for user {userId} to {newRole}");
                 var user = await _context.Users.FindAsync(userId);
-                if (user == null) 
+                if (user == null)
                 {
                     Console.WriteLine($"[USER_SERVICE] User not found for role update: {userId}");
                     await _loggingService.LogWarningAsync($"User not found for role update: {userId}");
@@ -902,14 +902,14 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves the leadership team for a specific club.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Query users belonging to specified club
         /// 2. Filter by leadership roles (Chairman, ViceChairman, TeamLeader)
         /// 3. Include club navigation for context
         /// 4. Order by role hierarchy, then by name
         /// 5. Return organized leadership list
-        /// 
+        ///
         /// Used by: Organizational charts, leadership directories, club management
         /// </summary>
         /// <param name="clubId">Unique identifier of the club</param>
@@ -926,9 +926,9 @@ namespace ClubManagementApp.Services
 
                 return await _context.Users
                     .Include(u => u.Club) // Club context for leadership display
-                    .Where(u => u.ClubID == clubId && 
-                               (u.Role == UserRole.Chairman || 
-                                u.Role == UserRole.ViceChairman || 
+                    .Where(u => u.ClubID == clubId &&
+                               (u.Role == UserRole.Chairman ||
+                                u.Role == UserRole.ViceChairman ||
                                 u.Role == UserRole.TeamLeader)) // Filter leadership roles
                     .OrderBy(u => u.Role) // Order by role hierarchy
                     .ThenBy(u => u.FullName) // Then alphabetically by name
@@ -943,12 +943,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Securely hashes a plain text password using SHA256 algorithm.
-        /// 
+        ///
         /// Security Implementation:
         /// 1. Convert password string to UTF-8 bytes
         /// 2. Apply SHA256 cryptographic hash function
         /// 3. Convert hash bytes to Base64 string for storage
-        /// 
+        ///
         /// Note: In production, consider using BCrypt or Argon2 for better security
         /// </summary>
         /// <param name="password">Plain text password to hash</param>
@@ -975,12 +975,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Verifies a plain text password against a stored hash.
-        /// 
+        ///
         /// Verification Process:
         /// 1. Hash the provided password using same algorithm
         /// 2. Compare the new hash with the stored hash
         /// 3. Return true if hashes match (password is correct)
-        /// 
+        ///
         /// Used by: Authentication, password validation
         /// </summary>
         /// <param name="password">Plain text password to verify</param>
@@ -1010,13 +1010,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Calculates comprehensive participation statistics from event participation data.
-        /// 
+        ///
         /// Analytics Calculation:
         /// 1. Count total events user participated in
         /// 2. Count events by attendance status (Attended, Registered, Absent)
         /// 3. Calculate attendance rate percentage
         /// 4. Return structured statistics object
-        /// 
+        ///
         /// Used by: User analytics, engagement reporting, performance tracking
         /// </summary>
         /// <param name="participations">List of user's event participation records</param>
@@ -1067,13 +1067,13 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Generates a summary of recent events for quick user activity overview.
-        /// 
+        ///
         /// Data Processing:
         /// 1. Sort participations by event date (most recent first)
         /// 2. Take configured number of recent events
         /// 3. Project to anonymous object with essential event details
         /// 4. Return formatted summary for UI display
-        /// 
+        ///
         /// Used by: User dashboards, activity summaries, quick overviews
         /// </summary>
         /// <param name="participations">List of user's event participation records</param>
@@ -1110,12 +1110,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Retrieves the currently authenticated user from the session.
-        /// 
+        ///
         /// Session Management:
         /// - Returns the user stored in _currentUser field
         /// - Used throughout the application to get current user context
         /// - Returns null if no user is currently logged in
-        /// 
+        ///
         /// Used by: Authorization checks, user context, personalization
         /// </summary>
         /// <returns>Current authenticated user or null if not logged in</returns>
@@ -1126,12 +1126,12 @@ namespace ClubManagementApp.Services
 
         /// <summary>
         /// Sets the current authenticated user for the session.
-        /// 
+        ///
         /// Session Management:
         /// - Stores user in _currentUser field for application-wide access
         /// - Called during login to establish user session
         /// - Can be set to null during logout to clear session
-        /// 
+        ///
         /// Used by: Login process, session management, user switching
         /// </summary>
         /// <param name="user">User to set as current, or null to clear session</param>
@@ -1139,17 +1139,66 @@ namespace ClubManagementApp.Services
         {
             _currentUser = user;
         }
+
+        /// <summary>
+        /// Gets the total count of users in the database efficiently.
+        ///
+        /// Performance:
+        /// - Uses COUNT query instead of loading all records
+        /// - Optimized for dashboard statistics display
+        ///
+        /// Used by: Dashboard statistics, admin overview
+        /// </summary>
+        /// <returns>Total number of users in the system</returns>
+        public async Task<int> GetTotalUsersCountAsync()
+        {
+            try
+            {
+                return await _context.Users.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error getting total users count: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets the count of new members who joined this month.
+        ///
+        /// Performance:
+        /// - Uses COUNT query with date filtering
+        /// - Optimized for dashboard statistics display
+        ///
+        /// Used by: Dashboard statistics, monthly reports
+        /// </summary>
+        /// <returns>Number of users who joined this month</returns>
+        public async Task<int> GetNewMembersThisMonthCountAsync()
+        {
+            try
+            {
+                var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                return await _context.Users
+                    .Where(u => u.JoinDate >= startOfMonth)
+                    .CountAsync();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error getting new members this month count: {ex.Message}", ex);
+                throw;
+            }
+        }
     }
 
     /// <summary>
     /// Data transfer object for user participation statistics and analytics.
     /// This class encapsulates calculated metrics about a user's event participation behavior.
-    /// 
+    ///
     /// Purpose:
     /// - Provides structured data for participation analytics
     /// - Enables consistent statistics calculation across the application
     /// - Supports dashboard widgets and reporting features
-    /// 
+    ///
     /// Usage:
     /// - Returned by CalculateParticipationStatistics method
     /// - Used in user profile displays and engagement reports
@@ -1159,16 +1208,16 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Total number of events the user has participated in (any status)</summary>
         public int TotalEvents { get; set; }
-        
+
         /// <summary>Number of events the user actually attended</summary>
         public int AttendedEvents { get; set; }
-        
+
         /// <summary>Number of events the user registered for but status is still pending</summary>
         public int RegisteredEvents { get; set; }
-        
+
         /// <summary>Number of events the user was registered for but did not attend</summary>
         public int AbsentEvents { get; set; }
-        
+
         /// <summary>Percentage of attended events out of total events (0-100)</summary>
         public double AttendanceRate { get; set; }
     }

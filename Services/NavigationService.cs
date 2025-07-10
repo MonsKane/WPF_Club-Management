@@ -23,7 +23,7 @@ namespace ClubManagementApp.Services
 
         public async void OpenMemberListWindow(Club club)
         {
-            await ShowWindowAsync<MemberListView, MemberListViewModel>(vm => 
+            await ShowWindowAsync<MemberListView, MemberListViewModel>(vm =>
             {
                 if (vm is MemberListViewModel memberVM)
                 {
@@ -39,7 +39,7 @@ namespace ClubManagementApp.Services
 
         public async void OpenEventManagementWindow(Club club)
         {
-            await ShowWindowAsync<EventManagementView, EventManagementViewModel>(vm => 
+            await ShowWindowAsync<EventManagementView, EventManagementViewModel>(vm =>
             {
                 if (vm is EventManagementViewModel eventVM)
                 {
@@ -69,7 +69,7 @@ namespace ClubManagementApp.Services
             {
                 var userService = _serviceProvider.GetService(typeof(UserService)) as UserService;
                 var eventService = _serviceProvider.GetService(typeof(EventService)) as EventService;
-                
+
                 if (userService == null || eventService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
 
@@ -82,13 +82,13 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public Task ShowManageLeadership(Club club)
+        public void ShowManageLeadership(Club club)
         {
             try
             {
                 var clubService = _serviceProvider.GetService(typeof(ClubService)) as ClubService;
                 var userService = _serviceProvider.GetService(typeof(UserService)) as UserService;
-                
+
                 if (clubService == null || userService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
 
@@ -100,8 +100,6 @@ namespace ClubManagementApp.Services
             {
                 ShowNotification($"Error opening leadership management: {ex.Message}");
             }
-            
-            return Task.CompletedTask;
         }
 
         public void NavigateToLogin()
@@ -110,12 +108,12 @@ namespace ClubManagementApp.Services
             {
                 // Close the current main window
                 Application.Current.MainWindow?.Close();
-                
+
                 // Create and show the login window
                 var loginViewModel = _serviceProvider.GetService(typeof(LoginViewModel)) as LoginViewModel;
                 if (loginViewModel == null)
                     throw new InvalidOperationException("Unable to resolve LoginViewModel from DI container.");
-                
+
                 var loginWindow = new LoginWindow(loginViewModel);
                 Application.Current.MainWindow = loginWindow;
                 loginWindow.Show();

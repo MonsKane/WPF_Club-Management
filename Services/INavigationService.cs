@@ -13,9 +13,9 @@ namespace ClubManagementApp.Services
         void OpenReportsWindow();
         void ShowNotification(string message);
         void ShowClubDetails(Club club);
-        Task ShowManageLeadership(Club club);
+        void ShowManageLeadership(Club club);
         void NavigateToLogin();
-        
+
         // Event for notification instead of direct dependency on MainViewModel
         event Action<string>? NotificationRequested;
     }
