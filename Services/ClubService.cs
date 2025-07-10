@@ -244,15 +244,19 @@ namespace ClubManagementApp.Services
                 if (string.IsNullOrWhiteSpace(club.Name))
                     throw new ArgumentException("Club name is required", nameof(club));
                 
-                // Check if club exists
+                // Check if club exists and update properties
                 var existingClub = await _context.Clubs.FindAsync(club.ClubID);
                 if (existingClub == null)
                     throw new InvalidOperationException($"Club with ID {club.ClubID} not found");
                 
-                _context.Clubs.Update(club);
+                // Update properties instead of replacing the entity
+                existingClub.Name = club.Name;
+                existingClub.Description = club.Description;
+                existingClub.IsActive = club.IsActive;
+                
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {club.Name}");
-                return club;
+                Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {existingClub.Name}");
+                return existingClub;
             }
             catch (Exception ex)
             {
@@ -894,6 +898,33 @@ namespace ClubManagementApp.Services
             {
                 Console.WriteLine($"[CLUB_SERVICE] Error getting club statistics for club {clubId}: {ex.Message}");
                 throw;
+            }
+        }
+
+        public async Task<bool> AddUserToClubAsync(int userId, int clubId, UserRole role)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                var club = await _context.Clubs.FindAsync(clubId);
+        
+                if (user == null || club == null)
+                    return false;
+        
+                // Check if user is already a member of this club
+                if (user.ClubID == clubId)
+                    return false;
+        
+                // Update user's club and role
+                user.ClubID = clubId;
+                user.Role = role;
+        
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

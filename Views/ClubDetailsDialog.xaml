@@ -35,6 +35,47 @@
             <Setter Property="Padding" Value="15"/>
             <Setter Property="Margin" Value="5"/>
         </Style>
+        
+        <!-- Button Styles -->
+        <Style x:Key="BaseButtonStyle" TargetType="Button">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="6" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="InfoButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#17a2b8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#007bff"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#6c757d"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        
+        <Style x:Key="WarningButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+            <Setter Property="Background" Value="#ffc107"/>
+            <Setter Property="Foreground" Value="#212529"/>
+        </Style>
     </Window.Resources>
     
     <Grid Margin="20">
@@ -164,7 +205,7 @@
                 </Grid>
                 
                 <!-- Action Buttons -->
-                <TextBlock Text="Actions" Style="{StaticResource HeaderTextStyle}"/>
+                <!--<TextBlock Text="Actions" Style="{StaticResource HeaderTextStyle}"/>
                 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                     <Button x:Name="ViewMembersButton" 
@@ -183,7 +224,7 @@
                             Content="Manage Leadership" 
                             Click="ManageLeadershipButton_Click"
                             Style="{StaticResource PrimaryButtonStyle}"/>
-                </StackPanel>
+                </StackPanel> -->
             </StackPanel>
         </ScrollViewer>
         

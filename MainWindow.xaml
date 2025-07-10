@@ -303,7 +303,7 @@
 
                                     <Button Background="#10B981" Foreground="White" BorderThickness="0" 
                                         Padding="16,12" Margin="0,0,0,12" 
-                                        Command="{Binding DashboardViewModel.AddMemberCommand}"
+                                        Command="{Binding DashboardViewModel.AddUserCommand}"
                                         Visibility="{Binding CanAccessAdminFeatures, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="👥" FontSize="16" Margin="0,0,8,0"/>

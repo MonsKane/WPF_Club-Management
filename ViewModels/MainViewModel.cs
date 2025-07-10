@@ -14,6 +14,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IReportService _reportService;
         private readonly INavigationService _navigationService;
         private readonly INotificationService _notificationService;
+        private readonly IAuthorizationService _authorizationService;
 
         private User? _currentUser;
         private string _currentView = "Dashboard";
@@ -33,7 +34,7 @@ namespace ClubManagementApp.ViewModels
 
         public MainViewModel(IUserService userService, IClubService clubService,
                            IEventService eventService, IReportService reportService,
-                           INavigationService navigationService, INotificationService notificationService)
+                           INavigationService navigationService, INotificationService notificationService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[MainViewModel] Initializing MainViewModel with services");
             _userService = userService;
@@ -42,6 +43,7 @@ namespace ClubManagementApp.ViewModels
             _reportService = reportService;
             _navigationService = navigationService;
             _notificationService = notificationService;
+            _authorizationService = authorizationService;
 
             InitializeCommands();
             InitializeChildViewModels();
@@ -108,27 +110,33 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            NavigateToDashboardCommand = new RelayCommand(() => {
+            NavigateToDashboardCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Navigating to Dashboard");
                 CurrentView = "Dashboard";
             });
-            OpenMemberListCommand = new RelayCommand(() => {
+            OpenMemberListCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Member List Window");
                 _navigationService.OpenMemberListWindow();
             });
-            OpenClubManagementCommand = new RelayCommand(() => {
+            OpenClubManagementCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Club Management Window");
                 _navigationService.OpenClubManagementWindow();
             });
-            OpenEventManagementCommand = new RelayCommand(() => {
+            OpenEventManagementCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Event Management Window");
                 _navigationService.OpenEventManagementWindow();
             });
-            OpenReportsCommand = new RelayCommand(() => {
+            OpenReportsCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Reports Window");
                 _navigationService.OpenReportsWindow();
             });
-            RefreshDataCommand = new RelayCommand(async () => {
+            RefreshDataCommand = new RelayCommand(async () =>
+            {
                 Console.WriteLine("[DATA] Refreshing all data...");
                 await LoadDataAsync();
             });
@@ -142,7 +150,7 @@ namespace ClubManagementApp.ViewModels
             DashboardViewModel = new DashboardViewModel(_userService, _clubService, _eventService, _reportService);
             MemberListViewModel = new MemberListViewModel(_userService, _clubService, _notificationService, null);
             EventManagementViewModel = new EventManagementViewModel(_eventService, _clubService, _userService);
-            ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService);
+            ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService, _authorizationService);
             ReportsViewModel = new ReportsViewModel(_reportService, _userService, _eventService, _clubService);
             Console.WriteLine("[MainViewModel] Child ViewModels initialized successfully");
         }
@@ -179,7 +187,7 @@ namespace ClubManagementApp.ViewModels
                 foreach (var report in reports)
                     Reports.Add(report);
                 Console.WriteLine($"[DATA] Loaded {reports.Count()} reports");
-                
+
                 Console.WriteLine("[DATA] All data loaded successfully");
             }
             catch (Exception ex)
@@ -200,7 +208,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine("[MAIN_LOGIN] Credentials validated, getting user details...");
                     CurrentUser = await _userService.GetUserByEmailAsync(email);
                     Console.WriteLine($"[MAIN_LOGIN] User set: {CurrentUser?.FullName} ({CurrentUser?.Role})");
-                    
+
                     Console.WriteLine("[MAIN_LOGIN] Loading initial data...");
                     await LoadDataAsync();
                     Console.WriteLine("[MAIN_LOGIN] Login process completed successfully");
@@ -227,7 +235,7 @@ namespace ClubManagementApp.ViewModels
             Events.Clear();
             Reports.Clear();
             Console.WriteLine("[LOGOUT] Logout completed, data cleared");
-            
+
             // Navigate back to login window
             _navigationService.NavigateToLogin();
         }

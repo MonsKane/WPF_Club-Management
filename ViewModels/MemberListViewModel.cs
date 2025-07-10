@@ -12,6 +12,15 @@ namespace ClubManagementApp.ViewModels
 {
     public class MemberListViewModel : BaseViewModel, IDisposable
     {
+        // Static event for notifying all instances when leadership changes
+        private static event Action? LeadershipChanged;
+        
+        // Public method to trigger the leadership changed event
+        public static void NotifyLeadershipChanged()
+        {
+            LeadershipChanged?.Invoke();
+        }
+        
         private readonly IUserService _userService;
         private readonly IClubService _clubService;
         private readonly INotificationService _notificationService;
@@ -40,6 +49,10 @@ namespace ClubManagementApp.ViewModels
             _logger = logger;
 
             InitializeCommands();
+            
+            // Subscribe to leadership change notifications
+            LeadershipChanged += OnLeadershipChanged;
+            
             Console.WriteLine("[MemberListViewModel] MemberListViewModel initialization completed");
         }
 
@@ -194,6 +207,19 @@ namespace ClubManagementApp.ViewModels
             await LoadMembersAsync();
             await ShowNotificationAsync("Member list refreshed successfully");
         }
+        
+        private async void OnLeadershipChanged()
+        {
+            try
+            {
+                Console.WriteLine("[MemberListViewModel] Leadership changed notification received, refreshing member list");
+                await LoadMembersAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MemberListViewModel] Error refreshing members after leadership change: {ex.Message}");
+            }
+        }
 
         private void FilterMembers()
         {
@@ -235,23 +261,16 @@ namespace ClubManagementApp.ViewModels
             {
                 Console.WriteLine("[MemberListViewModel] Add Member command executed");
 
-                var addDialog = new Views.AddUserDialog();
-                if (addDialog.ShowDialog() == true && addDialog.CreatedUser != null)
+                var addDialog = new Views.AddMemberDialog(_userService, _clubService, _clubFilter);
+                if (addDialog.ShowDialog() == true)
                 {
-                    Console.WriteLine($"[MemberListViewModel] Adding new member: {addDialog.CreatedUser.FullName}");
-                    IsLoading = true;
-
-                    var createdUser = await _userService.CreateUserAsync(addDialog.CreatedUser);
-
-                    // Update UI on main thread
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        Members.Add(createdUser);
-                        FilterMembers();
-                    });
-
-                    Console.WriteLine($"[MemberListViewModel] Member {createdUser.FullName} added successfully with ID: {createdUser.UserID}");
-                    await ShowNotificationAsync($"Member {createdUser.FullName} added successfully");
+                    Console.WriteLine("[MemberListViewModel] Member added successfully, refreshing member list");
+                    
+                    // Refresh the member list to show the new/added member
+                    await LoadMembersAsync();
+                    
+                    // Also refresh the filtered members to update the UI immediately
+                    FilterMembers();
                 }
                 else
                 {
@@ -476,6 +495,8 @@ namespace ClubManagementApp.ViewModels
 
         public void Dispose()
         {
+            // Unsubscribe from leadership change notifications
+            LeadershipChanged -= OnLeadershipChanged;
             Dispose(true);
             GC.SuppressFinalize(this);
         }

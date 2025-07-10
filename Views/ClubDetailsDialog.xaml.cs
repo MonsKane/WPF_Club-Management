@@ -1,9 +1,7 @@
-using System;
-using System.Linq;
-using System.Windows;
-using System.Windows.Media;
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
+using System.Windows;
+using System.Windows.Media;
 
 namespace ClubManagementApp.Views
 {
@@ -11,17 +9,17 @@ namespace ClubManagementApp.Views
     {
         private readonly Club _club;
         private readonly NavigationService _navigationService;
-        private readonly UserService _userService;
-        private readonly EventService _eventService;
+        private readonly IUserService _userService;
+        private readonly IEventService _eventService;
 
-        public ClubDetailsDialog(Club club, NavigationService navigationService, UserService userService, EventService eventService)
+        public ClubDetailsDialog(Club club, NavigationService navigationService, IUserService userService, IEventService eventService)
         {
             InitializeComponent();
             _club = club ?? throw new ArgumentNullException(nameof(club));
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
-            
+
             LoadClubDetails();
         }
 
@@ -54,7 +52,7 @@ namespace ClubManagementApp.Views
         private void SetStatusDisplay(string status)
         {
             StatusTextBlock.Text = status;
-            
+
             switch (status.ToLower())
             {
                 case "active":
@@ -96,7 +94,7 @@ namespace ClubManagementApp.Views
                 MemberCountTextBlock.Text = "N/A";
                 EventCountTextBlock.Text = "N/A";
                 ActiveEventCountTextBlock.Text = "N/A";
-                
+
                 System.Diagnostics.Debug.WriteLine($"Error loading statistics: {ex.Message}");
             }
         }
@@ -131,7 +129,7 @@ namespace ClubManagementApp.Views
             {
                 // For now, show a message that this feature is coming soon
                 // In a full implementation, this would open a leadership management dialog
-                MessageBox.Show($"Leadership management for {_club.Name} will be available in a future update.", 
+                MessageBox.Show($"Leadership management for {_club.Name} will be available in a future update.",
                                "Feature Coming Soon", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)

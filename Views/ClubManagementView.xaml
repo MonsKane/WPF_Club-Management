@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Club Management" 
         WindowStartupLocation="CenterScreen"
-        Width="1400" Height="900"
+        Width="1440" Height="900"
         MinWidth="1200" MinHeight="700"
         WindowState="Normal">
     
@@ -156,7 +156,8 @@
             <Button Grid.Column="2" 
                     Content="Add Club" 
                     Command="{Binding AddClubCommand}"
-                    Style="{StaticResource SuccessButtonStyle}"/>
+                    Style="{StaticResource SuccessButtonStyle}"
+                    IsEnabled="{Binding CanManageClubs}"/>
         </Grid>
         
         <!-- Clubs Display -->
@@ -259,13 +260,15 @@
                                             Command="{Binding DataContext.EditClubCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                                             CommandParameter="{Binding}"
                                             Style="{StaticResource WarningButtonStyle}"
-                                            Margin="2"/>
+                                            Margin="2"
+                                            IsEnabled="{Binding DataContext.CanManageClubs, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     
                                     <Button Content="Delete" 
                                             Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                                             CommandParameter="{Binding}"
                                             Style="{StaticResource DangerButtonStyle}"
-                                            Margin="2"/>
+                                            Margin="2"
+                                            IsEnabled="{Binding DataContext.CanManageClubs, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -302,20 +305,20 @@
                         CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Margin="0,0,10,0"
-                        IsEnabled="{Binding SelectedClub, Converter={StaticResource NullToBooleanConverter}}"/>
+                        IsEnabled="{Binding CanManageSelectedClub}"/>
                 
                 <Button Content="View Members" 
                         Command="{Binding ViewMembersCommand}"
                         CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource InfoButtonStyle}"
                         Margin="0,0,10,0"
-                        IsEnabled="{Binding SelectedClub, Converter={StaticResource NullToBooleanConverter}}"/>
+                        IsEnabled="{Binding CanManageSelectedClub}"/>
                 
                 <Button Content="View Events" 
                         Command="{Binding ViewEventsCommand}"
                         CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource WarningButtonStyle}"
-                        IsEnabled="{Binding SelectedClub, Converter={StaticResource NullToBooleanConverter}}"/>
+                        IsEnabled="{Binding CanManageSelectedClub}"/>
             </StackPanel>
         </Grid>
         
@@ -350,7 +353,8 @@
                           Margin="0,0,0,20"/>
                 <Button Content="Add Club" 
                         Command="{Binding AddClubCommand}"
-                        Style="{StaticResource SuccessButtonStyle}"/>
+                        Style="{StaticResource SuccessButtonStyle}"
+                        IsEnabled="{Binding CanManageClubs}"/>
             </StackPanel>
         </Grid>
     </Grid>

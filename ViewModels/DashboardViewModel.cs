@@ -89,7 +89,7 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Commands
-        public ICommand AddMemberCommand { get; private set; } = null!;
+        public ICommand AddUserCommand { get; private set; } = null!;
         public ICommand CreateEventCommand { get; private set; } = null!;
         public ICommand AddClubCommand { get; private set; } = null!;
         public ICommand GenerateReportCommand { get; private set; } = null!;
@@ -101,7 +101,7 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            AddMemberCommand = new RelayCommand(AddMember);
+            AddUserCommand = new RelayCommand(AddUser);
             CreateEventCommand = new RelayCommand(CreateEvent);
             AddClubCommand = new RelayCommand(AddClub);
             GenerateReportCommand = new RelayCommand(GenerateReport);
@@ -167,11 +167,19 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        private void AddMember(object? parameter)
+        private void AddUser(object? parameter)
         {
-            Console.WriteLine("[DashboardViewModel] Add Member command executed from Dashboard");
-            // Logic to navigate to add member view or open dialog
-            System.Diagnostics.Debug.WriteLine("Add Member clicked from Dashboard");
+            Console.WriteLine("[DashboardViewModel] Add User command executed from Dashboard");
+            try
+            {
+                var addUserDialog = new Views.AddUserDialog(_userService, _clubService);
+                addUserDialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error opening Add User dialog: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error opening Add User dialog: {ex.Message}");
+            }
         }
 
         private void CreateEvent(object? parameter)

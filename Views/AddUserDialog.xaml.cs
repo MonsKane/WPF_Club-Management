@@ -1,4 +1,5 @@
 using ClubManagementApp.Models;
+using ClubManagementApp.Services;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,40 +8,80 @@ namespace ClubManagementApp.Views
 {
     public partial class AddUserDialog : Window
     {
+        private readonly IUserService _userService;
+        private readonly IClubService _clubService;
+
         public User? CreatedUser { get; private set; }
 
-        public AddUserDialog()
+        public AddUserDialog(IUserService userService, IClubService clubService, Club? defaultClub = null)
         {
             InitializeComponent();
+            _userService = userService;
+            _clubService = clubService;
 
             // Set default role to Member
-            foreach (ComboBoxItem item in RoleComboBox.Items)
+            RoleComboBox.SelectedValue = "Member";
+
+            // Load clubs and set default if provided
+            _ = LoadClubsAsync(defaultClub);
+        }
+
+        private async Task LoadClubsAsync(Club? defaultClub = null)
+        {
+            try
             {
-                if (item.Tag?.ToString() == "Member")
+                var clubs = await _clubService.GetAllClubsAsync();
+                ClubComboBox.ItemsSource = clubs;
+                
+                // Set default club if provided
+                if (defaultClub != null)
                 {
-                    RoleComboBox.SelectedItem = item;
-                    break;
+                    ClubComboBox.SelectedValue = defaultClub.ClubID;
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading clubs: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void CreateButton_Click(object sender, RoutedEventArgs e)
+        private async void CreateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ValidateInput())
+            if (!ValidateInput())
+                return;
+
+            try
             {
-                CreatedUser = new User
+                var selectedRole = ((ComboBoxItem)RoleComboBox.SelectedItem).Tag.ToString();
+
+                var user = new User
                 {
                     FullName = FullNameTextBox.Text.Trim(),
                     Email = EmailTextBox.Text.Trim(),
                     Password = PasswordBox.Password,
                     PhoneNumber = string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim(),
-                    Role = Enum.Parse<UserRole>(((ComboBoxItem)RoleComboBox.SelectedItem)?.Tag?.ToString() ?? "Member"),
+                    Role = Enum.Parse<UserRole>(selectedRole ?? "Member"),
                     IsActive = IsActiveCheckBox.IsChecked ?? true,
                     JoinDate = DateTime.Now
                 };
 
-                this.DialogResult = true;
+                // Create the user first
+                var createdUser = await _userService.CreateUserAsync(user);
+
+                // If a club is selected, assign the user to the club
+                if (ClubComboBox.SelectedValue != null)
+                {
+                    var clubId = (int)ClubComboBox.SelectedValue;
+                    await _userService.AssignUserToClubAsync(createdUser.UserID, clubId);
+                }
+
+                MessageBox.Show("User created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                DialogResult = true;
                 Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error creating user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
