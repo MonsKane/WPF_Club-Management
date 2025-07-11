@@ -1,13 +1,14 @@
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace ClubManagementApp.Views
 {
-    public partial class ManageLeadershipDialog : Window
+    public partial class ManageLeadershipDialog : Window, INotifyPropertyChanged
     {
         private readonly IClubService _clubService;
         private readonly IUserService _userService;
@@ -18,6 +19,24 @@ namespace ClubManagementApp.Views
         private User? _chairman;
         private User? _viceChairman;
         private bool _hasChanges = false;
+        private bool _isLoading = false;
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set
+            {
+                _isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         public ManageLeadershipDialog(Club club, IClubService clubService, IUserService userService, INavigationService navigationService)
         {
@@ -29,13 +48,16 @@ namespace ClubManagementApp.Views
             _availableMembers = new ObservableCollection<User>();
             _teamLeaders = new ObservableCollection<User>();
             
-            InitializeDialog();
+            DataContext = this;
+            Loaded += async (s, e) => await InitializeDialogAsync();
         }
 
-        private async void InitializeDialog()
+        private async System.Threading.Tasks.Task InitializeDialogAsync()
         {
             try
             {
+                IsLoading = true;
+                
                 ClubNameText.Text = $"Club: {_club.Name}";
                 
                 // Load club members
@@ -73,6 +95,10 @@ namespace ClubManagementApp.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading leadership data: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 

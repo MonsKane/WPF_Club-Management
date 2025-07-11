@@ -3,12 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:models="clr-namespace:ClubManagementApp.Models"
         Title="Add New User" Height="700" Width="900"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
-        MinHeight="600" MinWidth="700"
+        MinHeight="600" MinWidth="800"
         WindowStyle="SingleBorderWindow"
         Background="#f8f9fa"
-        Icon="pack://application:,,,/Resources/user-icon.ico">
+        >
     <Window.Resources>
         <!-- Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">
@@ -260,23 +260,39 @@
                             
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Role" Style="{StaticResource ModernLabelStyle}"/>
-                                <ComboBox x:Name="RoleComboBox" 
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                <ComboBox x:Name="RoleComboBox" Style="{StaticResource ModernComboBoxStyle}"
                                           SelectedValuePath="Tag"
                                           DisplayMemberPath="Content">
-                                    <ComboBoxItem Content="System Admin" Tag="{x:Static models:UserRole.SystemAdmin}"/>
-                                    <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
-                                    <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
-                                    <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
-                                    <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
-                                    <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
-                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
+                                    <ComboBoxItem Content="System Admin" Tag="SystemAdmin"/>
+                                    <ComboBoxItem Content="Admin" Tag="Admin"/>
+                                    <ComboBoxItem Content="Club President" Tag="ClubPresident"/>
+                                    <ComboBoxItem Content="Chairman" Tag="Chairman"/>
+                                    <ComboBoxItem Content="Vice Chairman" Tag="ViceChairman"/>
+                                    <ComboBoxItem Content="Club Officer" Tag="ClubOfficer"/>
+                                    <ComboBoxItem Content="Team Leader" Tag="TeamLeader"/>
+                                    <ComboBoxItem Content="Member" Tag="Member"/>
                                 </ComboBox>
                             </StackPanel>
                             
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Phone Number" Style="{StaticResource ModernLabelStyle}"/>
                                 <TextBox x:Name="PhoneTextBox" Style="{StaticResource ModernTextBoxStyle}"/>
+                            </StackPanel>
+                        </Grid>
+                        
+                        <!-- Club Selection Row -->
+                        <Grid Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="Club Assignment (Optional)" Style="{StaticResource ModernLabelStyle}"/>
+                                <ComboBox x:Name="ClubComboBox" 
+                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          DisplayMemberPath="Name"
+                                          SelectedValuePath="ClubID">
+                                </ComboBox>
+                                <TextBlock Text="Leave empty if user should not be assigned to any club" 
+                                           FontSize="12" 
+                                           Foreground="#6c757d" 
+                                           Margin="0,5,0,0"/>
                             </StackPanel>
                         </Grid>
                         

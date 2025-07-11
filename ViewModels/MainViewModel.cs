@@ -14,6 +14,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IReportService _reportService;
         private readonly INavigationService _navigationService;
         private readonly INotificationService _notificationService;
+        private readonly IAuthorizationService _authorizationService;
 
         private User? _currentUser;
         private string _currentView = "Dashboard";
@@ -42,7 +43,7 @@ namespace ClubManagementApp.ViewModels
 
         public MainViewModel(IUserService userService, IClubService clubService,
                            IEventService eventService, IReportService reportService,
-                           INavigationService navigationService, INotificationService notificationService)
+                           INavigationService navigationService, INotificationService notificationService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[MainViewModel] Initializing MainViewModel with services");
             _userService = userService;
@@ -51,6 +52,7 @@ namespace ClubManagementApp.ViewModels
             _reportService = reportService;
             _navigationService = navigationService;
             _notificationService = notificationService;
+            _authorizationService = authorizationService;
 
             InitializeCommands();
             InitializeChildViewModels();
@@ -124,23 +126,28 @@ namespace ClubManagementApp.ViewModels
                 await DashboardViewModel.LoadAsync();
                 Console.WriteLine("[NAVIGATION] Dashboard statistics refreshed");
             });
-            OpenMemberListCommand = new RelayCommand(() => {
+            OpenMemberListCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Member List Window");
                 _navigationService.OpenMemberListWindow();
             });
-            OpenClubManagementCommand = new RelayCommand(() => {
+            OpenClubManagementCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Club Management Window");
                 _navigationService.OpenClubManagementWindow();
             });
-            OpenEventManagementCommand = new RelayCommand(() => {
+            OpenEventManagementCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Event Management Window");
                 _navigationService.OpenEventManagementWindow();
             });
-            OpenReportsCommand = new RelayCommand(() => {
+            OpenReportsCommand = new RelayCommand(() =>
+            {
                 Console.WriteLine("[NAVIGATION] Opening Reports Window");
                 _navigationService.OpenReportsWindow();
             });
-            RefreshDataCommand = new RelayCommand(async () => {
+            RefreshDataCommand = new RelayCommand(async () =>
+            {
                 Console.WriteLine("[DATA] Refreshing all data...");
                 await LoadDataAsync();
             });
@@ -156,7 +163,7 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine($"[MainViewModel] DashboardViewModel.RefreshCommand created: {DashboardViewModel.RefreshCommand != null}");
             MemberListViewModel = new MemberListViewModel(_userService, _clubService, _notificationService, null);
             EventManagementViewModel = new EventManagementViewModel(_eventService, _clubService, _userService);
-            ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService);
+            ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService, _authorizationService);
             ReportsViewModel = new ReportsViewModel(_reportService, _userService, _eventService, _clubService);
             Console.WriteLine("[MainViewModel] Child ViewModels initialized successfully");
         }

@@ -19,6 +19,7 @@ namespace ClubManagementApp.Services
         Task<Dictionary<UserRole, int>> GetClubRoleDistributionAsync(int clubId);
         Task<bool> RemoveClubLeadershipAsync(int clubId, int userId);
         Task<Dictionary<string, object>> GetClubStatisticsAsync(int clubId);
+        Task<bool> AddUserToClubAsync(int userId, int clubId, UserRole role);
         Task<int> GetTotalClubsCountAsync();
     }
 }

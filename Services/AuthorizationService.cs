@@ -1,6 +1,5 @@
-using ClubManagementApp.Models;
 using ClubManagementApp.Data;
-using Microsoft.EntityFrameworkCore;
+using ClubManagementApp.Models;
 
 namespace ClubManagementApp.Services
 {
@@ -49,21 +48,21 @@ namespace ClubManagementApp.Services
             {
                 UserRole.SystemAdmin => true,
                 UserRole.Admin => targetUserRole != UserRole.SystemAdmin,
-                UserRole.ClubPresident => userClubId == targetUserClubId && 
-                                        targetUserRole != UserRole.SystemAdmin && 
+                UserRole.ClubPresident => userClubId == targetUserClubId &&
+                                        targetUserRole != UserRole.SystemAdmin &&
                                         targetUserRole != UserRole.Admin,
-                UserRole.Chairman => userClubId == targetUserClubId && 
-                                   targetUserRole != UserRole.SystemAdmin && 
-                                   targetUserRole != UserRole.Admin && 
+                UserRole.Chairman => userClubId == targetUserClubId &&
+                                   targetUserRole != UserRole.SystemAdmin &&
+                                   targetUserRole != UserRole.Admin &&
                                    targetUserRole != UserRole.ClubPresident,
-                UserRole.ViceChairman => userClubId == targetUserClubId && 
-                                       targetUserRole != UserRole.SystemAdmin && 
-                                       targetUserRole != UserRole.Admin && 
-                                       targetUserRole != UserRole.ClubPresident && 
+                UserRole.ViceChairman => userClubId == targetUserClubId &&
+                                       targetUserRole != UserRole.SystemAdmin &&
+                                       targetUserRole != UserRole.Admin &&
+                                       targetUserRole != UserRole.ClubPresident &&
                                        targetUserRole != UserRole.Chairman,
-                UserRole.ClubOfficer => userClubId == targetUserClubId && 
+                UserRole.ClubOfficer => userClubId == targetUserClubId &&
                                       (targetUserRole == UserRole.TeamLeader || targetUserRole == UserRole.Member),
-                UserRole.TeamLeader => userClubId == targetUserClubId && 
+                UserRole.TeamLeader => userClubId == targetUserClubId &&
                                      targetUserRole == UserRole.Member,
                 _ => false
             };

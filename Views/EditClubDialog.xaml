@@ -7,7 +7,7 @@
         MinHeight="500" MinWidth="600"
         WindowStyle="SingleBorderWindow"
         Background="#f8f9fa"
-        Icon="pack://application:,,,/Resources/club-icon.ico">
+        >
     <Window.Resources>
         <!-- Card Style -->
         <Style x:Key="CardStyle" TargetType="Border">

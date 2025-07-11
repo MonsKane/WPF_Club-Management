@@ -100,7 +100,7 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Commands
-        public ICommand AddMemberCommand { get; private set; } = null!;
+        public ICommand AddUserCommand { get; private set; } = null!;
         public ICommand CreateEventCommand { get; private set; } = null!;
         public ICommand AddClubCommand { get; private set; } = null!;
         public ICommand GenerateReportCommand { get; private set; } = null!;
@@ -120,7 +120,7 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            AddMemberCommand = new RelayCommand(AddMember);
+            AddUserCommand = new RelayCommand(AddUser);
             CreateEventCommand = new RelayCommand(CreateEvent);
             AddClubCommand = new RelayCommand(AddClub);
             GenerateReportCommand = new RelayCommand(GenerateReport);
@@ -192,7 +192,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        private void AddMember(object? parameter)
+        private void AddUser(object? parameter)
         {
             Console.WriteLine("[DashboardViewModel] Add Member command executed from Dashboard");
             try

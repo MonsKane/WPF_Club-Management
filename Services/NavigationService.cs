@@ -1,6 +1,7 @@
+using ClubManagementApp.Models;
 using ClubManagementApp.ViewModels;
 using ClubManagementApp.Views;
-using ClubManagementApp.Models;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace ClubManagementApp.Services
@@ -100,6 +101,8 @@ namespace ClubManagementApp.Services
             {
                 ShowNotification($"Error opening leadership management: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
         public void NavigateToLogin()

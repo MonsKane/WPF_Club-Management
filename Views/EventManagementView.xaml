@@ -138,12 +138,13 @@
                 
                 <!-- Status Filter -->
                 <ComboBox Grid.Column="1" 
-                          SelectedItem="{Binding SelectedStatus}" 
+                          SelectedValue="{Binding SelectedStatus}" 
+                          SelectedValuePath="Content"
                           Width="150" 
                           Margin="0,0,10,0"
                           Padding="10,8"
                           FontSize="14">
-                    <ComboBoxItem Content="All Events"/>
+                    <ComboBoxItem Content="All Events" IsSelected="True"/>
                     <ComboBoxItem Content="Upcoming"/>
                     <ComboBoxItem Content="Ongoing"/>
                     <ComboBoxItem Content="Completed"/>
@@ -221,7 +222,7 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 
-                <DataGridTemplateColumn Header="Actions" Width="280">
+                <DataGridTemplateColumn Header="Actions" Width="350">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
