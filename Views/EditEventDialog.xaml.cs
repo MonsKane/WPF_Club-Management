@@ -61,7 +61,8 @@ namespace ClubManagementApp.Views
             {
                 try
                 {
-                    if (!(ClubComboBox.SelectedItem is Club selectedClub))
+                    var selectedClub = ClubComboBox.SelectedItem as Club;
+                    if (selectedClub == null)
                     {
                         MessageBox.Show("Please select a club for this event.", "Validation Error",
                             MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -76,6 +77,7 @@ namespace ClubManagementApp.Views
                     var minute = int.Parse(((ComboBoxItem)MinuteComboBox.SelectedItem).Content.ToString()!);
                     var eventDateTime = eventDate.AddHours(hour).AddMinutes(minute);
 
+#pragma warning disable CS8601 // Possible null reference assignment - selectedClub is validated above
                     UpdatedEvent = new Event
                     {
                         EventID = _originalEvent.EventID,
@@ -84,11 +86,12 @@ namespace ClubManagementApp.Views
                         EventDate = eventDateTime,
                         Location = string.IsNullOrWhiteSpace(LocationTextBox.Text) ? null : LocationTextBox.Text.Trim(),
                         ClubID = selectedClub.ClubID,
-                        Club = selectedClub!,
+                        Club = selectedClub,
                         Status = selectedStatus,
                         CreatedDate = _originalEvent.CreatedDate,
                         IsActive = _originalEvent.IsActive
                     };
+#pragma warning restore CS8601
 
                     // Set max participants if provided
                     if (!string.IsNullOrWhiteSpace(MaxParticipantsTextBox.Text) &&

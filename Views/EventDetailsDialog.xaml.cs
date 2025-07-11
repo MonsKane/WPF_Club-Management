@@ -52,34 +52,40 @@ namespace ClubManagementApp.Views
 
         private void SetStatusDisplay()
         {
-            StatusText.Text = Event.Status.ToString();
+            StatusText.Text = Event.StatusDisplay;
             
-            // Set status color based on event status
-            switch (Event.Status)
+            // Set status color based on displayed status
+            var displayStatus = Event.StatusDisplay;
+            switch (displayStatus)
             {
-                case EventStatus.Scheduled:
+                case "Upcoming":
                     StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0x00, 0x7b, 0xff)); // Blue
                     StatusText.Foreground = Brushes.White;
                     break;
-                case EventStatus.InProgress:
+                case "Ongoing":
                     StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0xff, 0x8c, 0x00)); // Orange
                     StatusText.Foreground = Brushes.White;
                     break;
-                case EventStatus.Completed:
+                case "Completed":
                     StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0x28, 0xa7, 0x45)); // Green
                     StatusText.Foreground = Brushes.White;
                     break;
-                case EventStatus.Cancelled:
+                case "Cancelled":
                     StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0xdc, 0x35, 0x45)); // Red
                     StatusText.Foreground = Brushes.White;
                     break;
-                case EventStatus.Postponed:
-                    StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0x6c, 0x75, 0x7d)); // Gray
-                    StatusText.Foreground = Brushes.White;
-                    break;
                 default:
-                    StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0x6c, 0x75, 0x7d)); // Default gray
-                    StatusText.Foreground = Brushes.White;
+                    // Handle raw enum values that might still appear
+                    if (Event.Status == EventStatus.Postponed)
+                    {
+                        StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0x6c, 0x75, 0x7d)); // Gray
+                        StatusText.Foreground = Brushes.White;
+                    }
+                    else
+                    {
+                        StatusBorder.Background = new SolidColorBrush(Color.FromRgb(0x6c, 0x75, 0x7d)); // Default gray
+                        StatusText.Foreground = Brushes.White;
+                    }
                     break;
             }
         }

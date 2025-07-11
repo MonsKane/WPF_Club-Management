@@ -515,12 +515,9 @@ namespace ClubManagementApp.ViewModels
         {
             try
             {
-                // Get current user from session or authentication context
-                var currentUserEmail = System.Threading.Thread.CurrentPrincipal?.Identity?.Name;
-                if (!string.IsNullOrEmpty(currentUserEmail))
-                {
-                    CurrentUser = await _userService.GetUserByEmailAsync(currentUserEmail);
-                }
+                // Get current user from UserService session
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                Console.WriteLine($"[MemberListViewModel] Current user loaded: {CurrentUser?.FullName ?? "None"} (Role: {CurrentUser?.Role})");
                 
                 // Notify property changes for permission-dependent UI elements
                 OnPropertyChanged(nameof(CanAccessUserManagement));

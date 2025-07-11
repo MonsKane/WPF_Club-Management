@@ -90,6 +90,7 @@ CREATE TABLE Events (
     RegistrationDeadline datetime2 NULL,
     MaxParticipants int NULL,
     Status nvarchar(50) NOT NULL DEFAULT 'Scheduled',
+    Type nvarchar(50) NOT NULL DEFAULT 'Workshop',
     ClubID int NOT NULL,
     FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE CASCADE
 );
@@ -322,28 +323,28 @@ INSERT INTO Users (FullName, Email, Password, StudentID, Role, ActivityLevel, Jo
 GO
 
 -- Insert Events
-INSERT INTO Events (Name, Description, EventDate, Location, CreatedDate, IsActive, RegistrationDeadline, MaxParticipants, ClubID) VALUES
+INSERT INTO Events (Name, Description, EventDate, Location, CreatedDate, IsActive, RegistrationDeadline, MaxParticipants, Type, ClubID) VALUES
 -- Computer Science Club Events
-('Python Workshop', 'Learn Python programming from basics to advanced concepts', '2024-12-15 14:00:00', 'Computer Lab A', '2024-11-01', 1, '2024-12-10', 30, 1),
-('Hackathon 2024', '24-hour coding competition with exciting prizes', '2024-12-20 09:00:00', 'Main Auditorium', '2024-11-05', 1, '2024-12-15', 100, 1),
-('AI and Machine Learning Seminar', 'Industry experts discuss the future of AI', '2025-01-10 16:00:00', 'Conference Room B', '2024-11-10', 1, '2025-01-05', 50, 1),
+('Python Workshop', 'Learn Python programming from basics to advanced concepts', '2024-12-15 14:00:00', 'Computer Lab A', '2024-11-01', 1, '2024-12-10', 30, 'Workshop', 1),
+('Hackathon 2024', '24-hour coding competition with exciting prizes', '2024-12-20 09:00:00', 'Main Auditorium', '2024-11-05', 1, '2024-12-15', 100, 'Competition', 1),
+('AI and Machine Learning Seminar', 'Industry experts discuss the future of AI', '2025-01-10 16:00:00', 'Conference Room B', '2024-11-10', 1, '2025-01-05', 50, 'Seminar', 1),
 
 -- Photography Club Events
-('Nature Photography Walk', 'Capture the beauty of campus nature', '2024-12-12 08:00:00', 'University Gardens', '2024-11-02', 1, '2024-12-08', 20, 2),
-('Portrait Photography Workshop', 'Learn professional portrait techniques', '2024-12-18 13:00:00', 'Studio Room 1', '2024-11-06', 1, '2024-12-15', 15, 2),
-('Photo Exhibition Setup', 'Prepare for the annual photo exhibition', '2025-01-15 10:00:00', 'Gallery Hall', '2024-11-12', 1, '2025-01-10', 25, 2),
+('Nature Photography Walk', 'Capture the beauty of campus nature', '2024-12-12 08:00:00', 'University Gardens', '2024-11-02', 1, '2024-12-08', 20, 'SocialEvent', 2),
+('Portrait Photography Workshop', 'Learn professional portrait techniques', '2024-12-18 13:00:00', 'Studio Room 1', '2024-11-06', 1, '2024-12-15', 15, 'Workshop', 2),
+('Photo Exhibition Setup', 'Prepare for the annual photo exhibition', '2025-01-15 10:00:00', 'Gallery Hall', '2024-11-12', 1, '2025-01-10', 25, 'Meeting', 2),
 
 -- Drama Society Events
-('Romeo and Juliet Auditions', 'Auditions for the spring play', '2024-12-14 15:00:00', 'Theater Room', '2024-11-03', 1, '2024-12-12', 40, 3),
-('Acting Workshop', 'Improve your acting skills with professional coaches', '2024-12-21 11:00:00', 'Drama Studio', '2024-11-07', 1, '2024-12-18', 25, 3),
+('Romeo and Juliet Auditions', 'Auditions for the spring play', '2024-12-14 15:00:00', 'Theater Room', '2024-11-03', 1, '2024-12-12', 40, 'Meeting', 3),
+('Acting Workshop', 'Improve your acting skills with professional coaches', '2024-12-21 11:00:00', 'Drama Studio', '2024-11-07', 1, '2024-12-18', 25, 'Workshop', 3),
 
 -- Environmental Club Events
-('Campus Cleanup Drive', 'Help keep our campus clean and green', '2024-12-13 07:00:00', 'Campus Grounds', '2024-11-04', 1, '2024-12-11', 50, 4),
-('Sustainability Fair', 'Learn about sustainable living practices', '2024-12-19 12:00:00', 'Student Center', '2024-11-08', 1, '2024-12-16', 100, 4),
+('Campus Cleanup Drive', 'Help keep our campus clean and green', '2024-12-13 07:00:00', 'Campus Grounds', '2024-11-04', 1, '2024-12-11', 50, 'SocialEvent', 4),
+('Sustainability Fair', 'Learn about sustainable living practices', '2024-12-19 12:00:00', 'Student Center', '2024-11-08', 1, '2024-12-16', 100, 'Seminar', 4),
 
 -- Music Club Events
-('Winter Concert', 'Showcase of student musical talents', '2024-12-22 19:00:00', 'Music Hall', '2024-11-09', 1, '2024-12-20', 200, 5),
-('Songwriting Workshop', 'Learn to write your own songs', '2025-01-08 14:00:00', 'Music Room 2', '2024-11-11', 1, '2025-01-05', 20, 5);
+('Winter Concert', 'Showcase of student musical talents', '2024-12-22 19:00:00', 'Music Hall', '2024-11-09', 1, '2024-12-20', 200, 'Performance', 5),
+('Songwriting Workshop', 'Learn to write your own songs', '2025-01-08 14:00:00', 'Music Room 2', '2024-11-11', 1, '2025-01-05', 20, 'Workshop', 5);
 GO
 
 -- Insert Event Participants

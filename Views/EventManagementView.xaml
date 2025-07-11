@@ -5,23 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:converters="clr-namespace:ClubManagementApp.Converters"
         mc:Ignorable="d"
-        Title="Event Management" 
+        Title="Event Management"
         WindowStartupLocation="CenterScreen"
-        Width="1400" Height="900"
+        Width="1500" Height="900"
         MinWidth="1200" MinHeight="700"
         WindowState="Normal">
-    
+
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
-        
+
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Foreground" Value="Black"/>
             <Setter Property="Margin" Value="0,0,0,20"/>
         </Style>
-        
+
         <Style x:Key="SearchBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="10,8"/>
             <Setter Property="FontSize" Value="14"/>
@@ -29,7 +29,7 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="White"/>
         </Style>
-        
+
         <Style x:Key="ActionButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="Margin" Value="5,0"/>
@@ -40,10 +40,10 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="4" 
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" 
+                            <ContentPresenter HorizontalAlignment="Center"
                                             VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -55,33 +55,33 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
             <Setter Property="Background" Value="#3498DB"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
-        
+
         <Style x:Key="SuccessButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
             <Setter Property="Background" Value="#27AE60"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
-        
+
         <Style x:Key="WarningButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
             <Setter Property="Background" Value="#F39C12"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
-        
+
         <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
             <Setter Property="Background" Value="#E74C3C"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
-        
+
         <Style x:Key="InfoButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
             <Setter Property="Background" Value="#17A2B8"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
     </Window.Resources>
-    
+
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -89,17 +89,17 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
         <!-- Header -->
         <TextBlock Grid.Row="0" Text="Event Management" Style="{StaticResource HeaderTextStyle}"/>
-        
+
         <!-- Search and Filter Section -->
         <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            
+
             <!-- First Row: Search and Status Filter -->
             <Grid Grid.Row="0" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
@@ -108,10 +108,10 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <!-- Search Box -->
-                <TextBox Grid.Column="0" 
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                <TextBox Grid.Column="0"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource SearchBoxStyle}"
                          Margin="0,0,10,0">
                     <TextBox.Resources>
@@ -122,9 +122,9 @@
                                         <Setter.Value>
                                             <VisualBrush AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                                 <VisualBrush.Visual>
-                                                    <TextBlock Text="Search events..." 
-                                                             Foreground="Gray" 
-                                                             FontSize="14" 
+                                                    <TextBlock Text="Search events..."
+                                                             Foreground="Gray"
+                                                             FontSize="14"
                                                              Margin="10,0,0,0"/>
                                                 </VisualBrush.Visual>
                                             </VisualBrush>
@@ -135,11 +135,12 @@
                         </Style>
                     </TextBox.Resources>
                 </TextBox>
-                
+
                 <!-- Status Filter -->
-                <ComboBox Grid.Column="1" 
-                          SelectedItem="{Binding SelectedStatus}" 
-                          Width="150" 
+                <ComboBox Grid.Column="1"
+                          SelectedValue="{Binding SelectedStatus}"
+                          SelectedValuePath="Content"
+                          Width="150"
                           Margin="0,0,10,0"
                           Padding="10,8"
                           FontSize="14">
@@ -149,58 +150,58 @@
                     <ComboBoxItem Content="Completed"/>
                     <ComboBoxItem Content="Cancelled"/>
                 </ComboBox>
-                
+
                 <!-- Create Event Button -->
-                <Button Grid.Column="2" 
-                        Content="Create Event" 
+                <Button Grid.Column="2"
+                        Content="Create Event"
                         Command="{Binding CreateEventCommand}"
                         Style="{StaticResource SuccessButtonStyle}"
                         Margin="0,0,10,0"/>
             </Grid>
         </Grid>
-        
+
         <!-- Events DataGrid -->
-        <DataGrid Grid.Row="2" 
-                  ItemsSource="{Binding FilteredEvents}" 
+        <DataGrid Grid.Row="2"
+                  ItemsSource="{Binding FilteredEvents}"
                   SelectedItem="{Binding SelectedEvent}"
-                  AutoGenerateColumns="False" 
-                  CanUserAddRows="False" 
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
                   CanUserDeleteRows="False"
                   GridLinesVisibility="Horizontal"
                   HeadersVisibility="Column"
                   SelectionMode="Single"
                   AlternatingRowBackground="#F8F9FA"
                   RowHeight="45">
-            
+
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Title" 
-                                    Binding="{Binding Title}" 
-                                    Width="200"
+                <DataGridTextColumn Header="Title"
+                                    Binding="{Binding Name}"
+                                    Width="2.5*"
                                     IsReadOnly="True"/>
-                
-                <DataGridTextColumn Header="Club" 
-                                    Binding="{Binding Club.Name}" 
-                                    Width="150"
+
+                <DataGridTextColumn Header="Club"
+                                    Binding="{Binding Club.Name}"
+                                    Width="1.5*"
                                     IsReadOnly="True"/>
-                
-                <DataGridTextColumn Header="Start Date" 
+
+                <DataGridTextColumn Header="Start Date"
                                     Binding="{Binding EventDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
-                                    Width="140"
+                                    Width="2*"
                                     IsReadOnly="True"/>
-                
-                <DataGridTextColumn Header="Location" 
-                                    Binding="{Binding Location}" 
-                                    Width="150"
+
+                <DataGridTextColumn Header="Location"
+                                    Binding="{Binding Location}"
+                                    Width="1.5*"
                                     IsReadOnly="True"/>
-                
-                <DataGridTextColumn Header="Participants" 
-                                    Binding="{Binding ParticipantCount}" 
-                                    Width="100"
+
+                <DataGridTextColumn Header="Participants"
+                                    Binding="{Binding ParticipantCount}"
+                                    Width="1*"
                                     IsReadOnly="True"/>
-                
-                <DataGridTextColumn Header="Status" 
-                                    Binding="{Binding StatusDisplay}" 
-                                    Width="100"
+
+                <DataGridTextColumn Header="Status"
+                                    Binding="{Binding StatusDisplay}"
+                                    Width="1*"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
@@ -225,31 +226,31 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                
-                <DataGridTemplateColumn Header="Actions" Width="280">
+
+                <DataGridTemplateColumn Header="Actions" Width="3*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Content="View" 
-                                        Command="{Binding DataContext.ViewEventCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                <Button Content="View"
+                                        Command="{Binding DataContext.ViewEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource InfoButtonStyle}"
                                         Margin="2"/>
-                                
-                                <Button Content="Edit" 
-                                        Command="{Binding DataContext.EditEventCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+
+                                <Button Content="Edit"
+                                        Command="{Binding DataContext.EditEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource WarningButtonStyle}"
                                         Margin="2"/>
-                                
-                                <Button Content="Participants" 
-                                        Command="{Binding DataContext.ManageParticipantsCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+
+                                <Button Content="Participants"
+                                        Command="{Binding DataContext.ManageParticipantsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         Margin="2"/>
-                                
-                                <Button Content="Delete" 
-                                        Command="{Binding DataContext.DeleteEventCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+
+                                <Button Content="Delete"
+                                        Command="{Binding DataContext.DeleteEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource DangerButtonStyle}"
                                         Margin="2"/>
@@ -259,45 +260,45 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-        
+
         <!-- Status Bar -->
         <Grid Grid.Row="3" Margin="0,20,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
+
             <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <TextBlock Text="Total Events: " FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding FilteredEvents.Count}" FontWeight="Bold" Foreground="Black"/>
-                
+
                 <TextBlock Text=" | Upcoming: " Margin="20,0,0,0" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding UpcomingEventsCount}" FontWeight="Bold" Foreground="Black"/>
-                
+
                 <TextBlock Text=" | Ongoing: " Margin="20,0,0,0" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding OngoingEventsCount}" FontWeight="Bold" Foreground="Black"/>
-                
+
                 <TextBlock Text=" | Loading: " Margin="20,0,0,0" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding IsLoading}" FontWeight="Bold" 
+                <TextBlock Text="{Binding IsLoading}" FontWeight="Bold"
                           Foreground="{Binding IsLoading, Converter={StaticResource BooleanToColorConverter}}"/>
             </StackPanel>
-            
+
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Export Events" 
+                <Button Content="Export Events"
                         Command="{Binding ExportEventsCommand}"
                         Style="{StaticResource PrimaryButtonStyle}"/>
             </StackPanel>
         </Grid>
-        
+
         <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="4" 
-              Background="#80000000" 
+        <Grid Grid.RowSpan="4"
+              Background="#80000000"
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="200" Height="10" Margin="0,0,0,10"/>
-                <TextBlock Text="Loading events..." 
-                          Foreground="White" 
-                          FontSize="16" 
+                <TextBlock Text="Loading events..."
+                          Foreground="White"
+                          FontSize="16"
                           HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>

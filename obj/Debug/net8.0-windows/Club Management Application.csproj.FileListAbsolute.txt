@@ -419,3 +419,5 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\refint\
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Club Management Application.pdb
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Club Management Application.genruntimeconfig.cache
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\ref\Club Management Application.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\CustomReportDialog.baml
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\CustomReportDialog.g.cs

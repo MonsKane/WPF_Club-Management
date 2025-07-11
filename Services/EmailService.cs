@@ -1,4 +1,5 @@
 using ClubManagementApp.Models;
+using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Mail;
@@ -44,19 +45,19 @@ namespace ClubManagementApp.Services
     {
         private readonly ILoggingService _loggingService;
         private readonly IAuditService _auditService;
-        private readonly IConfigurationService _configurationService;
+        private readonly IConfiguration _configuration;
         private readonly ISettingsService _settingsService;
         private EmailConfiguration? _emailConfiguration;
 
         public EmailService(
             ILoggingService loggingService,
             IAuditService auditService,
-            IConfigurationService configurationService,
+            IConfiguration configuration,
             ISettingsService settingsService)
         {
             _loggingService = loggingService;
             _auditService = auditService;
-            _configurationService = configurationService;
+            _configuration = configuration;
             _settingsService = settingsService;
         }
 
@@ -583,14 +584,14 @@ namespace ClubManagementApp.Services
             {
                 _emailConfiguration = new EmailConfiguration
                 {
-                    SmtpServer = _configurationService.GetValue<string>("Email:SmtpServer", "smtp.gmail.com"),
-                SmtpPort = _configurationService.GetValue<int>("Email:SmtpPort", 587),
-                EnableSsl = _configurationService.GetValue<bool>("Email:EnableSsl", true),
-                Username = _configurationService.GetValue<string>("Email:Username", ""),
-                Password = _configurationService.GetValue<string>("Email:Password", ""),
-                FromEmail = _configurationService.GetValue<string>("Email:FromEmail", ""),
-                FromName = _configurationService.GetValue<string>("Email:FromName", "Club Management System"),
-                IsEnabled = _configurationService.GetValue<bool>("Email:IsEnabled", false)
+                    SmtpServer = _configuration["EmailSettings:SmtpServer"] ?? "smtp.gmail.com",
+                    SmtpPort = int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587"),
+                    EnableSsl = bool.Parse(_configuration["EmailSettings:EnableSsl"] ?? "true"),
+                    Username = _configuration["EmailSettings:Username"] ?? "",
+                    Password = _configuration["EmailSettings:Password"] ?? "",
+                    FromEmail = _configuration["EmailSettings:FromEmail"] ?? "",
+                    FromName = _configuration["EmailSettings:FromName"] ?? "Club Management System",
+                    IsEnabled = !string.IsNullOrEmpty(_configuration["EmailSettings:Username"]) && !string.IsNullOrEmpty(_configuration["EmailSettings:Password"])
                 };
             }
 
@@ -601,19 +602,12 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                await _configurationService.SetAsync("Email:SmtpServer", configuration.SmtpServer);
-                await _configurationService.SetAsync("Email:SmtpPort", configuration.SmtpPort);
-                await _configurationService.SetAsync("Email:EnableSsl", configuration.EnableSsl);
-                await _configurationService.SetAsync("Email:Username", configuration.Username);
-                await _configurationService.SetAsync("Email:Password", configuration.Password);
-                await _configurationService.SetAsync("Email:FromEmail", configuration.FromEmail);
-                await _configurationService.SetAsync("Email:FromName", configuration.FromName);
-                await _configurationService.SetAsync("Email:IsEnabled", configuration.IsEnabled);
-                
-                await _configurationService.SaveAsync();
-                _emailConfiguration = null; // Reset cache
+                // Note: This method would need to update appsettings.json or use a different approach
+                // For now, we'll just reset the cache and log the action
+                _emailConfiguration = configuration;
                 
                 await _auditService.LogSystemEventAsync("Email Configuration Updated", "Email settings have been updated");
+                await _loggingService.LogInformationAsync("Email configuration updated. Note: Changes are temporary and will be lost on restart. Update appsettings.json for permanent changes.");
             }
             catch (Exception ex)
             {

@@ -180,30 +180,48 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Full Name" 
                                     Binding="{Binding FullName}" 
-                                    Width="200"
+                                    Width="2*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Email" 
                                     Binding="{Binding Email}" 
-                                    Width="250"
+                                    Width="3*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Role" 
                                     Binding="{Binding Role}" 
-                                    Width="120"
+                                    Width="1.5*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Club" 
                                     Binding="{Binding Club.Name}" 
-                                    Width="150"
+                                    Width="2*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Join Date" 
                                     Binding="{Binding JoinDate, StringFormat='{}{0:yyyy-MM-dd}'}" 
-                                    Width="120"
+                                    Width="1.5*"
                                     IsReadOnly="True"/>
                 
-
+                <DataGridTemplateColumn Header="Actions" Width="2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Edit" 
+                                        Command="{Binding DataContext.EditMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource WarningButtonStyle}"
+                                        Margin="2"/>
+                                
+                                <Button Content="Delete" 
+                                        Command="{Binding DataContext.DeleteMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource DangerButtonStyle}"
+                                        Margin="2"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
         

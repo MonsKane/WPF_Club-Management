@@ -111,7 +111,7 @@
             <Setter Property="Background" Value="#4285f4"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="Padding" Value="20,12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -145,7 +145,7 @@
             <Setter Property="Foreground" Value="#495057"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="BorderBrush" Value="#dee2e6"/>
-            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="Padding" Value="20,12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>

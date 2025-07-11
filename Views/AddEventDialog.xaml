@@ -404,10 +404,12 @@
                         <Button Content="🎉 Create Event" 
                                 Style="{StaticResource PrimaryButtonStyle}" 
                                 Click="CreateButton_Click" 
+                                Padding="20,12" 
                                 Margin="0,0,15,0"/>
                         <Button Content="❌ Cancel" 
                                 Style="{StaticResource SecondaryButtonStyle}" 
-                                Click="CancelButton_Click"/>
+                                Click="CancelButton_Click" 
+                                Padding="20,12"/>
                     </StackPanel>
                 </Grid>
             </ScrollViewer>

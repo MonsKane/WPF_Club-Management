@@ -262,9 +262,9 @@
                                             Style="{StaticResource WarningButtonStyle}"
                                             Margin="2"
                                             IsEnabled="{Binding DataContext.CanManageClubs, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                    
-                                    <Button Content="Delete" 
-                                            Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+
+                                    <Button Content="Delete"
+                                            Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
                                             Style="{StaticResource DangerButtonStyle}"
                                             Margin="2"
@@ -306,15 +306,15 @@
                         Style="{StaticResource PrimaryButtonStyle}"
                         Margin="0,0,10,0"
                         IsEnabled="{Binding CanManageSelectedClub}"/>
-                
-                <Button Content="View Members" 
+
+                <Button Content="View Members"
                         Command="{Binding ViewMembersCommand}"
                         CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource InfoButtonStyle}"
                         Margin="0,0,10,0"
                         IsEnabled="{Binding CanManageSelectedClub}"/>
-                
-                <Button Content="View Events" 
+
+                <Button Content="View Events"
                         Command="{Binding ViewEventsCommand}"
                         CommandParameter="{Binding SelectedClub}"
                         Style="{StaticResource WarningButtonStyle}"

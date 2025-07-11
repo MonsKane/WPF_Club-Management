@@ -137,16 +137,19 @@ namespace ClubManagementApp.Services
                 if (string.IsNullOrWhiteSpace(report.Semester))
                     throw new ArgumentException("Semester is required", nameof(report));
 
-                if (report.ClubID <= 0)
-                    throw new ArgumentException("Valid club ID is required", nameof(report));
-
                 if (report.GeneratedByUserID <= 0)
                     throw new ArgumentException("Valid user ID is required", nameof(report));
 
-                // Verify club exists
-                var club = await _context.Clubs.FindAsync(report.ClubID);
-                if (club == null)
-                    throw new InvalidOperationException($"Club with ID {report.ClubID} not found");
+                // Verify club exists (if ClubID is provided)
+                if (report.ClubID.HasValue)
+                {
+                    if (report.ClubID <= 0)
+                        throw new ArgumentException("Valid club ID is required", nameof(report));
+                        
+                    var club = await _context.Clubs.FindAsync(report.ClubID);
+                    if (club == null)
+                        throw new InvalidOperationException($"Club with ID {report.ClubID} not found");
+                }
 
                 // Verify user exists
                 var user = await _context.Users.FindAsync(report.GeneratedByUserID);

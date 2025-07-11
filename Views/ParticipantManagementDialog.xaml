@@ -11,7 +11,7 @@
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
         Background="#f8f9fa"
-        Icon="pack://application:,,,/Resources/event-icon.ico">
+        >
     
     <Window.Resources>
         <!-- Card Style -->
@@ -31,7 +31,7 @@
             <Setter Property="Background" Value="#007bff"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Padding" Value="20,12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -193,23 +193,25 @@
                           Style="{StaticResource ModernDataGridStyle}"
                           Margin="0,0,0,20">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Name" Binding="{Binding User.FullName}" Width="200"/>
-                        <DataGridTextColumn Header="Email" Binding="{Binding User.Email}" Width="250"/>
-                        <DataGridTextColumn Header="Registration Date" Binding="{Binding RegistrationDate, StringFormat='{}{0:MMM dd, yyyy}'}" Width="150"/>
-                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
-                        <DataGridTextColumn Header="Attendance Date" Binding="{Binding AttendanceDate, StringFormat='{}{0:MMM dd, yyyy}'}" Width="150"/>
-                        <DataGridTemplateColumn Header="Actions" Width="200">
+                        <DataGridTextColumn Header="Name" Binding="{Binding User.FullName}" Width="2*"/>
+                        <DataGridTextColumn Header="Email" Binding="{Binding User.Email}" Width="3*"/>
+                        <DataGridTextColumn Header="Registration Date" Binding="{Binding RegistrationDate, StringFormat='{}{0:MMM dd, yyyy}'}" Width="2*"/>
+                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="1.5*"/>
+                        <DataGridTextColumn Header="Attendance Date" Binding="{Binding AttendanceDate, StringFormat='{}{0:MMM dd, yyyy}'}" Width="2*"/>
+                        <DataGridTemplateColumn Header="Actions" Width="2.5*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Button Content="✓ Mark Attended" 
                                                 Style="{StaticResource SuccessButtonStyle}" 
                                                 Click="MarkAttended_Click" 
+                                                Padding="20,12" 
                                                 Margin="0,0,5,0"
                                                 Tag="{Binding}"/>
                                         <Button Content="✗ Mark Absent" 
                                                 Style="{StaticResource DangerButtonStyle}" 
                                                 Click="CancelParticipation_Click" 
+                                                Padding="20,12" 
                                                 Tag="{Binding}"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -225,10 +227,12 @@
                     <Button Content="📊 Export List" 
                             Style="{StaticResource ModernButtonStyle}" 
                             Click="ExportList_Click" 
+                            Padding="20,12" 
                             Margin="0,0,15,0"/>
                     <Button Content="🔄 Refresh" 
                             Style="{StaticResource ModernButtonStyle}" 
                             Click="Refresh_Click" 
+                            Padding="20,12" 
                             Margin="0,0,15,0"/>
                 </StackPanel>
             </Grid>
@@ -241,7 +245,8 @@
                     Margin="0,20,0,0">
             <Button Content="✅ Close" 
                     Style="{StaticResource SecondaryButtonStyle}" 
-                    Click="CloseButton_Click"/>
+                    Click="CloseButton_Click" 
+                    Padding="20,12"/>
         </StackPanel>
     </Grid>
 </Window>

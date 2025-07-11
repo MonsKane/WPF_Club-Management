@@ -159,7 +159,12 @@ namespace ClubManagementApp.ViewModels
 
         public bool CanCreateEvents
         {
-            get => CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+            get 
+            {
+                var canCreate = CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] CanCreateEvents check: CurrentUser={CurrentUser?.FullName ?? "NULL"}, Role={CurrentUser?.Role}, CanCreate={canCreate}");
+                return canCreate;
+            }
         }
 
         public bool CanEditEvents
@@ -337,10 +342,10 @@ namespace ClubManagementApp.ViewModels
                 var now = DateTime.Now;
                 filtered = SelectedStatus switch
                 {
-                    "Upcoming" => filtered.Where(e => e.EventDate > now),
-                    "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date),
+                    "Upcoming" => filtered.Where(e => e.EventDate > now && (e.Status == EventStatus.Scheduled || e.Status == EventStatus.Postponed)),
+                    "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date && e.Status == EventStatus.InProgress),
                     "Cancelled" => filtered.Where(e => e.Status == EventStatus.Cancelled),
-                    "Completed" => filtered.Where(e => e.EventDate < now),
+                    "Completed" => filtered.Where(e => e.Status == EventStatus.Completed || (e.EventDate < now && e.Status != EventStatus.Cancelled)),
                     _ => filtered
                 };
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied status filter: '{SelectedStatus}'");
@@ -380,21 +385,46 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine("[EVENT_MANAGEMENT_VM] Create Event command executed");
             try
             {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Available clubs count: {Clubs.Count}");
                 var addEventDialog = new Views.AddEventDialog(Clubs);
-                if (addEventDialog.ShowDialog() == true && addEventDialog.NewEvent != null)
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] AddEventDialog created, showing dialog...");
+                
+                var dialogResult = addEventDialog.ShowDialog();
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Dialog result: {dialogResult}, NewEvent is null: {addEventDialog.NewEvent == null}");
+                
+                if (dialogResult == true && addEventDialog.NewEvent != null)
                 {
-                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Creating new event: {addEventDialog.NewEvent.Name}");
-                    var createdEvent = await _eventService.CreateEventAsync(addEventDialog.NewEvent);
+                    var newEvent = addEventDialog.NewEvent;
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Creating new event: {newEvent.Name}");
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event details - Date: {newEvent.EventDate}, Location: {newEvent.Location}, ClubID: {newEvent.ClubID}");
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Events collection count before: {Events.Count}");
+                    
+                    var createdEvent = await _eventService.CreateEventAsync(newEvent);
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event service returned: {createdEvent.Name} with ID: {createdEvent.EventID}");
+                    
                     Events.Add(createdEvent);
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Events collection count after adding: {Events.Count}");
+                    
                     FilterEvents();
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Filtered events count: {FilteredEvents.Count}");
+                    
+                    // Reload data to verify persistence
+                    await LoadDataAsync();
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] After reload - Events count: {Events.Count}, Filtered count: {FilteredEvents.Count}");
+                    
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event created successfully: {createdEvent.Name}");
                     System.Windows.MessageBox.Show($"Event '{createdEvent.Name}' created successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+                else
+                {
+                    Console.WriteLine("[EVENT_MANAGEMENT_VM] Dialog was cancelled or no event was created");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error creating event: {ex.Message}");
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Stack trace: {ex.StackTrace}");
                 System.Windows.MessageBox.Show($"Error creating event: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }

@@ -7,7 +7,6 @@ namespace ClubManagementApp.Views
     public partial class AddEventDialog : Window
     {
         public Event? NewEvent { get; private set; }
-        public new bool DialogResult { get; private set; }
 
         public AddEventDialog()
         {
@@ -18,6 +17,14 @@ namespace ClubManagementApp.Views
         public AddEventDialog(IEnumerable<Club> clubs) : this()
         {
             ClubComboBox.ItemsSource = clubs;
+            
+            // Set default club selection to the first club if available
+            var clubsList = clubs.ToList();
+            if (clubsList.Count > 0)
+            {
+                ClubComboBox.SelectedIndex = 0;
+                Console.WriteLine($"[ADD_EVENT_DIALOG] Default club selected: {clubsList[0].Name}");
+            }
         }
 
         private void InitializeDefaults()
@@ -35,12 +42,16 @@ namespace ClubManagementApp.Views
 
         private void CreateButton_Click(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine("[ADD_EVENT_DIALOG] CreateButton_Click called");
             if (ValidateInput())
             {
+                Console.WriteLine("[ADD_EVENT_DIALOG] Validation passed, creating event...");
                 try
                 {
                     var selectedClub = ClubComboBox.SelectedItem as Club;
+                    Console.WriteLine($"[ADD_EVENT_DIALOG] Selected club: {selectedClub?.Name ?? "NULL"}");
                     var selectedStatus = (EventStatus)((ComboBoxItem)StatusComboBox.SelectedItem).Tag;
+                    Console.WriteLine($"[ADD_EVENT_DIALOG] Selected status: {selectedStatus}");
                     
                     // Combine date and time
                     var eventDate = EventDatePicker.SelectedDate!.Value.Date;
@@ -55,7 +66,7 @@ namespace ClubManagementApp.Views
                         EventDate = eventDateTime,
                         Location = LocationTextBox.Text.Trim(),
                         ClubID = selectedClub!.ClubID,
-                        Club = selectedClub,
+                        // Don't set Club navigation property to avoid EF tracking conflicts
                         Status = selectedStatus,
                         CreatedDate = DateTime.Now
                     };
@@ -74,28 +85,39 @@ namespace ClubManagementApp.Views
                         NewEvent.RegistrationDeadline = RegistrationDeadlinePicker.SelectedDate.Value;
                     }
 
-                    DialogResult = true;
+                    Console.WriteLine($"[ADD_EVENT_DIALOG] Event created successfully: {NewEvent.Name}");
+                    Console.WriteLine("[ADD_EVENT_DIALOG] Setting DialogResult to true and closing");
+                    this.DialogResult = true;
                     Close();
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[ADD_EVENT_DIALOG] Exception occurred: {ex.Message}");
+                    Console.WriteLine($"[ADD_EVENT_DIALOG] Exception stack trace: {ex.StackTrace}");
                     MessageBox.Show($"Error creating event: {ex.Message}", "Error", 
                         MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+            else
+            {
+                Console.WriteLine("[ADD_EVENT_DIALOG] Validation failed");
             }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 
         private bool ValidateInput()
         {
+            Console.WriteLine("[ADD_EVENT_DIALOG] Starting validation...");
+            
             // Validate event name
             if (string.IsNullOrWhiteSpace(EventNameTextBox.Text))
             {
+                Console.WriteLine("[ADD_EVENT_DIALOG] Validation failed: Event name is empty");
                 MessageBox.Show("Please enter an event name.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventNameTextBox.Focus();
@@ -104,6 +126,7 @@ namespace ClubManagementApp.Views
 
             if (EventNameTextBox.Text.Trim().Length < 3)
             {
+                Console.WriteLine($"[ADD_EVENT_DIALOG] Validation failed: Event name too short ({EventNameTextBox.Text.Trim().Length} chars)");
                 MessageBox.Show("Event name must be at least 3 characters long.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventNameTextBox.Focus();
@@ -113,6 +136,7 @@ namespace ClubManagementApp.Views
             // Validate event date
             if (!EventDatePicker.SelectedDate.HasValue)
             {
+                Console.WriteLine("[ADD_EVENT_DIALOG] Validation failed: No event date selected");
                 MessageBox.Show("Please select an event date.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventDatePicker.Focus();
@@ -122,6 +146,7 @@ namespace ClubManagementApp.Views
             // Validate event time
             if (HourComboBox.SelectedItem == null || MinuteComboBox.SelectedItem == null)
             {
+                Console.WriteLine($"[ADD_EVENT_DIALOG] Validation failed: Time not selected (Hour: {HourComboBox.SelectedItem}, Minute: {MinuteComboBox.SelectedItem})");
                 MessageBox.Show("Please select an event time.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 HourComboBox.Focus();
@@ -131,6 +156,7 @@ namespace ClubManagementApp.Views
             // Validate club selection
             if (ClubComboBox.SelectedItem == null)
             {
+                Console.WriteLine($"[ADD_EVENT_DIALOG] Validation failed: No club selected (Available clubs: {ClubComboBox.Items.Count})");
                 MessageBox.Show("Please select a club for this event.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 ClubComboBox.Focus();
@@ -175,6 +201,7 @@ namespace ClubManagementApp.Views
                 }
             }
 
+            Console.WriteLine("[ADD_EVENT_DIALOG] All validations passed!");
             return true;
         }
     }
