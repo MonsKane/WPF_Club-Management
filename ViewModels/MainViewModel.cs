@@ -33,7 +33,7 @@ namespace ClubManagementApp.ViewModels
             private set
             {
                 Console.WriteLine($"[MainViewModel] Setting DashboardViewModel: {value != null}");
-                SetProperty(ref _dashboardViewModel, value);
+                SetProperty(ref _dashboardViewModel, value!);
             }
         }
         public MemberListViewModel? MemberListViewModel { get; private set; }
@@ -123,7 +123,10 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine("[NAVIGATION] Navigating to Dashboard");
                 CurrentView = "Dashboard";
                 // Load dashboard statistics when navigating to dashboard
-                await DashboardViewModel.LoadAsync();
+                if (DashboardViewModel != null)
+                {
+                    await DashboardViewModel!.LoadAsync();
+                }
                 Console.WriteLine("[NAVIGATION] Dashboard statistics refreshed");
             });
             OpenMemberListCommand = new RelayCommand(() =>
@@ -203,7 +206,10 @@ namespace ClubManagementApp.ViewModels
 
                 // Load dashboard statistics
                 Console.WriteLine("[DATA] Loading dashboard statistics...");
-                await DashboardViewModel.LoadAsync();
+                if (DashboardViewModel != null)
+                {
+                    await DashboardViewModel!.LoadAsync();
+                }
                 Console.WriteLine("[DATA] Dashboard statistics loaded");
 
                 Console.WriteLine("[DATA] All data loaded successfully");

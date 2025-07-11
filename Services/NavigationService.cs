@@ -101,8 +101,6 @@ namespace ClubManagementApp.Services
             {
                 ShowNotification($"Error opening leadership management: {ex.Message}");
             }
-
-            return Task.CompletedTask;
         }
 
         public void NavigateToLogin()

@@ -412,7 +412,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        private void ManageLeadership(Club? club)
+        private async void ManageLeadership(Club? club)
         {
             if (club == null) return;
 

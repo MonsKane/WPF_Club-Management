@@ -242,7 +242,7 @@ namespace ClubManagementApp.Views
                 FullName = FullNameTextBox.Text.Trim(),
                 Email = EmailTextBox.Text.Trim(),
                 PhoneNumber = PhoneTextBox.Text.Trim(),
-                Role = (UserRole)Enum.Parse(typeof(UserRole), NewUserRoleComboBox.SelectedValue?.ToString() ?? "Member"),
+                Role = (UserRole)Enum.Parse(typeof(UserRole), selectedRole),
                 IsActive = IsActiveCheckBox.IsChecked ?? true,
                 ClubID = _targetClub?.ClubID
             };
@@ -267,7 +267,7 @@ namespace ClubManagementApp.Views
             }
             
             var roleEnum = (UserRole)Enum.Parse(typeof(UserRole), selectedRole);
-            await _clubService.AddUserToClubAsync(_targetClub.ClubID, createdUser.UserID, roleEnum);
+            await _clubService.AddUserToClubAsync(_targetClub!.ClubID, createdUser.UserID, roleEnum);
 
             MessageBox.Show($"{newUser.FullName} has been created and added to {_targetClub.Name}.",
                 "Member Created and Added", MessageBoxButton.OK, MessageBoxImage.Information);
