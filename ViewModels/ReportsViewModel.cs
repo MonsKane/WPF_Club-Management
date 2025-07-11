@@ -1,10 +1,12 @@
 using ClubManagementApp.Commands;
 using ClubManagementApp.DTOs;
+using ClubManagementApp.Helpers;
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
+using System.Web;
 using System.Windows.Input;
 
 namespace ClubManagementApp.ViewModels
@@ -15,6 +17,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IUserService _userService;
         private readonly IEventService _eventService;
         private readonly IClubService _clubService;
+        private readonly IAuthorizationService _authorizationService;
         private ObservableCollection<Report> _reports = new();
         private ObservableCollection<Report> _filteredReports = new();
         private string _searchText = string.Empty;
@@ -24,16 +27,19 @@ namespace ClubManagementApp.ViewModels
         private int _todayReportsCount;
         private int _monthReportsCount;
         private bool _hasNoReports;
+        private User? _currentUser;
 
         public ReportsViewModel(IReportService reportService, IUserService userService,
-                              IEventService eventService, IClubService clubService)
+                              IEventService eventService, IClubService clubService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[ReportsViewModel] Initializing ReportsViewModel with services");
             _reportService = reportService;
             _userService = userService;
             _eventService = eventService;
             _clubService = clubService;
+            _authorizationService = authorizationService;
             InitializeCommands();
+            LoadCurrentUserAsync();
             Console.WriteLine("[ReportsViewModel] ReportsViewModel initialization completed");
         }
 
@@ -123,6 +129,28 @@ namespace ClubManagementApp.ViewModels
             set => SetProperty(ref _hasNoReports, value);
         }
 
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set => SetProperty(ref _currentUser, value);
+        }
+
+        // Reporting Permissions
+        public bool CanAccessReports
+        {
+            get => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ReportView");
+        }
+
+        public bool CanGenerateReports
+        {
+            get => CurrentUser != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
+        }
+
+        public bool CanExportReports
+        {
+            get => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        }
+
         // Commands
         public ICommand GenerateReportCommand { get; private set; } = null!;
         public ICommand GenerateMembershipReportCommand { get; private set; } = null!;
@@ -132,21 +160,69 @@ namespace ClubManagementApp.ViewModels
         public ICommand ViewReportCommand { get; private set; } = null!;
         public ICommand DownloadReportCommand { get; private set; } = null!;
         public ICommand EmailReportCommand { get; private set; } = null!;
+        public ICommand UpdateReportCommand { get; private set; } = null!;
         public ICommand DeleteReportCommand { get; private set; } = null!;
         public ICommand RefreshCommand { get; private set; } = null!;
 
         private void InitializeCommands()
         {
-            GenerateReportCommand = new RelayCommand(GenerateReport);
-            GenerateMembershipReportCommand = new RelayCommand(async () => await GenerateMembershipReportAsync());
-            GenerateEventReportCommand = new RelayCommand(async () => await GenerateEventReportAsync());
-            GenerateFinancialReportCommand = new RelayCommand(async () => await GenerateFinancialReportAsync());
-            GenerateActivityReportCommand = new RelayCommand(async () => await GenerateActivityReportAsync());
-            ViewReportCommand = new RelayCommand<Report>(ViewReport);
-            DownloadReportCommand = new RelayCommand<Report>(DownloadReport);
-            EmailReportCommand = new RelayCommand<Report>(EmailReport);
-            DeleteReportCommand = new RelayCommand<Report>(DeleteReport);
-            RefreshCommand = new RelayCommand(async () => await LoadReportsAsync());
+            GenerateReportCommand = new RelayCommand(GenerateReport, CanExecuteGenerateReport);
+            GenerateMembershipReportCommand = new RelayCommand(async _ => await GenerateMembershipReportAsync(), CanExecuteGenerateReport);
+            GenerateEventReportCommand = new RelayCommand(async _ => await GenerateEventReportAsync(), CanExecuteGenerateReport);
+            GenerateFinancialReportCommand = new RelayCommand(async _ => await GenerateFinancialReportAsync(), CanExecuteGenerateReport);
+            GenerateActivityReportCommand = new RelayCommand(async _ => await GenerateActivityReportAsync(), CanExecuteGenerateReport);
+            ViewReportCommand = new RelayCommand<Report>(ViewReport, CanExecuteViewReport);
+            DownloadReportCommand = new RelayCommand<Report>(DownloadReport, CanExecuteDownloadReport);
+            EmailReportCommand = new RelayCommand<Report>(EmailReport, CanExecuteEmailReport);
+            UpdateReportCommand = new RelayCommand<Report>(UpdateReport, CanExecuteUpdateReport);
+            DeleteReportCommand = new RelayCommand<Report>(DeleteReport, CanExecuteDeleteReport);
+            RefreshCommand = new RelayCommand(async _ => await LoadReportsAsync());
+        }
+
+        private async void LoadCurrentUserAsync()
+        {
+            try
+            {
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                Console.WriteLine($"[ReportsViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                OnPropertyChanged(nameof(CanAccessReports));
+                OnPropertyChanged(nameof(CanGenerateReports));
+                OnPropertyChanged(nameof(CanExportReports));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportsViewModel] Error loading current user: {ex.Message}");
+            }
+        }
+
+        private bool CanExecuteGenerateReport(object? parameter)
+        {
+            return CanGenerateReports;
+        }
+
+        private bool CanExecuteViewReport(Report? report)
+        {
+            return report != null && CanAccessReports;
+        }
+
+        private bool CanExecuteDownloadReport(Report? report)
+        {
+            return report != null && CanExportReports;
+        }
+
+        private bool CanExecuteEmailReport(Report? report)
+        {
+            return report != null && CanExportReports;
+        }
+
+        private bool CanExecuteUpdateReport(Report? report)
+        {
+            return report != null && CanGenerateReports;
+        }
+
+        private bool CanExecuteDeleteReport(Report? report)
+        {
+            return report != null && CanGenerateReports;
         }
 
         private async Task LoadReportsAsync()
@@ -701,35 +777,104 @@ namespace ClubManagementApp.ViewModels
                     Margin = new System.Windows.Thickness(5, 0, 0, 0)
                 };
 
-                sendButton.Click += (s, e) => 
+                sendButton.Click += async (s, e) => 
                 {
-                    if (string.IsNullOrWhiteSpace(emailTextBox.Text))
+                    var email = emailTextBox.Text.Trim();
+                    if (string.IsNullOrWhiteSpace(email))
                     {
                         System.Windows.MessageBox.Show("Please enter an email address.", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                         return;
                     }
 
+                    // Validate email format
+                    if (!IsValidEmail(email))
+                    {
+                        System.Windows.MessageBox.Show("Please enter a valid email address.", "Invalid Email", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        return;
+                    }
+
                     try
                     {
-                        // Open default email client with mailto link
-                        var subject = System.Uri.EscapeDataString($"Report: {report.Title}");
-                        var body = System.Uri.EscapeDataString($"Please find the report content below:\n\n{report.Content}");
-                        var mailtoUrl = $"mailto:{emailTextBox.Text}?subject={subject}&body={body}";
-                        
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = mailtoUrl,
-                            UseShellExecute = true
-                        });
+                        sendButton.IsEnabled = false;
+                        sendButton.Content = "Sending...";
 
-                        Console.WriteLine($"[ReportsViewModel] Email client opened for report: {report.Title}");
-                        System.Windows.MessageBox.Show("Email client opened with report content.", "Email Prepared", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                        emailDialog.Close();
+                        // Create HTML email content
+                        var subject = $"Report: {report.Title}";
+                        var body = $@"
+                            <html>
+                            <body>
+                                <h2>Club Management Report</h2>
+                                <p><strong>Report Title:</strong> {report.Title}</p>
+                                <p><strong>Report Type:</strong> {report.Type}</p>
+                                <p><strong>Generated Date:</strong> {report.GeneratedDate:MMMM dd, yyyy}</p>
+                                <p><strong>Semester:</strong> {report.Semester}</p>
+                                <hr/>
+                                <h3>Report Content:</h3>
+                                <pre>{System.Web.HttpUtility.HtmlEncode(report.Content)}</pre>
+                            </body>
+                            </html>";
+
+                        // Use EmailService to send the email automatically
+                        Services.IEmailService? emailService = null;
+                        try
+                        {
+                            emailService = ServiceLocator.GetService<Services.IEmailService>();
+                        }
+                        catch (Exception serviceEx)
+                        {
+                            Console.WriteLine($"[ReportsViewModel] ServiceLocator not configured: {serviceEx.Message}");
+                        }
+                        
+                        if (emailService != null)
+                        {
+                            var success = await emailService.SendEmailAsync(email, subject, body, true);
+                            
+                            if (success)
+                            {
+                                Console.WriteLine($"[ReportsViewModel] Report sent successfully to {email}");
+                                System.Windows.MessageBox.Show(
+                                    $"Report sent successfully to {email}!",
+                                    "Email Sent",
+                                    System.Windows.MessageBoxButton.OK,
+                                    System.Windows.MessageBoxImage.Information);
+                                emailDialog.Close();
+                            }
+                            else
+                            {
+                                System.Windows.MessageBox.Show(
+                                    "Failed to send email. Please check your email configuration.",
+                                    "Send Failed",
+                                    System.Windows.MessageBoxButton.OK,
+                                    System.Windows.MessageBoxImage.Error);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to mailto if EmailService is not available
+                            var mailtoSubject = System.Uri.EscapeDataString(subject);
+                            var mailtoBody = System.Uri.EscapeDataString($"Please find the report content below:\n\n{report.Content}");
+                            var mailtoUrl = $"mailto:{email}?subject={mailtoSubject}&body={mailtoBody}";
+                            
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = mailtoUrl,
+                                UseShellExecute = true
+                            });
+
+                            Console.WriteLine($"[ReportsViewModel] Email client opened for report: {report.Title}");
+                            System.Windows.MessageBox.Show("Email client opened with report content.", "Email Prepared", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                            emailDialog.Close();
+                        }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[ReportsViewModel] Error preparing email: {ex.Message}");
-                        System.Windows.MessageBox.Show($"Error preparing email: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        Console.WriteLine($"[ReportsViewModel] Error sending email: {ex.Message}");
+                        System.Windows.MessageBox.Show($"Error sending email: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    }
+                    finally
+                    {
+                        sendButton.IsEnabled = true;
+                        sendButton.Content = "Send";
                     }
                 };
 
@@ -747,6 +892,141 @@ namespace ClubManagementApp.ViewModels
             {
                 Console.WriteLine($"[ReportsViewModel] Error opening email dialog: {ex.Message}");
                 System.Windows.MessageBox.Show($"Error opening email dialog: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void UpdateReport(Report? report)
+        {
+            if (report == null) return;
+
+            Console.WriteLine($"[ReportsViewModel] Update report requested: {report.Title} (ID: {report.ReportID})");
+            
+            try
+            {
+                // Create a simple update dialog
+                var updateDialog = new System.Windows.Window
+                {
+                    Title = "Update Report",
+                    Width = 500,
+                    Height = 400,
+                    WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen,
+                    ResizeMode = System.Windows.ResizeMode.NoResize
+                };
+
+                var grid = new System.Windows.Controls.Grid();
+                grid.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = System.Windows.GridLength.Auto });
+                grid.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = System.Windows.GridLength.Auto });
+                grid.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = new System.Windows.GridLength(1, System.Windows.GridUnitType.Star) });
+                grid.RowDefinitions.Add(new System.Windows.Controls.RowDefinition { Height = System.Windows.GridLength.Auto });
+
+                var titleLabel = new System.Windows.Controls.Label { Content = "Report Title:", Margin = new System.Windows.Thickness(10) };
+                System.Windows.Controls.Grid.SetRow(titleLabel, 0);
+                grid.Children.Add(titleLabel);
+
+                var titleTextBox = new System.Windows.Controls.TextBox { Text = report.Title, Margin = new System.Windows.Thickness(10, 0, 10, 10) };
+                System.Windows.Controls.Grid.SetRow(titleTextBox, 1);
+                grid.Children.Add(titleTextBox);
+
+                var contentLabel = new System.Windows.Controls.Label { Content = "Report Content:", Margin = new System.Windows.Thickness(10, 0, 10, 5) };
+                var contentTextBox = new System.Windows.Controls.TextBox 
+                { 
+                    Text = report.Content, 
+                    Margin = new System.Windows.Thickness(10, 0, 10, 10),
+                    AcceptsReturn = true,
+                    TextWrapping = System.Windows.TextWrapping.Wrap,
+                    VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto
+                };
+
+                var contentPanel = new System.Windows.Controls.StackPanel();
+                contentPanel.Children.Add(contentLabel);
+                contentPanel.Children.Add(contentTextBox);
+                System.Windows.Controls.Grid.SetRow(contentPanel, 2);
+                grid.Children.Add(contentPanel);
+
+                var buttonPanel = new System.Windows.Controls.StackPanel 
+                { 
+                    Orientation = System.Windows.Controls.Orientation.Horizontal, 
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                    Margin = new System.Windows.Thickness(10)
+                };
+                
+                var updateButton = new System.Windows.Controls.Button 
+                { 
+                    Content = "Update", 
+                    Width = 75, 
+                    Height = 25, 
+                    Margin = new System.Windows.Thickness(5, 0, 0, 0)
+                };
+                
+                var cancelButton = new System.Windows.Controls.Button 
+                { 
+                    Content = "Cancel", 
+                    Width = 75, 
+                    Height = 25, 
+                    Margin = new System.Windows.Thickness(5, 0, 0, 0)
+                };
+
+                updateButton.Click += async (s, e) => 
+                {
+                    if (string.IsNullOrWhiteSpace(titleTextBox.Text))
+                    {
+                        System.Windows.MessageBox.Show("Please enter a report title.", "Validation Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    try
+                    {
+                        report.Title = titleTextBox.Text.Trim();
+                        report.Content = contentTextBox.Text;
+                        
+                        await _reportService.UpdateReportAsync(report);
+                        
+                        // Update the report in the collection
+                        var index = Reports.IndexOf(report);
+                        if (index >= 0)
+                        {
+                            Reports[index] = report;
+                        }
+                        
+                        FilterReports();
+                        Console.WriteLine($"[ReportsViewModel] Report updated successfully: {report.Title}");
+                        System.Windows.MessageBox.Show("Report updated successfully.", "Update Complete", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        updateDialog.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ReportsViewModel] Error updating report: {ex.Message}");
+                        System.Windows.MessageBox.Show($"Error updating report: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    }
+                };
+
+                cancelButton.Click += (s, e) => updateDialog.Close();
+
+                buttonPanel.Children.Add(updateButton);
+                buttonPanel.Children.Add(cancelButton);
+                System.Windows.Controls.Grid.SetRow(buttonPanel, 3);
+                grid.Children.Add(buttonPanel);
+
+                updateDialog.Content = grid;
+                updateDialog.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportsViewModel] Error opening update dialog: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error opening update dialog: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 

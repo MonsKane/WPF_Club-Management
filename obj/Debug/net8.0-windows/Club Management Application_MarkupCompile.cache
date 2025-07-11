@@ -12,7 +12,7 @@ TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR
 E:\Pet Projects\Freelancers\WPF_Club-Management\App.xaml
 171089993668
 
-83-2031068702
+85-1417875712
 268-659774258
 MainWindow.xaml;Views\AddClubDialog.xaml;Views\AddEventDialog.xaml;Views\AddMemberDialog.xaml;Views\AddUserDialog.xaml;Views\ClubDetailsDialog.xaml;Views\ClubManagementView.xaml;Views\EditClubDialog.xaml;Views\EditEventDialog.xaml;Views\EditUserDialog.xaml;Views\EventDetailsDialog.xaml;Views\EventManagementView.xaml;Views\LoginWindow.xaml;Views\ManageLeadershipDialog.xaml;Views\MemberListView.xaml;Views\ParticipantManagementDialog.xaml;Views\ReportsView.xaml;
 

@@ -161,13 +161,13 @@ namespace ClubManagementApp.ViewModels
         private void InitializeChildViewModels()
         {
             Console.WriteLine("[MainViewModel] Initializing child ViewModels");
-            DashboardViewModel = new DashboardViewModel(_userService, _clubService, _eventService, _reportService, _navigationService);
+            DashboardViewModel = new DashboardViewModel(_userService, _clubService, _eventService, _reportService, _navigationService, _authorizationService);
             Console.WriteLine($"[MainViewModel] DashboardViewModel created: {DashboardViewModel != null}");
-            Console.WriteLine($"[MainViewModel] DashboardViewModel.RefreshCommand created: {DashboardViewModel.RefreshCommand != null}");
-            MemberListViewModel = new MemberListViewModel(_userService, _clubService, _notificationService, null);
-            EventManagementViewModel = new EventManagementViewModel(_eventService, _clubService, _userService);
+            Console.WriteLine($"[MainViewModel] DashboardViewModel.RefreshCommand created: {DashboardViewModel!.RefreshCommand != null}");
+            MemberListViewModel = new MemberListViewModel(_userService, _clubService, _notificationService, _authorizationService);
+            EventManagementViewModel = new EventManagementViewModel(_eventService, _clubService, _userService, _authorizationService);
             ClubManagementViewModel = new ClubManagementViewModel(_clubService, _userService, _eventService, _navigationService, _authorizationService);
-            ReportsViewModel = new ReportsViewModel(_reportService, _userService, _eventService, _clubService);
+            ReportsViewModel = new ReportsViewModel(_reportService, _userService, _eventService, _clubService, _authorizationService);
             Console.WriteLine("[MainViewModel] Child ViewModels initialized successfully");
         }
 
@@ -264,9 +264,38 @@ namespace ClubManagementApp.ViewModels
             _navigationService.NavigateToLogin();
         }
 
-        public bool CanAccessAdminFeatures => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin;
-        public bool CanAccessClubManagement => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin or UserRole.ClubPresident or UserRole.Chairman or UserRole.ViceChairman or UserRole.ClubOfficer;
-        public bool CanAccessEventManagement => CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin or UserRole.ClubPresident or UserRole.Chairman or UserRole.ViceChairman or UserRole.ClubOfficer or UserRole.TeamLeader;
+        // User Management Permissions
+        public bool CanAccessUserManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanCreateUsers => CurrentUser?.Role != null && _authorizationService.CanCreateUsers(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanEditUsers => CurrentUser?.Role != null && _authorizationService.CanEditUsers(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanDeleteUsers => CurrentUser?.Role != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
+        public bool CanAssignRoles => CurrentUser?.Role != null && _authorizationService.CanAssignRoles(CurrentUser.Role, CurrentUser.ClubID);
+        
+        // Club Management Permissions
+        public bool CanAccessClubManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+        public bool CanCreateClubs => CurrentUser?.Role != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
+        public bool CanEditClubs => CurrentUser?.Role != null && _authorizationService.CanEditClubs(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanDeleteClubs => CurrentUser?.Role != null && _authorizationService.CanDeleteClubs(CurrentUser.Role);
+        
+        // Event Management Permissions
+        public bool CanAccessEventManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
+        public bool CanCreateEvents => CurrentUser?.Role != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+        public bool CanEditEvents => CurrentUser?.Role != null && _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanDeleteEvents => CurrentUser?.Role != null && _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanRegisterForEvents => CurrentUser?.Role != null && _authorizationService.CanRegisterForEvents(CurrentUser.Role);
+        
+        // Reporting Permissions
+        public bool CanAccessReports => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ReportView");
+        public bool CanGenerateReports => CurrentUser?.Role != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
+        public bool CanExportReports => CurrentUser?.Role != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        
+        // System Settings Permissions
+        public bool CanAccessGlobalSettings => CurrentUser?.Role != null && _authorizationService.CanAccessGlobalSettings(CurrentUser.Role);
+        public bool CanAccessClubSettings => CurrentUser?.Role != null && _authorizationService.CanAccessClubSettings(CurrentUser.Role, CurrentUser.ClubID);
+        
+        // Legacy properties for backward compatibility
+        public bool CanAccessAdminFeatures => CanAccessUserManagement || CanAccessGlobalSettings;
+        public bool CanAccessMemberManagement => CanAccessUserManagement;
 
         public void ShowNotification(string message)
         {

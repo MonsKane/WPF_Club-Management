@@ -197,40 +197,14 @@ E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net8.0-windows\refi
 E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net8.0-windows\Club Management Application.pdb
 E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net8.0-windows\Club Management Application.genruntimeconfig.cache
 E:\Pet Projects\Dotnet\Club Management Application\obj\Debug\net8.0-windows\ref\Club Management Application.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.Abstractions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.Relational.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.SqlServer.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Caching.Abstractions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Caching.Memory.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Abstractions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.EnvironmentVariables.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.FileExtensions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Json.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.FileProviders.Abstractions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.FileProviders.Physical.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.FileSystemGlobbing.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Options.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Primitives.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Identity.Client.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.SqlServer.Server.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Diagnostics.DiagnosticSource.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Text.Json.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\appsettings.json
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\appsettings.Production.json
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\database_seed_script.sql
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.exe
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.deps.json
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.runtimeconfig.json
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.pdb
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Azure.Core.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Azure.Identity.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\BCrypt.Net-Next.dll
@@ -260,13 +234,34 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microso
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Data.SqlClient.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.DotNet.PlatformAbstractions.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.Abstractions.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.Design.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.Relational.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.EntityFrameworkCore.SqlServer.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Caching.Abstractions.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Caching.Memory.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Abstractions.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Binder.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.EnvironmentVariables.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.FileExtensions.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Configuration.Json.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyModel.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.FileProviders.Abstractions.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.FileProviders.Physical.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.FileSystemGlobbing.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Configuration.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Console.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Debug.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Options.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Extensions.Primitives.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Identity.Client.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.Identity.Client.Extensions.Msal.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.IdentityModel.Abstractions.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.IdentityModel.JsonWebTokens.dll
@@ -275,6 +270,7 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microso
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.IdentityModel.Tokens.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.IO.RecyclableMemoryStream.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Microsoft.SqlServer.Server.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Mono.TextTemplating.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Newtonsoft.Json.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Serilog.dll
@@ -290,11 +286,14 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Composition.Hosting.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Composition.Runtime.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Composition.TypedParts.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Diagnostics.DiagnosticSource.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Formats.Asn1.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.IdentityModel.Tokens.Jwt.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Memory.Data.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Runtime.Caching.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Text.Encodings.Web.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\System.Text.Json.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\cs\Microsoft.CodeAnalysis.resources.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\de\Microsoft.CodeAnalysis.resources.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\es\Microsoft.CodeAnalysis.resources.dll
@@ -361,13 +360,16 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\tr\Micr
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Club Management Application.csproj.AssemblyReference.cache
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddClubDialog.baml
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddMemberDialog.baml
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ClubDetailsDialog.baml
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\EditClubDialog.baml
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\EventDetailsDialog.baml
@@ -375,6 +377,7 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\P
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\MainWindow.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddClubDialog.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddEventDialog.g.cs
+E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddMemberDialog.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddUserDialog.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ClubDetailsDialog.g.cs
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\ClubManagementView.g.cs
@@ -415,7 +418,4 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Club Ma
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\refint\Club Management Application.dll
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Club Management Application.pdb
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Club Management Application.genruntimeconfig.cache
-E:\Pet Projects\Freelancers\WPF_Club-Management\bin\Debug\net8.0-windows\Club Management Application.pdb
 E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\ref\Club Management Application.dll
-E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddMemberDialog.baml
-E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\Views\AddMemberDialog.g.cs

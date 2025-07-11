@@ -169,10 +169,10 @@
                       Padding="10,8"
                       FontSize="14">
                 <ComboBoxItem Content="All Types"/>
-                <ComboBoxItem Content="Membership"/>
-                <ComboBoxItem Content="Events"/>
-                <ComboBoxItem Content="Financial"/>
-                <ComboBoxItem Content="Activity"/>
+                <ComboBoxItem Content="MemberStatistics"/>
+                <ComboBoxItem Content="EventOutcomes"/>
+                <ComboBoxItem Content="ActivityTracking"/>
+                <ComboBoxItem Content="SemesterSummary"/>
             </ComboBox>
             
             <!-- Date Filter -->
@@ -245,37 +245,37 @@
                                     Width="150"
                                     IsReadOnly="True"/>
                 
-
-                
                 <DataGridTemplateColumn Header="Actions" Width="300">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Button Content="View" 
-                                        Command="{Binding DataContext.ViewReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource InfoButtonStyle}"
-                                        Margin="2"/>
-                                
-                                <Button Content="Download" 
-                                        Command="{Binding DataContext.DownloadReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Margin="2"/>
-                                
-                                <Button Content="Email" 
-                                        Command="{Binding DataContext.EmailReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource WarningButtonStyle}"
-                                        Margin="2"/>
-                                
-                                <Button Content="Delete" 
-                                        Command="{Binding DataContext.DeleteReportCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource DangerButtonStyle}"
-                                        Margin="2"/>
-                            </StackPanel>
-                        </DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="View" 
+                                            Command="{Binding DataContext.ViewReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Margin="2"/>
+                                    <Button Content="Edit" 
+                                            Command="{Binding DataContext.UpdateReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Margin="2"/>
+                                    <Button Content="Download" 
+                                            Command="{Binding DataContext.DownloadReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Margin="2"/>
+                                    <Button Content="Email" 
+                                            Command="{Binding DataContext.EmailReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource ActionButtonStyle}"
+                                            Margin="2"/>
+                                    <Button Content="Delete" 
+                                            Command="{Binding DataContext.DeleteReportCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource DangerButtonStyle}"
+                                            Margin="2"/>
+                                </StackPanel>
+                            </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>

@@ -166,6 +166,50 @@ namespace ClubManagementApp.Services
             }
         }
 
+        public async Task<Report> UpdateReportAsync(Report report)
+        {
+            try
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Updating report: {report.Title} (ID: {report.ReportID})");
+
+                // Input validation
+                if (report == null)
+                    throw new ArgumentNullException(nameof(report), "Report cannot be null");
+
+                if (report.ReportID <= 0)
+                    throw new ArgumentException("Invalid report ID", nameof(report.ReportID));
+
+                if (string.IsNullOrWhiteSpace(report.Title))
+                    throw new ArgumentException("Report title is required", nameof(report.Title));
+
+                if (string.IsNullOrWhiteSpace(report.Content))
+                    throw new ArgumentException("Report content is required", nameof(report.Content));
+
+                // Check if report exists
+                var existingReport = await _context.Reports.FindAsync(report.ReportID);
+                if (existingReport == null)
+                    throw new InvalidOperationException($"Report with ID {report.ReportID} not found");
+
+                // Update properties
+                existingReport.Title = report.Title;
+                existingReport.Content = report.Content;
+                existingReport.Type = report.Type;
+                existingReport.Semester = report.Semester;
+                // Note: We don't update GeneratedDate, ClubID, or GeneratedByUserID for audit purposes
+
+                _context.Reports.Update(existingReport);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[REPORT_SERVICE] Report updated successfully: {existingReport.Title}");
+                return existingReport;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error updating report {report?.ReportID}: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> DeleteReportAsync(int reportId)
         {
             try

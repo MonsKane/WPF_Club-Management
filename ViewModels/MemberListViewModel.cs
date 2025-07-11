@@ -24,7 +24,9 @@ namespace ClubManagementApp.ViewModels
         private readonly IUserService _userService;
         private readonly IClubService _clubService;
         private readonly INotificationService _notificationService;
+        private readonly IAuthorizationService _authorizationService;
         private readonly ILogger<MemberListViewModel>? _logger;
+        private User? _currentUser;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
         private ObservableCollection<User> _members = new();
@@ -40,15 +42,18 @@ namespace ClubManagementApp.ViewModels
             IUserService userService,
             IClubService clubService,
             INotificationService notificationService,
+            IAuthorizationService authorizationService,
             ILogger<MemberListViewModel>? logger = null)
         {
             Console.WriteLine("[MemberListViewModel] Initializing MemberListViewModel with services");
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _clubService = clubService ?? throw new ArgumentNullException(nameof(clubService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _logger = logger;
 
             InitializeCommands();
+            _ = LoadCurrentUserAsync();
             
             // Subscribe to leadership change notifications
             LeadershipChanged += OnLeadershipChanged;
@@ -128,20 +133,22 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            AddMemberCommand = new RelayCommand(AddMember, _ => CanExecuteCommand());
-            EditMemberCommand = new RelayCommand<User>(EditMember, CanEditMember);
-            DeleteMemberCommand = new RelayCommand<User>(DeleteMember, CanDeleteMember);
+            AddMemberCommand = new RelayCommand(AddMember, _ => CanExecuteAddMember());
+            EditMemberCommand = new RelayCommand<User>(EditMember, CanExecuteEditMember);
+            DeleteMemberCommand = new RelayCommand<User>(DeleteMember, CanExecuteDeleteMember);
             RefreshCommand = new RelayCommand(async _ => await RefreshMembersAsync(), _ => CanExecuteCommand());
-            ExportMembersCommand = new RelayCommand(ExportMembers, _ => CanExportMembers());
+            ExportMembersCommand = new RelayCommand(ExportMembers, _ => CanExecuteExportMembers());
         }
 
         private bool CanExecuteCommand() => !IsLoading && !_disposed;
 
-        private bool CanEditMember(User? member) => member != null && CanExecuteCommand();
+        private bool CanExecuteAddMember() => CanCreateUsers && CanExecuteCommand();
 
-        private bool CanDeleteMember(User? member) => member != null && CanExecuteCommand();
+        private bool CanExecuteEditMember(User? member) => member != null && CanEditUser(member) && CanExecuteCommand();
 
-        private bool CanExportMembers() => FilteredMembers.Any() && CanExecuteCommand();
+        private bool CanExecuteDeleteMember(User? member) => member != null && CanDeleteUser(member) && CanExecuteCommand();
+
+        private bool CanExecuteExportMembers() => CanExportUsers && FilteredMembers.Any() && CanExecuteCommand();
 
         private async Task InitializeAsync()
         {
@@ -480,6 +487,52 @@ namespace ClubManagementApp.ViewModels
                 // Fallback to MessageBox if notification service fails
                 System.Windows.MessageBox.Show(message, "Member Management",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+        }
+
+        // Permission Properties
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set => SetProperty(ref _currentUser, value);
+        }
+
+        // User Management Permissions
+        public bool CanAccessUserManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanCreateUsers => CurrentUser?.Role != null && _authorizationService.CanCreateUsers(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanEditUsers => CurrentUser?.Role != null && _authorizationService.CanEditUsers(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanDeleteUsers => CurrentUser?.Role != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
+        public bool CanAssignRoles => CurrentUser?.Role != null && _authorizationService.CanAssignRoles(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanExportUsers => CurrentUser?.Role != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        
+        // User-specific permissions
+        public bool CanEditUser(User user) => CurrentUser?.Role != null && _authorizationService.CanEditUsers(CurrentUser.Role, CurrentUser.ClubID) && 
+                                              (CurrentUser.Role == UserRole.SystemAdmin || CurrentUser.ClubID == user.ClubID);
+        public bool CanDeleteUser(User user) => CurrentUser?.Role != null && _authorizationService.CanDeleteUsers(CurrentUser.Role) && 
+                                                 user.UserID != CurrentUser.UserID; // Cannot delete self
+
+        private async Task LoadCurrentUserAsync()
+        {
+            try
+            {
+                // Get current user from session or authentication context
+                var currentUserEmail = System.Threading.Thread.CurrentPrincipal?.Identity?.Name;
+                if (!string.IsNullOrEmpty(currentUserEmail))
+                {
+                    CurrentUser = await _userService.GetUserByEmailAsync(currentUserEmail);
+                }
+                
+                // Notify property changes for permission-dependent UI elements
+                OnPropertyChanged(nameof(CanAccessUserManagement));
+                OnPropertyChanged(nameof(CanCreateUsers));
+                OnPropertyChanged(nameof(CanEditUsers));
+                OnPropertyChanged(nameof(CanDeleteUsers));
+                OnPropertyChanged(nameof(CanAssignRoles));
+                OnPropertyChanged(nameof(CanExportUsers));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MemberListViewModel] Error loading current user: {ex.Message}");
             }
         }
 

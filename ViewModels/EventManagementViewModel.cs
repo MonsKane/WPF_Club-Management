@@ -3,6 +3,7 @@ using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using static ClubManagementApp.Models.EventStatus;
 
 namespace ClubManagementApp.ViewModels
 {
@@ -11,6 +12,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IEventService _eventService;
         private readonly IClubService _clubService;
         private readonly IUserService _userService;
+        private readonly IAuthorizationService _authorizationService;
         private ObservableCollection<Event> _events = new();
         private ObservableCollection<Event> _filteredEvents = new();
         private ObservableCollection<Club> _clubs = new();
@@ -20,14 +22,17 @@ namespace ClubManagementApp.ViewModels
         private bool _isLoading;
         private Event? _selectedEvent;
         private Club? _clubFilter;
+        private User? _currentUser;
 
-        public EventManagementViewModel(IEventService eventService, IClubService clubService, IUserService userService)
+        public EventManagementViewModel(IEventService eventService, IClubService clubService, IUserService userService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[EVENT_MANAGEMENT_VM] Initializing EventManagementViewModel");
             _eventService = eventService;
             _clubService = clubService;
             _userService = userService;
+            _authorizationService = authorizationService;
             InitializeCommands();
+            LoadCurrentUserAsync();
             Console.WriteLine("[EVENT_MANAGEMENT_VM] EventManagementViewModel initialized successfully");
         }
 
@@ -113,6 +118,85 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
+        public int UpcomingEventsCount
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return Events.Count(e => e.EventDate > now);
+            }
+        }
+
+        public int OngoingEventsCount
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return Events.Count(e => e.EventDate.Date == now.Date);
+            }
+        }
+
+        public int CompletedEventsCount
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return Events.Count(e => e.EventDate < now);
+            }
+        }
+
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set => SetProperty(ref _currentUser, value);
+        }
+
+        // Event Management Permissions
+        public bool CanAccessEventManagement
+        {
+            get => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
+        }
+
+        public bool CanCreateEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+        }
+
+        public bool CanEditEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID);
+        }
+
+        public bool CanDeleteEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID);
+        }
+
+        public bool CanRegisterForEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanRegisterForEvents(CurrentUser.Role);
+        }
+
+        public bool CanEditSelectedEvent
+        {
+            get => SelectedEvent != null && CurrentUser != null &&
+                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, SelectedEvent.ClubID, IsOwnEvent(SelectedEvent));
+        }
+
+        public bool CanDeleteSelectedEvent
+        {
+            get => SelectedEvent != null && CurrentUser != null &&
+                   _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, SelectedEvent.ClubID, IsOwnEvent(SelectedEvent));
+        }
+
+        private bool IsOwnEvent(Event eventItem)
+        {
+            // Check if the current user is the creator/owner of the event
+            // This would need to be implemented based on your Event model
+            // For now, assuming events belong to the user's club or created by team leaders
+            return CurrentUser?.Role == UserRole.TeamLeader && eventItem.ClubID == CurrentUser.ClubID;
+        }
+
         // Commands
         public ICommand CreateEventCommand { get; private set; } = null!;
         public ICommand EditEventCommand { get; private set; } = null!;
@@ -124,13 +208,64 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            CreateEventCommand = new RelayCommand(CreateEvent);
-            EditEventCommand = new RelayCommand<Event>(EditEvent);
-            DeleteEventCommand = new RelayCommand<Event>(DeleteEvent);
-            ViewEventCommand = new RelayCommand<Event>(ViewEvent);
+            CreateEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
+            EditEventCommand = new RelayCommand<Event>(EditEvent, CanExecuteEditEvent);
+            DeleteEventCommand = new RelayCommand<Event>(DeleteEvent, CanExecuteDeleteEvent);
+            ViewEventCommand = new RelayCommand<Event>(ViewEvent, CanExecuteViewEvent);
             RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
-            ExportEventsCommand = new RelayCommand(ExportEvents);
-            ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants);
+            ExportEventsCommand = new RelayCommand(ExportEvents, CanExecuteExportEvents);
+            ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants, CanExecuteManageParticipants);
+        }
+
+        private async void LoadCurrentUserAsync()
+        {
+            try
+            {
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                OnPropertyChanged(nameof(CanAccessEventManagement));
+                OnPropertyChanged(nameof(CanCreateEvents));
+                OnPropertyChanged(nameof(CanEditEvents));
+                OnPropertyChanged(nameof(CanDeleteEvents));
+                OnPropertyChanged(nameof(CanRegisterForEvents));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error loading current user: {ex.Message}");
+            }
+        }
+
+        private bool CanExecuteCreateEvent(object? parameter)
+        {
+            return CanCreateEvents;
+        }
+
+        private bool CanExecuteEditEvent(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null &&
+                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+        }
+
+        private bool CanExecuteDeleteEvent(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null &&
+                   _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+        }
+
+        private bool CanExecuteViewEvent(Event? eventItem)
+        {
+            return eventItem != null;
+        }
+
+        private bool CanExecuteExportEvents(object? parameter)
+        {
+            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        }
+
+        private bool CanExecuteManageParticipants(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null &&
+                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
         }
 
         private async Task LoadDataAsync()
@@ -161,6 +296,12 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Loaded {Clubs.Count} clubs");
 
                 FilterEvents();
+                
+                // Notify property changes for count properties after loading
+                OnPropertyChanged(nameof(UpcomingEventsCount));
+                OnPropertyChanged(nameof(OngoingEventsCount));
+                OnPropertyChanged(nameof(CompletedEventsCount));
+                
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] Event management data loaded successfully");
             }
             catch (Exception ex)
@@ -198,6 +339,7 @@ namespace ClubManagementApp.ViewModels
                 {
                     "Upcoming" => filtered.Where(e => e.EventDate > now),
                     "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date),
+                    "Cancelled" => filtered.Where(e => e.Status == EventStatus.Cancelled),
                     "Completed" => filtered.Where(e => e.EventDate < now),
                     _ => filtered
                 };
@@ -224,6 +366,12 @@ namespace ClubManagementApp.ViewModels
             {
                 FilteredEvents.Add(eventItem);
             }
+            
+            // Notify property changes for count properties
+            OnPropertyChanged(nameof(UpcomingEventsCount));
+            OnPropertyChanged(nameof(OngoingEventsCount));
+            OnPropertyChanged(nameof(CompletedEventsCount));
+            
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Filtering complete: {originalCount} -> {FilteredEvents.Count} events");
         }
 
@@ -432,13 +580,7 @@ namespace ClubManagementApp.ViewModels
 
         public string GetEventStatus(Event eventItem)
         {
-            var now = DateTime.Now;
-            if (eventItem.EventDate > now)
-                return "Upcoming";
-            else if (eventItem.EventDate <= now && eventItem.EventDate >= now)
-                return "Ongoing";
-            else
-                return "Completed";
+            return eventItem.StatusDisplay;
         }
 
         public void SetClubFilter(Club club)

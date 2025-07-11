@@ -61,15 +61,14 @@ namespace ClubManagementApp.Views
             {
                 try
                 {
-                    var selectedClub = ClubComboBox.SelectedItem as Club;
-                    var selectedStatus = (EventStatus)((ComboBoxItem)StatusComboBox.SelectedItem).Tag;
-
-                    if (selectedClub == null)
+                    if (!(ClubComboBox.SelectedItem is Club selectedClub))
                     {
                         MessageBox.Show("Please select a club for this event.", "Validation Error",
                             MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
+
+                    var selectedStatus = (EventStatus)((ComboBoxItem)StatusComboBox.SelectedItem).Tag;
 
                     // Combine date and time
                     var eventDate = EventDatePicker.SelectedDate!.Value.Date;

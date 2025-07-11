@@ -203,25 +203,7 @@
                                     Width="120"
                                     IsReadOnly="True"/>
                 
-                <DataGridTemplateColumn Header="Actions" Width="200">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="Edit" 
-                                        Command="{Binding DataContext.EditMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource WarningButtonStyle}"
-                                        Margin="2"/>
-                                
-                                <Button Content="Delete" 
-                                        Command="{Binding DataContext.DeleteMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                        CommandParameter="{Binding}"
-                                        Style="{StaticResource DangerButtonStyle}"
-                                        Margin="2"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+
             </DataGrid.Columns>
         </DataGrid>
         

@@ -13,6 +13,8 @@ namespace ClubManagementApp.ViewModels
         private readonly IEventService _eventService;
         private readonly IReportService _reportService;
         private readonly INavigationService _navigationService;
+        private readonly IAuthorizationService _authorizationService;
+        private User? _currentUser;
         private int _totalUsers;
         private int _totalClubs;
         private int _totalEvents;
@@ -25,7 +27,7 @@ namespace ClubManagementApp.ViewModels
 
         public DashboardViewModel(IUserService userService, IClubService clubService,
                                 IEventService eventService, IReportService reportService,
-                                INavigationService navigationService)
+                                INavigationService navigationService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[DashboardViewModel] Initializing DashboardViewModel with services");
             _userService = userService;
@@ -33,7 +35,9 @@ namespace ClubManagementApp.ViewModels
             _eventService = eventService;
             _reportService = reportService;
             _navigationService = navigationService;
+            _authorizationService = authorizationService;
             InitializeCommands();
+            _ = LoadCurrentUserAsync();
             Console.WriteLine("[DashboardViewModel] DashboardViewModel initialization completed");
         }
 
@@ -368,6 +372,62 @@ namespace ClubManagementApp.ViewModels
             {
                 Console.WriteLine($"[DashboardViewModel] Error opening Event Management window: {ex.Message}");
                 _navigationService.ShowNotification("Không thể mở cửa sổ sự kiện sắp tới");
+            }
+        }
+
+        // Permission Properties
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set => SetProperty(ref _currentUser, value);
+        }
+
+        // Dashboard Access Permissions
+        public bool CanAccessDashboard => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "Dashboard");
+        public bool CanViewStatistics => CurrentUser?.Role != null && _authorizationService.CanViewStatistics(CurrentUser.Role);
+        
+        // Quick Action Permissions
+        public bool CanCreateUsers => CurrentUser?.Role != null && _authorizationService.CanCreateUsers(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanCreateEvents => CurrentUser?.Role != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+        public bool CanCreateClubs => CurrentUser?.Role != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
+        public bool CanGenerateReports => CurrentUser?.Role != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
+        public bool CanExportData => CurrentUser?.Role != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        public bool CanBackupData => CurrentUser?.Role != null && _authorizationService.CanAccessGlobalSettings(CurrentUser.Role);
+        
+        // Navigation Permissions
+        public bool CanAccessUserManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanAccessClubManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+        public bool CanAccessEventManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
+        public bool CanAccessReports => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ReportView");
+
+        private async Task LoadCurrentUserAsync()
+        {
+            try
+            {
+                // Get current user from session or authentication context
+                var currentUserEmail = System.Threading.Thread.CurrentPrincipal?.Identity?.Name;
+                if (!string.IsNullOrEmpty(currentUserEmail))
+                {
+                    CurrentUser = await _userService.GetUserByEmailAsync(currentUserEmail);
+                }
+                
+                // Notify property changes for permission-dependent UI elements
+                OnPropertyChanged(nameof(CanAccessDashboard));
+                OnPropertyChanged(nameof(CanViewStatistics));
+                OnPropertyChanged(nameof(CanCreateUsers));
+                OnPropertyChanged(nameof(CanCreateEvents));
+                OnPropertyChanged(nameof(CanCreateClubs));
+                OnPropertyChanged(nameof(CanGenerateReports));
+                OnPropertyChanged(nameof(CanExportData));
+                OnPropertyChanged(nameof(CanBackupData));
+                OnPropertyChanged(nameof(CanAccessUserManagement));
+                OnPropertyChanged(nameof(CanAccessClubManagement));
+                OnPropertyChanged(nameof(CanAccessEventManagement));
+                OnPropertyChanged(nameof(CanAccessReports));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error loading current user: {ex.Message}");
             }
         }
 

@@ -47,5 +47,25 @@ namespace ClubManagementApp.Models
         // Navigation properties
         public virtual Club Club { get; set; } = null!;
         public virtual ICollection<EventParticipant> Participants { get; set; } = new List<EventParticipant>();
+        
+        // Computed properties
+        public int ParticipantCount => Participants?.Count ?? 0;
+        
+        public string StatusDisplay
+        {
+            get
+            {
+                var now = DateTime.Now;
+                if (Status == EventStatus.Cancelled)
+                    return "Cancelled";
+                if (Status == EventStatus.Completed || EventDate < now)
+                    return "Completed";
+                if (EventDate.Date == now.Date)
+                    return "Ongoing";
+                if (EventDate > now)
+                    return "Upcoming";
+                return Status.ToString();
+            }
+        }
     }
 }

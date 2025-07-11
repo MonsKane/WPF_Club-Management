@@ -149,6 +149,13 @@
                     <ComboBoxItem Content="Completed"/>
                     <ComboBoxItem Content="Cancelled"/>
                 </ComboBox>
+                
+                <!-- Create Event Button -->
+                <Button Grid.Column="2" 
+                        Content="Create Event" 
+                        Command="{Binding CreateEventCommand}"
+                        Style="{StaticResource SuccessButtonStyle}"
+                        Margin="0,0,10,0"/>
             </Grid>
         </Grid>
         
@@ -177,11 +184,9 @@
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Start Date" 
-                                    Binding="{Binding EventDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" 
+                                    Binding="{Binding EventDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
                                     Width="140"
                                     IsReadOnly="True"/>
-                
-
                 
                 <DataGridTextColumn Header="Location" 
                                     Binding="{Binding Location}" 
@@ -194,26 +199,26 @@
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Status" 
-                                    Binding="{Binding Status}" 
+                                    Binding="{Binding StatusDisplay}" 
                                     Width="100"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Style.Triggers>
                                 <Trigger Property="Text" Value="Upcoming">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#2E8B57"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="Text" Value="Ongoing">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#FF8C00"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="Text" Value="Completed">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#4682B4"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="Text" Value="Cancelled">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#DC143C"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                             </Style.Triggers>

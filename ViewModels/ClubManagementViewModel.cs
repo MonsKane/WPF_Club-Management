@@ -87,16 +87,32 @@ namespace ClubManagementApp.ViewModels
             set => SetProperty(ref _currentUser, value);
         }
 
-        public bool CanManageClubs
+        // Club Management Permissions
+        public bool CanAccessClubManagement
         {
             get => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
         }
 
-        public bool CanManageSelectedClub
+        public bool CanCreateClubs
+        {
+            get => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
+        }
+
+        public bool CanEditSelectedClub
         {
             get => SelectedClub != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, SelectedClub.ClubID);
+                   _authorizationService.CanEditClubs(CurrentUser.Role, CurrentUser.ClubID, SelectedClub.ClubID);
         }
+
+        public bool CanDeleteSelectedClub
+        {
+            get => SelectedClub != null && CurrentUser != null &&
+                   _authorizationService.CanDeleteClubs(CurrentUser.Role);
+        }
+
+        // Legacy property for backward compatibility
+        public bool CanManageClubs => CanAccessClubManagement;
+        public bool CanManageSelectedClub => CanEditSelectedClub;
 
         // Commands
         public ICommand AddClubCommand { get; private set; } = null!;
@@ -137,19 +153,19 @@ namespace ClubManagementApp.ViewModels
 
         private bool CanExecuteAddClub(object? parameter)
         {
-            return CanManageClubs;
+            return CanCreateClubs;
         }
 
         private bool CanExecuteEditClub(Club? club)
         {
             return club != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanEditClubs(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
         }
 
         private bool CanExecuteDeleteClub(Club? club)
         {
             return club != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanDeleteClubs(CurrentUser.Role);
         }
 
         private bool CanExecuteViewClubDetails(Club? club)
