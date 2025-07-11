@@ -216,15 +216,26 @@ namespace ClubManagementApp.Services
                 if (string.IsNullOrWhiteSpace(eventItem.Name))
                     throw new ArgumentException("Event name is required", nameof(eventItem));
 
-                // Check if event exists
+                // Check if event exists and get tracked entity
                 var existingEvent = await _context.Events.FindAsync(eventItem.EventID);
                 if (existingEvent == null)
                     throw new InvalidOperationException($"Event with ID {eventItem.EventID} not found");
 
-                _context.Events.Update(eventItem);
+                // Update properties of the tracked entity to avoid tracking conflicts
+                existingEvent.Name = eventItem.Name;
+                existingEvent.Description = eventItem.Description;
+                existingEvent.EventDate = eventItem.EventDate;
+                existingEvent.Location = eventItem.Location;
+                existingEvent.ClubID = eventItem.ClubID;
+                existingEvent.Status = eventItem.Status;
+                existingEvent.MaxParticipants = eventItem.MaxParticipants;
+                existingEvent.RegistrationDeadline = eventItem.RegistrationDeadline;
+
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {eventItem.Name}");
-                return eventItem;
+                Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {existingEvent.Name}");
+                
+                // Return the updated tracked entity
+                return existingEvent;
             }
             catch (Exception ex)
             {

@@ -128,7 +128,8 @@ namespace ClubManagementApp.ViewModels
             ViewAllClubsCommand = new RelayCommand(ViewAllClubs);
             ViewAllEventsCommand = new RelayCommand(ViewAllEvents);
             ViewAllReportsCommand = new RelayCommand(ViewAllReports);
-            RefreshCommand = new RelayCommand(async () => {
+            RefreshCommand = new RelayCommand(async () =>
+            {
                 Console.WriteLine("[DashboardViewModel] RefreshCommand executed - starting refresh");
                 await LoadDashboardDataAsync();
                 Console.WriteLine("[DashboardViewModel] RefreshCommand completed");
@@ -194,16 +195,21 @@ namespace ClubManagementApp.ViewModels
 
         private void AddUser(object? parameter)
         {
-            Console.WriteLine("[DashboardViewModel] Add Member command executed from Dashboard");
+            Console.WriteLine("[DashboardViewModel] Add User command executed from Dashboard");
             try
             {
-                _navigationService.OpenMemberListWindow();
-                Console.WriteLine("[DashboardViewModel] Successfully opened Member List window");
+                var addUserDialog = new Views.AddUserDialog(_userService);
+                var result = addUserDialog.ShowDialog();
+                if (result == true)
+                {
+                    Console.WriteLine("[DashboardViewModel] User created successfully");
+                    _navigationService.ShowNotification("Tạo tài khoản người dùng thành công!");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DashboardViewModel] Error opening Member List window: {ex.Message}");
-                _navigationService.ShowNotification("Không thể mở cửa sổ quản lý thành viên");
+                Console.WriteLine($"[DashboardViewModel] Error opening Add User dialog: {ex.Message}");
+                _navigationService.ShowNotification("Không thể mở cửa sổ tạo tài khoản người dùng");
             }
         }
 

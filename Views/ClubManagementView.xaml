@@ -171,7 +171,7 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ClubCardStyle}" Width="320" Height="280"
+                        <Border Style="{StaticResource ClubCardStyle}" Width="320" Height="320"
                                 MouseLeftButtonDown="ClubCard_MouseLeftButtonDown"
                                 Tag="{Binding}"
                                 Background="{Binding IsSelected, Converter={StaticResource BooleanToBackgroundConverter}, FallbackValue=White}"
@@ -249,27 +249,66 @@
                                 </Grid>
 
                                 <!-- Action Buttons -->
-                                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Button Content="View Details"
-                                            Command="{Binding DataContext.ViewClubDetailsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"
-                                            Style="{StaticResource InfoButtonStyle}"
-                                            Margin="2"/>
-
-                                    <Button Content="Edit"
-                                            Command="{Binding DataContext.EditClubCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"
-                                            Style="{StaticResource WarningButtonStyle}"
-                                            Margin="2"
-                                            IsEnabled="{Binding DataContext.CanManageClubs, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                <Grid Grid.Row="4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
                                     
-                                    <Button Content="Delete" 
-                                            Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                            CommandParameter="{Binding}"
-                                            Style="{StaticResource DangerButtonStyle}"
-                                            Margin="2"
-                                            IsEnabled="{Binding DataContext.CanManageClubs, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                </StackPanel>
+                                    <!-- Management Actions -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                        <Button Content="Members"
+                                                Command="{Binding DataContext.ViewMembersCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource InfoButtonStyle}"
+                                                Margin="2"
+                                                FontSize="12"
+                                                Padding="8,4"/>
+
+                                        <Button Content="Leadership"
+                                                Command="{Binding DataContext.ManageLeadershipCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                Margin="2"
+                                                FontSize="12"
+                                                Padding="8,4"/>
+                                        
+                                        <Button Content="Events"
+                                                Command="{Binding DataContext.ViewEventsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource WarningButtonStyle}"
+                                                Margin="2"
+                                                FontSize="12"
+                                                Padding="8,4"/>
+                                    </StackPanel>
+                                    
+                                    <!-- Admin Actions -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="Details"
+                                                Command="{Binding DataContext.ViewClubDetailsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource InfoButtonStyle}"
+                                                Margin="2"
+                                                FontSize="11"
+                                                Padding="6,3"/>
+
+                                        <Button Content="Edit"
+                                                Command="{Binding DataContext.EditClubCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource WarningButtonStyle}"
+                                                Margin="2"
+                                                FontSize="11"
+                                                Padding="6,3"/>
+                                        
+                                        <Button Content="Delete" 
+                                                Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource DangerButtonStyle}"
+                                                Margin="2"
+                                                FontSize="11"
+                                                Padding="6,3"/>
+                                    </StackPanel>
+                                </Grid>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -299,27 +338,11 @@
                           Foreground="{Binding IsLoading, Converter={StaticResource BooleanToColorConverter}}"/>
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Manage Leadership"
-                        Command="{Binding ManageLeadershipCommand}"
-                        CommandParameter="{Binding SelectedClub}"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Margin="0,0,10,0"
-                        IsEnabled="{Binding CanManageSelectedClub}"/>
-                
-                <Button Content="View Members" 
-                        Command="{Binding ViewMembersCommand}"
-                        CommandParameter="{Binding SelectedClub}"
-                        Style="{StaticResource InfoButtonStyle}"
-                        Margin="0,0,10,0"
-                        IsEnabled="{Binding CanManageSelectedClub}"/>
-                
-                <Button Content="View Events" 
-                        Command="{Binding ViewEventsCommand}"
-                        CommandParameter="{Binding SelectedClub}"
-                        Style="{StaticResource WarningButtonStyle}"
-                        IsEnabled="{Binding CanManageSelectedClub}"/>
-            </StackPanel>
+            <TextBlock Grid.Column="1" 
+                      Text="Click on any club card to access management options"
+                      FontStyle="Italic"
+                      Foreground="Gray"
+                      VerticalAlignment="Center"/>
         </Grid>
 
         <!-- Loading Overlay -->

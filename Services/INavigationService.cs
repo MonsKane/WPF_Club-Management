@@ -14,6 +14,8 @@ namespace ClubManagementApp.Services
         void ShowNotification(string message);
         void ShowClubDetails(Club club);
         void ShowManageLeadership(Club club);
+        void ShowAddUserDialog();
+        void ShowEditUserDialog(User user);
         void NavigateToLogin();
 
         // Event for notification instead of direct dependency on MainViewModel

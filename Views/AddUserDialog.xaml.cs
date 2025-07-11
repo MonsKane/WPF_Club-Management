@@ -9,40 +9,16 @@ namespace ClubManagementApp.Views
     public partial class AddUserDialog : Window
     {
         private readonly IUserService _userService;
-        private readonly IClubService _clubService;
 
         public User? CreatedUser { get; private set; }
 
-        public AddUserDialog(IUserService userService, IClubService clubService, Club? defaultClub = null)
+        public AddUserDialog(IUserService userService)
         {
             InitializeComponent();
             _userService = userService;
-            _clubService = clubService;
 
             // Set default role to Member
-            RoleComboBox.SelectedValue = "Member";
-
-            // Load clubs and set default if provided
-            _ = LoadClubsAsync(defaultClub);
-        }
-
-        private async Task LoadClubsAsync(Club? defaultClub = null)
-        {
-            try
-            {
-                var clubs = await _clubService.GetAllClubsAsync();
-                ClubComboBox.ItemsSource = clubs;
-                
-                // Set default club if provided
-                if (defaultClub != null)
-                {
-                    ClubComboBox.SelectedValue = defaultClub.ClubID;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading clubs: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RoleComboBox.SelectedValue = UserRole.Member;
         }
 
         private async void CreateButton_Click(object sender, RoutedEventArgs e)
@@ -52,30 +28,22 @@ namespace ClubManagementApp.Views
 
             try
             {
-                var selectedRole = ((ComboBoxItem)RoleComboBox.SelectedItem).Tag.ToString();
-
                 var user = new User
                 {
                     FullName = FullNameTextBox.Text.Trim(),
                     Email = EmailTextBox.Text.Trim(),
                     Password = PasswordBox.Password,
                     PhoneNumber = string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim(),
-                    Role = Enum.Parse<UserRole>(selectedRole ?? "Member"),
+                    Role = (UserRole)(RoleComboBox.SelectedValue ?? UserRole.Member),
                     IsActive = IsActiveCheckBox.IsChecked ?? true,
                     JoinDate = DateTime.Now
                 };
 
-                // Create the user first
+                // Create the user (no club assignment in user creation)
                 var createdUser = await _userService.CreateUserAsync(user);
+                CreatedUser = createdUser;
 
-                // If a club is selected, assign the user to the club
-                if (ClubComboBox.SelectedValue != null)
-                {
-                    var clubId = (int)ClubComboBox.SelectedValue;
-                    await _userService.AssignUserToClubAsync(createdUser.UserID, clubId);
-                }
-
-                MessageBox.Show("User created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("User account created successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 DialogResult = true;
                 Close();
             }

@@ -15,10 +15,19 @@ namespace ClubManagementApp.ViewModels
         // Static event for notifying all instances when leadership changes
         private static event Action? LeadershipChanged;
         
+        // Static event for member changes
+        public static event Action? MemberChanged;
+        
         // Public method to trigger the leadership changed event
         public static void NotifyLeadershipChanged()
         {
             LeadershipChanged?.Invoke();
+        }
+        
+        // Public method to trigger the member changed event
+        public static void NotifyMemberChanged()
+        {
+            MemberChanged?.Invoke();
         }
         
         private readonly IUserService _userService;
@@ -165,7 +174,20 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine("[MemberListViewModel] Starting to load members");
                 IsLoading = true;
 
-                var members = await _userService.GetAllUsersAsync();
+                IEnumerable<User> members;
+                
+                // If a club filter is set, load only members of that club
+                if (ClubFilter != null)
+                {
+                    Console.WriteLine($"[MemberListViewModel] Loading members for club: {ClubFilter.Name} (ID: {ClubFilter.ClubID})");
+                    members = await _clubService.GetClubMembersAsync(ClubFilter.ClubID);
+                }
+                else
+                {
+                    Console.WriteLine("[MemberListViewModel] Loading all users (no club filter)");
+                    members = await _userService.GetAllUsersAsync();
+                }
+                
                 Console.WriteLine($"[MemberListViewModel] Retrieved {members.Count()} members from service");
 
                 if (_cancellationTokenSource.Token.IsCancellationRequested)
@@ -271,6 +293,9 @@ namespace ClubManagementApp.ViewModels
                     
                     // Also refresh the filtered members to update the UI immediately
                     FilterMembers();
+                    
+                    // Notify other ViewModels about member change
+                    MemberChanged?.Invoke();
                 }
                 else
                 {
@@ -336,6 +361,9 @@ namespace ClubManagementApp.ViewModels
 
                     Console.WriteLine($"[MemberListViewModel] Member {editDialog.UpdatedUser.FullName} updated successfully");
                     await ShowNotificationAsync($"Member {editDialog.UpdatedUser.FullName} updated successfully");
+                    
+                    // Notify other ViewModels about member change
+                    MemberChanged?.Invoke();
                 }
                 else
                 {
@@ -394,6 +422,9 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[MemberListViewModel] Member {member.FullName} deleted successfully");
                     await ShowNotificationAsync($"Member {member.FullName} has been deleted successfully");
                     _logger?.LogInformation("Successfully deleted member {UserId}: {FullName}", member.UserID, member.FullName);
+                    
+                    // Notify other ViewModels about member change
+                    MemberChanged?.Invoke();
                 }
                 else
                 {
@@ -483,14 +514,18 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public void SetClubFilter(Club club)
+        public async void SetClubFilter(Club club)
         {
             ClubFilter = club;
+            // Reload members when club filter changes
+            await LoadMembersAsync();
         }
 
-        public void ClearClubFilter()
+        public async void ClearClubFilter()
         {
             ClubFilter = null;
+            // Reload all members when club filter is cleared
+            await LoadMembersAsync();
         }
 
         public void Dispose()

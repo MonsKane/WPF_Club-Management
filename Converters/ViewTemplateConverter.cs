@@ -9,6 +9,7 @@ namespace ClubManagementApp.Converters
     {
         public DataTemplate? DashboardTemplate { get; set; }
         public DataTemplate? UsersTemplate { get; set; }
+        public DataTemplate? UserManagementTemplate { get; set; }
         public DataTemplate? ClubsTemplate { get; set; }
         public DataTemplate? EventsTemplate { get; set; }
         public DataTemplate? ReportsTemplate { get; set; }
@@ -21,6 +22,7 @@ namespace ClubManagementApp.Converters
                 {
                     "Dashboard" => DashboardTemplate,
                     "Users" => UsersTemplate,
+                    "UserManagement" => UserManagementTemplate,
                     "Clubs" => ClubsTemplate,
                     "Events" => EventsTemplate,
                     "Reports" => ReportsTemplate,

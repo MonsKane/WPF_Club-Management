@@ -2,7 +2,6 @@ using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -14,12 +13,15 @@ namespace ClubManagementApp.Views
         private readonly IUserService _userService;
         private readonly INavigationService _navigationService;
         private Club _club;
-        private ObservableCollection<User> _availableMembers;
-        private ObservableCollection<User> _teamLeaders;
+        private readonly ObservableCollection<User> _teamLeaders;
+        private readonly ObservableCollection<User> _availableMembers;
+        private readonly ObservableCollection<User> _allAvailableMembers = new();
         private User? _chairman;
         private User? _viceChairman;
         private bool _hasChanges = false;
         private bool _isLoading = false;
+        private string _searchText = string.Empty;
+        private string _memberFilter = "Current Members"; // "All", "Current Members", "Not in Club"
 
         public bool IsLoading
         {
@@ -27,12 +29,34 @@ namespace ClubManagementApp.Views
             set
             {
                 _isLoading = value;
-                OnPropertyChanged(nameof(IsLoading));
+                OnPropertyChanged(value.ToString());
+            }
+        }
+
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged(value);
+                FilterMembers();
+            }
+        }
+
+        public string MemberFilter
+        {
+            get => _memberFilter;
+            set
+            {
+                _memberFilter = value;
+                OnPropertyChanged(value);
+                FilterMembers();
             }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -40,14 +64,16 @@ namespace ClubManagementApp.Views
 
         public ManageLeadershipDialog(Club club, IClubService clubService, IUserService userService, INavigationService navigationService)
         {
-            InitializeComponent();
             _club = club;
             _clubService = clubService;
             _userService = userService;
             _navigationService = navigationService;
+
             _availableMembers = new ObservableCollection<User>();
             _teamLeaders = new ObservableCollection<User>();
-            
+
+            InitializeComponent();
+
             DataContext = this;
             Loaded += async (s, e) => await InitializeDialogAsync();
         }
@@ -57,38 +83,46 @@ namespace ClubManagementApp.Views
             try
             {
                 IsLoading = true;
-                
+
                 ClubNameText.Text = $"Club: {_club.Name}";
-                
+
                 // Load club members
                 var members = await _userService.GetUsersByClubAsync(_club.ClubID);
-                
-                // Separate members by roles
+
+                // Load users without club membership (removed members who can be reassigned)
+                var unassignedUsers = await _userService.GetUsersWithoutClubAsync();
+
+                // Separate current club members by roles
                 _chairman = members.FirstOrDefault(m => m.Role == UserRole.Chairman && m.ClubID == _club.ClubID);
                 _viceChairman = members.FirstOrDefault(m => m.Role == UserRole.ViceChairman && m.ClubID == _club.ClubID);
-                
+
                 var teamLeaders = members.Where(m => m.Role == UserRole.TeamLeader && m.ClubID == _club.ClubID);
                 _teamLeaders.Clear();
                 foreach (var leader in teamLeaders)
                 {
                     _teamLeaders.Add(leader);
                 }
-                
-                // Available members (excluding current leadership)
-                var availableMembers = members.Where(m => 
-                    m.Role == UserRole.Member || 
+
+                // Available members: current club members + unassigned users (removed members)
+                var availableMembers = members.Where(m =>
+                    m.Role == UserRole.Member ||
                     (m.Role == UserRole.TeamLeader && m.ClubID == _club.ClubID) ||
                     (m.Role == UserRole.ViceChairman && m.ClubID == _club.ClubID) ||
-                    (m.Role == UserRole.Chairman && m.ClubID == _club.ClubID));
-                
-                _availableMembers.Clear();
-                foreach (var member in availableMembers)
+                    (m.Role == UserRole.Chairman && m.ClubID == _club.ClubID))
+                    .Concat(unassignedUsers); // Include removed members for reassignment
+
+                _allAvailableMembers.Clear();
+                foreach (var member in availableMembers.OrderBy(m => m.FullName))
                 {
-                    _availableMembers.Add(member);
+                    _allAvailableMembers.Add(member);
                 }
-                
+
+                // Apply initial filtering
+                FilterMembers();
+
                 UpdateUI();
-                
+
+                // Set ItemsSource for UI controls
                 MembersList.ItemsSource = _availableMembers;
                 TeamLeadersList.ItemsSource = _teamLeaders;
             }
@@ -108,6 +142,40 @@ namespace ClubManagementApp.Views
             ViceChairmanText.Text = _viceChairman?.FullName ?? "Not Assigned";
         }
 
+        private void FilterMembers()
+        {
+            if (_allAvailableMembers == null) return;
+
+            var filteredMembers = _allAvailableMembers.AsEnumerable();
+
+            // Apply member filter
+            switch (_memberFilter)
+            {
+                case "Current Members":
+                    filteredMembers = filteredMembers.Where(m => m.ClubID == _club.ClubID);
+                    break;
+                case "Not in Club":
+                    filteredMembers = filteredMembers.Where(m => m.ClubID == null);
+                    break;
+                    // "All" - no additional filtering
+            }
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                filteredMembers = filteredMembers.Where(m =>
+                    m.FullName.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                    m.Email.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrEmpty(m.StudentID) && m.StudentID.Contains(_searchText, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            _availableMembers.Clear();
+            foreach (var member in filteredMembers.OrderBy(m => m.FullName))
+            {
+                _availableMembers.Add(member);
+            }
+        }
+
         private void ChangeChairman_Click(object sender, RoutedEventArgs e)
         {
             var selectedMember = MembersList.SelectedItem as User;
@@ -123,9 +191,9 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var result = MessageBox.Show($"Assign {selectedMember.FullName} as Chairman?\n\nThis will remove the current Chairman role from {_chairman?.FullName ?? "no one"}.", 
+            var result = MessageBox.Show($"Assign {selectedMember.FullName} as Chairman?\n\nThis will remove the current Chairman role from {_chairman?.FullName ?? "no one"}.",
                 "Confirm Assignment", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
                 _chairman = selectedMember;
@@ -155,9 +223,9 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var result = MessageBox.Show($"Assign {selectedMember.FullName} as Vice Chairman?\n\nThis will remove the current Vice Chairman role from {_viceChairman?.FullName ?? "no one"}.", 
+            var result = MessageBox.Show($"Assign {selectedMember.FullName} as Vice Chairman?\n\nThis will remove the current Vice Chairman role from {_viceChairman?.FullName ?? "no one"}.",
                 "Confirm Assignment", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
                 _viceChairman = selectedMember;
@@ -187,9 +255,9 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var result = MessageBox.Show($"Assign {selectedMember.FullName} as Team Leader?", 
+            var result = MessageBox.Show($"Assign {selectedMember.FullName} as Team Leader?",
                 "Confirm Assignment", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
                 _teamLeaders.Add(selectedMember);
@@ -201,9 +269,9 @@ namespace ClubManagementApp.Views
         {
             if (sender is Button button && button.Tag is User teamLeader)
             {
-                var result = MessageBox.Show($"Remove {teamLeader.FullName} from Team Leader role?", 
+                var result = MessageBox.Show($"Remove {teamLeader.FullName} from Team Leader role?",
                     "Confirm Removal", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
+
                 if (result == MessageBoxResult.Yes)
                 {
                     _teamLeaders.Remove(teamLeader);
@@ -223,33 +291,70 @@ namespace ClubManagementApp.Views
 
             try
             {
-                // Reset all members to Member role first
+                IsLoading = true;
+
+                // Get current leadership to compare changes
                 var allMembers = await _userService.GetUsersByClubAsync(_club.ClubID);
-                foreach (var member in allMembers)
+                var currentChairman = allMembers.FirstOrDefault(m => m.Role == UserRole.Chairman && m.ClubID == _club.ClubID);
+                var currentViceChairman = allMembers.FirstOrDefault(m => m.Role == UserRole.ViceChairman && m.ClubID == _club.ClubID);
+                var currentTeamLeaders = allMembers.Where(m => m.Role == UserRole.TeamLeader && m.ClubID == _club.ClubID).ToList();
+
+                // Reset previous leadership roles to Member (only if they're being changed)
+                if (currentChairman != null && currentChairman != _chairman)
                 {
-                    if (member.Role != UserRole.Admin && member.ClubID == _club.ClubID)
+                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentChairman.UserID, UserRole.Member);
+                }
+
+                if (currentViceChairman != null && currentViceChairman != _viceChairman)
+                {
+                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentViceChairman.UserID, UserRole.Member);
+                }
+
+                // Reset team leaders who are no longer in the list
+                foreach (var currentTL in currentTeamLeaders)
+                {
+                    if (!_teamLeaders.Contains(currentTL))
                     {
-                        await _clubService.AssignClubLeadershipAsync(_club.ClubID, member.UserID, UserRole.Member);
+                        await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentTL.UserID, UserRole.Member);
                     }
                 }
 
                 // Assign new leadership roles
                 if (_chairman != null)
                 {
+                    // If user is not in club (ClubID is null), assign them to club first
+                    if (_chairman.ClubID == null)
+                    {
+                        await _userService.AssignUserToClubAsync(_chairman.UserID, _club.ClubID);
+                    }
                     await _clubService.AssignClubLeadershipAsync(_club.ClubID, _chairman.UserID, UserRole.Chairman);
                 }
 
                 if (_viceChairman != null)
                 {
+                    // If user is not in club (ClubID is null), assign them to club first
+                    if (_viceChairman.ClubID == null)
+                    {
+                        await _userService.AssignUserToClubAsync(_viceChairman.UserID, _club.ClubID);
+                    }
                     await _clubService.AssignClubLeadershipAsync(_club.ClubID, _viceChairman.UserID, UserRole.ViceChairman);
                 }
 
                 foreach (var teamLeader in _teamLeaders)
                 {
+                    // If user is not in club (ClubID is null), assign them to club first
+                    if (teamLeader.ClubID == null)
+                    {
+                        await _userService.AssignUserToClubAsync(teamLeader.UserID, _club.ClubID);
+                    }
                     await _clubService.AssignClubLeadershipAsync(_club.ClubID, teamLeader.UserID, UserRole.TeamLeader);
                 }
 
                 _navigationService.ShowNotification("Leadership roles updated successfully!");
+
+                // Reset the changes flag
+                _hasChanges = false;
+
                 DialogResult = true;
                 Close();
             }
@@ -257,21 +362,31 @@ namespace ClubManagementApp.Views
             {
                 MessageBox.Show($"Error saving leadership changes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             if (_hasChanges)
             {
-                var result = MessageBox.Show("You have unsaved changes. Are you sure you want to cancel?", 
+                var result = MessageBox.Show("You have unsaved changes. Are you sure you want to cancel?",
                     "Unsaved Changes", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                
+
                 if (result == MessageBoxResult.No)
                     return;
             }
 
             DialogResult = false;
             Close();
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // The SearchText property will automatically trigger FilterMembers()
+            // This event handler is here for any additional logic if needed
         }
     }
 }

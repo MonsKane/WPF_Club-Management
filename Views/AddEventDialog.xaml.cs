@@ -1,13 +1,15 @@
 using ClubManagementApp.Models;
+using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace ClubManagementApp.Views
 {
     public partial class AddEventDialog : Window
     {
-        public Event? NewEvent { get; private set; }
-        public new bool DialogResult { get; private set; }
+        public Event Event { get; private set; }
+        private Club _preSelectedClub; // Store the pre-selected club as fallback
 
         public AddEventDialog()
         {
@@ -18,6 +20,25 @@ namespace ClubManagementApp.Views
         public AddEventDialog(IEnumerable<Club> clubs) : this()
         {
             ClubComboBox.ItemsSource = clubs;
+        }
+
+        public AddEventDialog(IEnumerable<Club> clubs, Club? preSelectedClub) : this(clubs)
+        {
+            _preSelectedClub = preSelectedClub; // Store for fallback use
+            
+            if (preSelectedClub != null)
+            {
+                // Set the selected club after the window is loaded to ensure ItemsSource is ready
+                this.Loaded += (s, e) => {
+                    // Use Dispatcher to ensure UI is fully rendered before setting selection
+                    this.Dispatcher.BeginInvoke(new Action(() => {
+                        // Try both SelectedValue and SelectedItem to ensure proper selection
+                        ClubComboBox.SelectedValue = preSelectedClub.ClubID;
+                        ClubComboBox.SelectedItem = preSelectedClub;
+                        ClubComboBox.IsEnabled = false; // Disable club selection when pre-selected
+                    }), System.Windows.Threading.DispatcherPriority.Loaded);
+                };
+            }
         }
 
         private void InitializeDefaults()
@@ -48,14 +69,17 @@ namespace ClubManagementApp.Views
                     var minute = int.Parse(((ComboBoxItem)MinuteComboBox.SelectedItem).Content.ToString()!);
                     var eventDateTime = eventDate.AddHours(hour).AddMinutes(minute);
 
+                    // Use the selected club (either from ComboBox or pre-selected fallback)
+                    var finalSelectedClub = selectedClub ?? _preSelectedClub;
+                    
                     NewEvent = new Event
                     {
                         Name = EventNameTextBox.Text.Trim(),
                         Description = string.IsNullOrWhiteSpace(DescriptionTextBox.Text) ? null : DescriptionTextBox.Text.Trim(),
                         EventDate = eventDateTime,
                         Location = LocationTextBox.Text.Trim(),
-                        ClubID = selectedClub!.ClubID,
-                        Club = selectedClub,
+                        ClubID = finalSelectedClub!.ClubID,
+                        Club = finalSelectedClub,
                         Status = selectedStatus,
                         CreatedDate = DateTime.Now
                     };
@@ -74,7 +98,7 @@ namespace ClubManagementApp.Views
                         NewEvent.RegistrationDeadline = RegistrationDeadlinePicker.SelectedDate.Value;
                     }
 
-                    DialogResult = true;
+                    this.DialogResult = true;
                     Close();
                 }
                 catch (Exception ex)
@@ -87,7 +111,7 @@ namespace ClubManagementApp.Views
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 
@@ -129,7 +153,7 @@ namespace ClubManagementApp.Views
             }
 
             // Validate club selection
-            if (ClubComboBox.SelectedItem == null)
+            if (ClubComboBox.SelectedItem == null && _preSelectedClub == null)
             {
                 MessageBox.Show("Please select a club for this event.", "Validation Error", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);

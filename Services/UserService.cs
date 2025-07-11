@@ -205,6 +205,35 @@ namespace ClubManagementApp.Services
         }
 
         /// <summary>
+        /// Retrieves all users who are not currently assigned to any club (ClubID is null).
+        ///
+        /// Data Flow:
+        /// 1. Filter Users where ClubID is null
+        /// 2. Include Club navigation for context (will be null)
+        /// 3. Order by name for organized display
+        /// 4. Return unassigned users list
+        ///
+        /// Used by: Club management, member assignment, leadership dialogs
+        /// </summary>
+        /// <returns>Collection of users without club membership, ordered by name</returns>
+        public async Task<IEnumerable<User>> GetUsersWithoutClubAsync()
+        {
+            try
+            {
+                return await _context.Users
+                    .Include(u => u.Club) // Club information (will be null)
+                    .Where(u => u.ClubID == null && u.IsActive) // Filter by no club membership and active status
+                    .OrderBy(u => u.FullName) // Alphabetical organization
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error retrieving users without club: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Searches users by name or email using partial string matching.
         ///
         /// Data Flow:

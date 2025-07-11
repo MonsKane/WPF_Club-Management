@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:ClubManagementApp"
         xmlns:converters="clr-namespace:ClubManagementApp.Converters"
         xmlns:vm="clr-namespace:ClubManagementApp.ViewModels"
+        xmlns:views="clr-namespace:ClubManagementApp.Views"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="Ứng Dụng Quản Lý Câu Lạc Bộ"
@@ -692,6 +693,11 @@
             </ScrollViewer>
         </DataTemplate>
 
+        <!-- Modern User Management Template -->
+        <DataTemplate x:Key="UserManagementTemplate">
+            <views:UserManagementView DataContext="{Binding UserManagementViewModel}"/>
+        </DataTemplate>
+
         <!-- Modern Reports Template -->
         <DataTemplate x:Key="ReportsTemplate">
             <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0">
@@ -874,7 +880,7 @@
 
                             <!-- Table Content -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-                                <ItemsControl ItemsSource="{Binding Reports}">
+                                <ItemsControl ItemsSource="{Binding ReportsViewModel.Reports}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="Transparent" Padding="0,16" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
@@ -944,6 +950,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
@@ -953,8 +960,18 @@
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#EF4444" Foreground="White" BorderThickness="0"
-                            Padding="20,12" FontWeight="Medium">
+                        <Button Grid.Column="1" Background="#10B981" Foreground="White" BorderThickness="0"
+                            Padding="16,12" FontWeight="Medium" Margin="0,0,12,0"
+                            Command="{Binding ClubManagementViewModel.RefreshCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔄" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Làm Mới" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="2" Background="#EF4444" Foreground="White" BorderThickness="0"
+                            Padding="20,12" FontWeight="Medium" 
+                            Command="{Binding ClubManagementViewModel.AddClubCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="➕" FontSize="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Thêm Câu Lạc Bộ" FontSize="14"/>
@@ -978,13 +995,15 @@
                             </Border>
                             <TextBox Grid.Column="1" Name="ClubSearchBox" BorderThickness="0" Background="Transparent"
                                  VerticalAlignment="Center" FontSize="16"
-                                 Foreground="Black" FontWeight="Medium"/>
+                                 Foreground="Black" FontWeight="Medium"
+                                 Text="{Binding ClubManagementViewModel.SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Tìm kiếm câu lạc bộ..."/>
                         </Grid>
                     </Border>
 
                     <!-- Modern Clubs Grid -->
                     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Clubs}">
+                        <ItemsControl ItemsSource="{Binding ClubManagementViewModel.FilteredClubs}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <UniformGrid Columns="3" HorizontalAlignment="Stretch"/>
@@ -992,7 +1011,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="White" CornerRadius="16" Margin="0,0,20,20" Padding="24">
+                                    <Border Background="White" CornerRadius="16" Margin="10" Padding="20">
                                         <Border.Effect>
                                             <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="12"/>
                                         </Border.Effect>
@@ -1031,8 +1050,8 @@
 
                                                 <Border Grid.Column="0" Background="#F0F9FF" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
                                                     <StackPanel>
-                                                        <TextBlock Text="{Binding Users.Count}" FontSize="18" FontWeight="Bold"
-                                                               Foreground="Black" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding Members.Count}" FontSize="18" FontWeight="Bold"
+                                               Foreground="Black" HorizontalAlignment="Center"/>
                                                         <TextBlock Text="Thành Viên" FontSize="12" Foreground="Black"
                                                                HorizontalAlignment="Center"/>
                                                     </StackPanel>
@@ -1050,20 +1069,70 @@
 
                                             <!-- Action Buttons -->
                                             <Grid Grid.Row="5">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
 
-                                                <Button Grid.Column="0" Background="#3B82F6" Foreground="White" BorderThickness="0"
-                                                    Padding="12,8" FontWeight="Medium" Margin="0,0,8,0">
-                                                    <TextBlock Text="Xem Chi Tiết" FontSize="14"/>
-                                                </Button>
+                                                <!-- First Row of Buttons -->
+                                                <Grid Grid.Row="0" Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
 
-                                                <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0"
-                                                    Padding="12,8" FontWeight="Medium">
-                                                    <TextBlock Text="✏️" FontSize="14"/>
-                                                </Button>
+                                                    <Button Grid.Column="0" Background="#3B82F6" Foreground="White" BorderThickness="0"
+                                                        Padding="8,6" FontWeight="Medium" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.ClubManagementViewModel.ViewClubDetailsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                        <TextBlock Text="Chi Tiết" FontSize="12"/>
+                                                    </Button>
+
+                                                    <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0"
+                                                        Padding="8,6" FontWeight="Medium" Margin="4,0,4,0"
+                                                        Command="{Binding DataContext.ClubManagementViewModel.EditClubCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                        <TextBlock Text="Sửa" FontSize="12"/>
+                                                    </Button>
+
+                                                    <Button Grid.Column="2" Background="#EF4444" Foreground="White" BorderThickness="0"
+                                                        Padding="8,6" FontWeight="Medium" Margin="4,0,0,0"
+                                                        Command="{Binding DataContext.ClubManagementViewModel.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                        <TextBlock Text="Xóa" FontSize="12"/>
+                                                    </Button>
+                                                </Grid>
+
+                                                <!-- Second Row of Buttons -->
+                                                <Grid Grid.Row="1">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Button Grid.Column="0" Background="#10B981" Foreground="White" BorderThickness="0"
+                                                        Padding="8,6" FontWeight="Medium" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.ClubManagementViewModel.ViewMembersCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                        <TextBlock Text="Thành Viên" FontSize="10"/>
+                                                    </Button>
+
+                                                    <Button Grid.Column="1" Background="#8B5CF6" Foreground="White" BorderThickness="0"
+                                                        Padding="8,6" FontWeight="Medium" Margin="4,0,4,0"
+                                                        Command="{Binding DataContext.ClubManagementViewModel.ManageLeadershipCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                        <TextBlock Text="Lãnh Đạo" FontSize="10"/>
+                                                    </Button>
+
+                                                    <Button Grid.Column="2" Background="#EC4899" Foreground="White" BorderThickness="0"
+                                                        Padding="8,6" FontWeight="Medium" Margin="4,0,0,0"
+                                                        Command="{Binding DataContext.ClubManagementViewModel.ViewEventsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}">
+                                                        <TextBlock Text="Sự Kiện" FontSize="10"/>
+                                                    </Button>
+                                                </Grid>
                                             </Grid>
                                         </Grid>
                                     </Border>
@@ -1193,7 +1262,7 @@
 
                             <!-- Table Content -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-                                <ItemsControl ItemsSource="{Binding Events}">
+                                <ItemsControl ItemsSource="{Binding EventManagementViewModel.Events}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="Transparent" Padding="0,16" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
@@ -1255,6 +1324,7 @@
         <converters:ViewTemplateConverter x:Key="ViewTemplateConverter"
                                           DashboardTemplate="{StaticResource DashboardTemplate}"
                                           UsersTemplate="{StaticResource UsersTemplate}"
+                                          UserManagementTemplate="{StaticResource UserManagementTemplate}"
                                           ClubsTemplate="{StaticResource ClubsTemplate}"
                                           EventsTemplate="{StaticResource EventsTemplate}"
                                           ReportsTemplate="{StaticResource ReportsTemplate}"/>
@@ -1475,7 +1545,7 @@
                             </Button>
 
                             <!-- Users Management -->
-                            <Button Command="{Binding OpenMemberListCommand}" Style="{StaticResource ModernNavButtonStyle}" Margin="0,0,0,8"
+                            <Button Command="{Binding OpenUserManagementCommand}" Style="{StaticResource ModernNavButtonStyle}" Margin="0,0,0,8"
                                     Visibility="{Binding CanAccessAdminFeatures, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <Border Background="#10B981" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">

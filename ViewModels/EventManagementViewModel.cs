@@ -21,12 +21,19 @@ namespace ClubManagementApp.ViewModels
         private Event? _selectedEvent;
         private Club? _clubFilter;
 
+        // Static event for event changes
+        public static event Action? EventChanged;
+
         public EventManagementViewModel(IEventService eventService, IClubService clubService, IUserService userService)
         {
             Console.WriteLine("[EVENT_MANAGEMENT_VM] Initializing EventManagementViewModel");
             _eventService = eventService;
             _clubService = clubService;
             _userService = userService;
+            
+            // Ensure default filter is set correctly
+            _selectedStatus = "All Events";
+            
             InitializeCommands();
             Console.WriteLine("[EVENT_MANAGEMENT_VM] EventManagementViewModel initialized successfully");
         }
@@ -115,6 +122,7 @@ namespace ClubManagementApp.ViewModels
 
         // Commands
         public ICommand CreateEventCommand { get; private set; } = null!;
+        public ICommand AddEventCommand { get; private set; } = null!;
         public ICommand EditEventCommand { get; private set; } = null!;
         public ICommand DeleteEventCommand { get; private set; } = null!;
         public ICommand ViewEventCommand { get; private set; } = null!;
@@ -125,6 +133,7 @@ namespace ClubManagementApp.ViewModels
         private void InitializeCommands()
         {
             CreateEventCommand = new RelayCommand(CreateEvent);
+            AddEventCommand = new RelayCommand(CreateEvent);
             EditEventCommand = new RelayCommand<Event>(EditEvent);
             DeleteEventCommand = new RelayCommand<Event>(DeleteEvent);
             ViewEventCommand = new RelayCommand<Event>(ViewEvent);
@@ -232,7 +241,11 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine("[EVENT_MANAGEMENT_VM] Create Event command executed");
             try
             {
-                var addEventDialog = new Views.AddEventDialog(Clubs);
+                // Pass the ClubFilter if we're in club-specific context
+                var addEventDialog = ClubFilter != null 
+                    ? new Views.AddEventDialog(Clubs, ClubFilter)
+                    : new Views.AddEventDialog(Clubs);
+                    
                 if (addEventDialog.ShowDialog() == true && addEventDialog.NewEvent != null)
                 {
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Creating new event: {addEventDialog.NewEvent.Name}");
@@ -242,6 +255,9 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event created successfully: {createdEvent.Name}");
                     System.Windows.MessageBox.Show($"Event '{createdEvent.Name}' created successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    
+                    // Notify other ViewModels about event change
+                    EventChanged?.Invoke();
                 }
             }
             catch (Exception ex)
@@ -281,6 +297,9 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event updated successfully: {updatedEvent.Name}");
                     System.Windows.MessageBox.Show($"Event '{updatedEvent.Name}' updated successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    
+                    // Notify other ViewModels about event change
+                    EventChanged?.Invoke();
                 }
             }
             catch (Exception ex)
@@ -316,6 +335,9 @@ namespace ClubManagementApp.ViewModels
                     Events.Remove(eventItem);
                     FilterEvents();
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event deleted successfully: {eventItem.Name}");
+                    
+                    // Notify other ViewModels about event change
+                    EventChanged?.Invoke();
                 }
                 else
                 {

@@ -7,7 +7,6 @@ namespace ClubManagementApp.Views
     public partial class EditClubDialog : Window
     {
         public Club? UpdatedClub { get; private set; }
-        public new bool DialogResult { get; private set; }
         private readonly Club _originalClub;
 
         public EditClubDialog(Club club)
@@ -55,25 +54,20 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            // Create updated club object
-            UpdatedClub = new Club
-            {
-                ClubID = _originalClub.ClubID,
-                Name = ClubNameTextBox.Text.Trim(),
-                Description = DescriptionTextBox.Text.Trim(),
-                IsActive = GetSelectedStatus() == "Active",
-                CreatedDate = _originalClub.CreatedDate,
-                Members = _originalClub.Members,
-                Events = _originalClub.Events
-            };
+            // Update the original club object instead of creating a new one
+            _originalClub.Name = ClubNameTextBox.Text.Trim();
+            _originalClub.Description = DescriptionTextBox.Text.Trim();
+            _originalClub.IsActive = GetSelectedStatus() == "Active";
+            
+            UpdatedClub = _originalClub;
 
-            DialogResult = true;
+            this.DialogResult = true;
             Close();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 

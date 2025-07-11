@@ -3,11 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:ClubManagementApp.Models"
         mc:Ignorable="d"
         Title="Add Member to Club"
         Height="700"
         Width="900"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="#f8f9fa">
     
@@ -224,25 +225,11 @@
                             <!-- Search Controls -->
                             <StackPanel Grid.Row="0" Margin="0,0,0,20">
                                 <TextBlock Text="Search Users" Style="{StaticResource ModernLabelStyle}"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <TextBox x:Name="SearchTextBox" 
-                                             Grid.Column="0"
-                                             Style="{StaticResource ModernTextBoxStyle}"
-                                             Margin="0,0,10,0"
-                                             TextChanged="SearchTextBox_TextChanged"
-                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                                    
-                                    <Button Grid.Column="1" 
-                                            Content="🔍 Search" 
-                                            Style="{StaticResource PrimaryButtonStyle}"
-                                            Click="SearchButton_Click"/>
-                                </Grid>
-                                <TextBlock Text="Search by name or email" 
+                                <TextBox x:Name="SearchTextBox" 
+                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         TextChanged="SearchTextBox_TextChanged"
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="Search by name or email (auto-search as you type)" 
                                            FontSize="12" 
                                            Foreground="#6c757d" 
                                            Margin="0,5,0,0"/>
@@ -254,13 +241,14 @@
                                 <ComboBox x:Name="ExistingUserRoleComboBox" 
                                           Style="{StaticResource ModernComboBoxStyle}"
                                           SelectedValuePath="Tag"
-                                          DisplayMemberPath="Content">
-                                    <ComboBoxItem Content="Club President" Tag="ClubPresident"/>
-                                    <ComboBoxItem Content="Chairman" Tag="Chairman"/>
-                                    <ComboBoxItem Content="Vice Chairman" Tag="ViceChairman"/>
-                                    <ComboBoxItem Content="Club Officer" Tag="ClubOfficer"/>
-                                    <ComboBoxItem Content="Team Leader" Tag="TeamLeader"/>
-                                    <ComboBoxItem Content="Member" Tag="Member" IsSelected="True"/>
+                                          DisplayMemberPath="Content"
+                                          SelectedIndex="5">
+                                    <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
+                                    <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
+                                    <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
+                                    <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
+                                    <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
+                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
                             
@@ -319,15 +307,7 @@
                                                                        Margin="0,2,0,0"/>
                                                         </StackPanel>
                                                         
-                                                        <Border Grid.Column="1" 
-                                                                Background="#e3f2fd" 
-                                                                CornerRadius="20" 
-                                                                Padding="8,4">
-                                                            <TextBlock Text="Select" 
-                                                                       FontSize="12" 
-                                                                       FontWeight="SemiBold" 
-                                                                       Foreground="#1976d2"/>
-                                                        </Border>
+
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
@@ -377,13 +357,14 @@
                                         <ComboBox x:Name="NewUserRoleComboBox" 
                                                   Style="{StaticResource ModernComboBoxStyle}"
                                                   SelectedValuePath="Tag"
-                                                  DisplayMemberPath="Content">
-                                            <ComboBoxItem Content="Club President" Tag="ClubPresident"/>
-                                            <ComboBoxItem Content="Chairman" Tag="Chairman"/>
-                                            <ComboBoxItem Content="Vice Chairman" Tag="ViceChairman"/>
-                                            <ComboBoxItem Content="Club Officer" Tag="ClubOfficer"/>
-                                            <ComboBoxItem Content="Team Leader" Tag="TeamLeader"/>
-                                            <ComboBoxItem Content="Member" Tag="Member" IsSelected="True"/>
+                                                  DisplayMemberPath="Content"
+                                                  SelectedIndex="5">
+                                            <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
+                                            <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
+                                            <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
+                                            <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
+                                            <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
+                                            <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
                                         </ComboBox>
                                     </StackPanel>
                                 </Grid>

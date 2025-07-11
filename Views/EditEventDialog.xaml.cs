@@ -7,7 +7,6 @@ namespace ClubManagementApp.Views
     public partial class EditEventDialog : Window
     {
         public Event? UpdatedEvent { get; private set; }
-        public new bool DialogResult { get; private set; }
         private readonly Event _originalEvent;
 
         public EditEventDialog(Event eventToEdit, IEnumerable<Club> clubs)
@@ -116,7 +115,7 @@ namespace ClubManagementApp.Views
                     // Copy participants from original event
                     UpdatedEvent.Participants = _originalEvent.Participants;
 
-                    DialogResult = true;
+                    this.DialogResult = true;
                     Close();
                 }
                 catch (Exception ex)
@@ -129,7 +128,7 @@ namespace ClubManagementApp.Views
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 

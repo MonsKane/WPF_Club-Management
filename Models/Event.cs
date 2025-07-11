@@ -47,5 +47,8 @@ namespace ClubManagementApp.Models
         // Navigation properties
         public virtual Club Club { get; set; } = null!;
         public virtual ICollection<EventParticipant> Participants { get; set; } = new List<EventParticipant>();
+        
+        // Computed properties for UI
+        public int ParticipantCount => Participants?.Count ?? 0;
     }
 }

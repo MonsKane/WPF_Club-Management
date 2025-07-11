@@ -61,18 +61,19 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                Console.WriteLine("[CLUB_SERVICE] Getting all clubs from database...");
+                Console.WriteLine("[CLUB_SERVICE] Getting all clubs");
                 var clubs = await _context.Clubs
+                    .AsNoTracking()
                     .Include(c => c.Members)
                     .Include(c => c.Events)
-                    .OrderBy(c => c.Name)
                     .ToListAsync();
-                Console.WriteLine($"[CLUB_SERVICE] Retrieved {clubs.Count} clubs from database");
+                
+                Console.WriteLine($"[CLUB_SERVICE] Found {clubs.Count} clubs");
                 return clubs;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[CLUB_SERVICE] Error getting all clubs: {ex.Message}");
+                Console.WriteLine($"[CLUB_SERVICE] Error getting clubs: {ex.Message}");
                 throw;
             }
         }
@@ -196,6 +197,9 @@ namespace ClubManagementApp.Services
                 if (existingClub != null)
                     throw new InvalidOperationException($"Club with name '{club.Name}' already exists");
 
+                // Ensure ClubID is 0 for new entities
+                club.ClubID = 0;
+                
                 _context.Clubs.Add(club);
                 await _context.SaveChangesAsync();
 
@@ -451,9 +455,9 @@ namespace ClubManagementApp.Services
 
                 Console.WriteLine($"[CLUB_SERVICE] Assigning leadership role {role} to user {userId} in club {clubId}");
 
-                if (role != UserRole.Chairman && role != UserRole.ViceChairman && role != UserRole.TeamLeader)
+                if (role != UserRole.Chairman && role != UserRole.ViceChairman && role != UserRole.TeamLeader && role != UserRole.Member)
                 {
-                    Console.WriteLine($"[CLUB_SERVICE] Invalid leadership role: {role}");
+                    Console.WriteLine($"[CLUB_SERVICE] Invalid role: {role}");
                     return false;
                 }
 
@@ -911,22 +915,27 @@ namespace ClubManagementApp.Services
                 if (user == null || club == null)
                     return false;
         
-                // Check if user is already a member of this club
+                // If user is already a member of this club, update their role
                 if (user.ClubID == clubId)
-                    return false;
+                {
+                    user.Role = role;
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine($"[CLUB_SERVICE] Updated role for existing member {user.FullName} to {role} in club {clubId}");
+                    return true;
+                }
         
-                // Update user's club and role
+                // Add new user to club with specified role
                 user.ClubID = clubId;
                 user.Role = role;
         
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"[CLUB_SERVICE] Added new member {user.FullName} with role {role} to club {clubId}");
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[CLUB_SERVICE] Error adding user {userId} to club {clubId}: {ex.Message}");
                 return false;
-
-                
             }
         }
 

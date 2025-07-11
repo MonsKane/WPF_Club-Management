@@ -7,7 +7,6 @@ namespace ClubManagementApp.Views
     public partial class AddClubDialog : Window
     {
         public Club? CreatedClub { get; private set; }
-        public new bool DialogResult { get; private set; }
 
         public AddClubDialog()
         {
@@ -42,13 +41,13 @@ namespace ClubManagementApp.Views
                 CreatedDate = DateTime.Now
             };
 
-            DialogResult = true;
+            this.DialogResult = true;
             Close();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false;
+            this.DialogResult = false;
             Close();
         }
 

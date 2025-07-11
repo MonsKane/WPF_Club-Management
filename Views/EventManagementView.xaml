@@ -138,17 +138,31 @@
                 
                 <!-- Status Filter -->
                 <ComboBox Grid.Column="1" 
-                          SelectedItem="{Binding SelectedStatus}" 
+                          SelectedValue="{Binding SelectedStatus}" 
+                          SelectedValuePath="Content"
                           Width="150" 
                           Margin="0,0,10,0"
                           Padding="10,8"
                           FontSize="14">
-                    <ComboBoxItem Content="All Events"/>
+                    <ComboBoxItem Content="All Events" IsSelected="True"/>
                     <ComboBoxItem Content="Upcoming"/>
                     <ComboBoxItem Content="Ongoing"/>
                     <ComboBoxItem Content="Completed"/>
                     <ComboBoxItem Content="Cancelled"/>
                 </ComboBox>
+                
+                <!-- Refresh Button -->
+                <Button Grid.Column="2"
+                        Content="Refresh"
+                        Command="{Binding RefreshCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Margin="0,0,10,0"/>
+                
+                <!-- Add Event Button -->
+                <Button Grid.Column="3"
+                        Content="Add Event"
+                        Command="{Binding AddEventCommand}"
+                        Style="{StaticResource SuccessButtonStyle}"/>
             </Grid>
         </Grid>
         
@@ -167,7 +181,7 @@
             
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Title" 
-                                    Binding="{Binding Title}" 
+                                    Binding="{Binding Name}" 
                                     Width="200"
                                     IsReadOnly="True"/>
                 
@@ -221,7 +235,7 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 
-                <DataGridTemplateColumn Header="Actions" Width="280">
+                <DataGridTemplateColumn Header="Actions" Width="320">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

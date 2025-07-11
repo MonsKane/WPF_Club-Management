@@ -1,8 +1,6 @@
 using ClubManagementApp.Models;
 using ClubManagementApp.ViewModels;
 using ClubManagementApp.Views;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 using System.Windows;
 
 namespace ClubManagementApp.Services
@@ -69,13 +67,14 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                var userService = _serviceProvider.GetService(typeof(UserService)) as UserService;
-                var eventService = _serviceProvider.GetService(typeof(EventService)) as EventService;
+                var userService = _serviceProvider.GetService(typeof(IUserService)) as IUserService;
+                var eventService = _serviceProvider.GetService(typeof(IEventService)) as IEventService;
 
                 if (userService == null || eventService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
 
                 var dialog = new ClubDetailsDialog(club, this, userService, eventService);
+                dialog.Owner = Application.Current.MainWindow;
                 dialog.ShowDialog();
             }
             catch (Exception ex)
@@ -88,8 +87,8 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                var clubService = _serviceProvider.GetService(typeof(ClubService)) as ClubService;
-                var userService = _serviceProvider.GetService(typeof(UserService)) as UserService;
+                var clubService = _serviceProvider.GetService(typeof(IClubService)) as IClubService;
+                var userService = _serviceProvider.GetService(typeof(IUserService)) as IUserService;
 
                 if (clubService == null || userService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
@@ -101,6 +100,71 @@ namespace ClubManagementApp.Services
             catch (Exception ex)
             {
                 ShowNotification($"Error opening leadership management: {ex.Message}");
+            }
+        }
+
+        public void ShowAddUserDialog()
+        {
+            try
+            {
+                var userService = _serviceProvider.GetService(typeof(IUserService)) as IUserService;
+
+                if (userService == null)
+                    throw new InvalidOperationException("Unable to resolve required services from DI container.");
+
+                var dialog = new AddUserDialog(userService);
+                dialog.Owner = Application.Current.MainWindow;
+                
+                if (dialog.ShowDialog() == true && dialog.CreatedUser != null)
+                {
+                    ShowNotification("User created successfully!");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowNotification($"Error opening add user dialog: {ex.Message}");
+            }
+        }
+
+        public void ShowEditUserDialog(User user)
+        {
+            try
+            {
+                var userService = _serviceProvider.GetService(typeof(IUserService)) as IUserService;
+                var clubService = _serviceProvider.GetService(typeof(IClubService)) as IClubService;
+
+                if (userService == null || clubService == null)
+                    throw new InvalidOperationException("Unable to resolve required services from DI container.");
+
+                var dialog = new EditUserDialog(user);
+                dialog.Owner = Application.Current.MainWindow;
+                
+                if (dialog.ShowDialog() == true && dialog.UpdatedUser != null)
+                {
+                    // Save the updated user
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await userService.UpdateUserAsync(dialog.UpdatedUser);
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                ShowNotification("User updated successfully!");
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show($"Error updating user: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            });
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowNotification($"Error opening edit user dialog: {ex.Message}");
             }
         }
 
@@ -117,10 +181,10 @@ namespace ClubManagementApp.Services
                     throw new InvalidOperationException("Unable to resolve LoginViewModel from DI container.");
 
                 var loginWindow = new LoginWindow(loginViewModel);
-                
+
                 // Set up login success handler to properly manage application lifecycle
                 loginViewModel.LoginSuccessful += async (sender, e) => await OnLoginSuccessfulFromLogout();
-                
+
                 // Set the login window as the new main window before showing it
                 Application.Current.MainWindow = loginWindow;
                 loginWindow.Show();
@@ -129,7 +193,7 @@ namespace ClubManagementApp.Services
                 var windowsToClose = Application.Current.Windows.Cast<Window>()
                     .Where(w => w != loginWindow)
                     .ToList();
-                
+
                 foreach (var window in windowsToClose)
                 {
                     window.Close();
@@ -187,7 +251,7 @@ namespace ClubManagementApp.Services
 
                     // Create and show main window
                     var mainWindow = new MainWindow(mainViewModel);
-                    
+
                     // Set shutdown mode back to normal behavior
                     Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                     Application.Current.MainWindow = mainWindow;
@@ -197,7 +261,7 @@ namespace ClubManagementApp.Services
                     var loginWindows = Application.Current.Windows.Cast<Window>()
                         .Where(w => w is LoginWindow)
                         .ToList();
-                    
+
                     foreach (var loginWindow in loginWindows)
                     {
                         loginWindow.Close();

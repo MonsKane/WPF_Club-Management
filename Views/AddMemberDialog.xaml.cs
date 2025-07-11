@@ -1,5 +1,6 @@
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
+using ClubManagementApp.ViewModels;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -103,10 +104,7 @@ namespace ClubManagementApp.Views
             CreateTabContent.Visibility = IsCreateTabActive ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private async void SearchButton_Click(object sender, RoutedEventArgs e)
-        {
-            await PerformSearch();
-        }
+        // Search button removed - auto-search functionality handles search
 
         private async void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -197,8 +195,8 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var selectedRole = ExistingUserRoleComboBox.SelectedValue?.ToString();
-            if (string.IsNullOrEmpty(selectedRole))
+            var selectedRole = ExistingUserRoleComboBox.SelectedValue as UserRole?;
+            if (selectedRole == null)
             {
                 MessageBox.Show("Please select a role for the user.", "No Role Selected",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -206,11 +204,14 @@ namespace ClubManagementApp.Views
             }
 
             // Add user to club
-            var roleEnum = (UserRole)Enum.Parse(typeof(UserRole), selectedRole);
-            await _clubService.AddUserToClubAsync(_targetClub.ClubID, SelectedUser.UserID, roleEnum);
+            var roleEnum = selectedRole.Value;
+            await _clubService.AddUserToClubAsync(SelectedUser.UserID, _targetClub.ClubID, roleEnum);
 
             MessageBox.Show($"{SelectedUser.FullName} has been successfully added to {_targetClub.Name}.",
                 "Member Added", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Trigger member change notification to refresh views
+            MemberListViewModel.NotifyMemberChanged();
 
             DialogResult = true;
             Close();
@@ -228,8 +229,8 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var selectedRole = NewUserRoleComboBox.SelectedValue?.ToString();
-            if (string.IsNullOrEmpty(selectedRole))
+            var selectedRole = NewUserRoleComboBox.SelectedValue as UserRole?;
+            if (selectedRole == null)
             {
                 MessageBox.Show("Please select a role for the user.", "No Role Selected",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -242,7 +243,7 @@ namespace ClubManagementApp.Views
                 FullName = FullNameTextBox.Text.Trim(),
                 Email = EmailTextBox.Text.Trim(),
                 PhoneNumber = PhoneTextBox.Text.Trim(),
-                Role = (UserRole)Enum.Parse(typeof(UserRole), selectedRole),
+                Role = selectedRole.Value,
                 IsActive = IsActiveCheckBox.IsChecked ?? true,
                 ClubID = _targetClub?.ClubID
             };
@@ -266,11 +267,14 @@ namespace ClubManagementApp.Views
                 return;
             }
             
-            var roleEnum = (UserRole)Enum.Parse(typeof(UserRole), selectedRole);
-            await _clubService.AddUserToClubAsync(_targetClub!.ClubID, createdUser.UserID, roleEnum);
+            var roleEnum = selectedRole.Value;
+            await _clubService.AddUserToClubAsync(createdUser.UserID, _targetClub!.ClubID, roleEnum);
 
             MessageBox.Show($"{newUser.FullName} has been created and added to {_targetClub.Name}.",
                 "Member Created and Added", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Trigger member change notification to refresh views
+            MemberListViewModel.NotifyMemberChanged();
 
             DialogResult = true;
             Close();
@@ -294,9 +298,9 @@ namespace ClubManagementApp.Views
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(PasswordBox.Password) || PasswordBox.Password.Length < 8)
+            if (string.IsNullOrWhiteSpace(PasswordBox.Password) || PasswordBox.Password.Length < 6)
             {
-                MessageBox.Show("Password must be at least 8 characters long.", "Validation Error",
+                MessageBox.Show("Password must be at least 6 characters long.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 PasswordBox.Focus();
                 return false;

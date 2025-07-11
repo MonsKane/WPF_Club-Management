@@ -8,6 +8,7 @@ namespace ClubManagementApp.Services
         Task<User?> GetUserByIdAsync(int userId);
         Task<User?> GetUserByEmailAsync(string email);
         Task<IEnumerable<User>> GetUsersByClubAsync(int clubId);
+        Task<IEnumerable<User>> GetUsersWithoutClubAsync();
         Task<IEnumerable<User>> SearchUsersAsync(string searchTerm);
         Task<User> CreateUserAsync(User user);
         Task<User> UpdateUserAsync(User user);
