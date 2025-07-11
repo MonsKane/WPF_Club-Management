@@ -252,13 +252,20 @@ namespace ClubManagementApp.ViewModels
         private void Logout()
         {
             Console.WriteLine($"[LOGOUT] User {CurrentUser?.FullName} logging out...");
+            
+            // Clear user session and all cached data
             CurrentUser = null;
             CurrentView = "Dashboard";
             Users.Clear();
             Clubs.Clear();
             Events.Clear();
             Reports.Clear();
-            Console.WriteLine("[LOGOUT] Logout completed, data cleared");
+            
+            // Clear notifications
+            HasNotifications = false;
+            NotificationMessage = string.Empty;
+            
+            Console.WriteLine("[LOGOUT] Logout completed, all data and session cleared");
 
             // Navigate back to login window
             _navigationService.NavigateToLogin();
