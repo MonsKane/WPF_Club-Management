@@ -36,6 +36,7 @@ namespace ClubManagementApp.ViewModels
             _navigationService = navigationService;
             _authorizationService = authorizationService;
             InitializeCommands();
+            LoadCurrentUserAsync();
             Console.WriteLine("[DashboardViewModel] DashboardViewModel initialization completed");
         }
 
@@ -200,10 +201,15 @@ namespace ClubManagementApp.ViewModels
                 IsLoading = true;
 
                 // Load statistics efficiently using count methods
-                TotalUsers = await _userService.GetTotalUsersCountAsync();
-                TotalClubs = await _clubService.GetTotalClubsCountAsync();
-                TotalEvents = await _eventService.GetTotalEventsCountAsync();
-                TotalReports = await _reportService.GetTotalReportsCountAsync();
+                var canViewUser = _authorizationService.CanViewUser(CurrentUser!.Role);
+                var canViewClub = _authorizationService.CanViewClub(CurrentUser!.Role);
+                var canViewEvent = _authorizationService.CanViewEvent(CurrentUser!.Role);
+                var canViewReport = _authorizationService.CanViewReports(CurrentUser!.Role, default, default);
+
+                TotalUsers = canViewUser ? await _userService.GetTotalUsersCountAsync() : 0;
+                TotalClubs = canViewClub ? await _clubService.GetTotalClubsCountAsync() : 0;
+                TotalEvents = canViewEvent ? await _eventService.GetTotalEventsCountAsync() : 0;
+                TotalReports = canViewReport ? await _reportService.GetTotalReportsCountAsync() : 0;
                 Console.WriteLine($"[DashboardViewModel] Retrieved counts - Users: {TotalUsers}, Clubs: {TotalClubs}, Events: {TotalEvents}, Reports: {TotalReports}");
 
                 // Calculate event statistics efficiently

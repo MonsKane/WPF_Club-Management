@@ -376,7 +376,7 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine($"[MemberListViewModel] Edit Member command executed for: {member.FullName} (ID: {member.UserID})");
 
                 // Create and show the edit dialog
-                var editDialog = new Views.EditUserDialog(member);
+                var editDialog = new Views.EditUserDialog(member, _userService);
                 Console.WriteLine($"[MemberListViewModel] EditUserDialog created successfully for {member.FullName}");
 
                 var dialogResult = editDialog.ShowDialog();

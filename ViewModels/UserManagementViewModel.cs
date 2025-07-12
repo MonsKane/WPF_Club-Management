@@ -15,32 +15,32 @@ namespace ClubManagementApp.ViewModels
         private readonly INavigationService _navigationService;
         private readonly IAuthorizationService _authorizationService;
         private readonly ILogger<UserManagementViewModel>? _logger;
-        
+
         private ObservableCollection<User> _users = new();
         private ObservableCollection<User> _filteredUsers = new();
         private User? _selectedUser;
         private string _searchText = string.Empty;
         private UserRole? _selectedRole;
         private User? _currentUser;
-        
+
         public ObservableCollection<User> Users
         {
             get => _users;
             set => SetProperty(ref _users, value);
         }
-        
+
         public ObservableCollection<User> FilteredUsers
         {
             get => _filteredUsers;
             set => SetProperty(ref _filteredUsers, value);
         }
-        
+
         public User? SelectedUser
         {
             get => _selectedUser;
             set => SetProperty(ref _selectedUser, value);
         }
-        
+
         public string SearchText
         {
             get => _searchText;
@@ -52,7 +52,7 @@ namespace ClubManagementApp.ViewModels
                 }
             }
         }
-        
+
         public UserRole? SelectedRole
         {
             get => _selectedRole;
@@ -64,7 +64,7 @@ namespace ClubManagementApp.ViewModels
                 }
             }
         }
-        
+
         public User? CurrentUser
         {
             get => _currentUser;
@@ -79,17 +79,17 @@ namespace ClubManagementApp.ViewModels
                 }
             }
         }
-        
+
         public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
         public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
         public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.Role);
         public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
-        
+
         public ICommand RefreshCommand { get; }
         public ICommand CreateAccountCommand { get; }
         public ICommand EditUserCommand { get; }
         public ICommand DeleteUserCommand { get; }
-        
+
         public UserManagementViewModel(
             IUserService userService,
             INotificationService notificationService,
@@ -102,16 +102,16 @@ namespace ClubManagementApp.ViewModels
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _logger = logger;
-            
+
             RefreshCommand = new RelayCommand(async () => await LoadUsersAsync(), () => CanAccessUserManagement);
             CreateAccountCommand = new RelayCommand(CreateAccount, () => CanCreateUsers);
             EditUserCommand = new RelayCommand(EditUser, () => SelectedUser != null && CanEditUsers);
             DeleteUserCommand = new RelayCommand(DeleteUser, () => SelectedUser != null && CanDeleteUsers && SelectedUser.UserID != CurrentUser?.UserID);
-            
+
             _ = LoadCurrentUserAsync();
             _ = LoadUsersAsync();
         }
-        
+
         private async Task LoadCurrentUserAsync()
         {
             try
@@ -124,12 +124,12 @@ namespace ClubManagementApp.ViewModels
                 _logger?.LogError(ex, "Error loading current user");
             }
         }
-        
+
         public override async Task LoadAsync()
         {
             await LoadUsersAsync();
         }
-        
+
         private async Task LoadUsersAsync()
         {
             try
@@ -149,26 +149,26 @@ namespace ClubManagementApp.ViewModels
                 IsLoading = false;
             }
         }
-        
+
         private void FilterUsers()
         {
             var filtered = Users.AsEnumerable();
-            
+
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filtered = filtered.Where(u => 
+                filtered = filtered.Where(u =>
                     u.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     u.Email.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
             }
-            
+
             if (SelectedRole.HasValue)
             {
                 filtered = filtered.Where(u => u.Role == SelectedRole.Value);
             }
-            
+
             FilteredUsers = new ObservableCollection<User>(filtered);
         }
-        
+
         private void CreateAccount()
         {
             try
@@ -182,11 +182,11 @@ namespace ClubManagementApp.ViewModels
                 MessageBox.Show("Failed to open create account dialog.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         private void EditUser()
         {
             if (SelectedUser == null) return;
-            
+
             try
             {
                 _navigationService.ShowEditUserDialog(SelectedUser);
@@ -198,19 +198,19 @@ namespace ClubManagementApp.ViewModels
                 MessageBox.Show("Failed to open edit user dialog.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-        
+
         private async void DeleteUser()
         {
             if (SelectedUser == null) return;
-            
+
             var result = MessageBox.Show(
                 $"Are you sure you want to delete user '{SelectedUser.FullName}'?\n\nThis action cannot be undone.",
                 "Confirm Delete",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
-                
+
             if (result != MessageBoxResult.Yes) return;
-            
+
             try
             {
                 IsLoading = true;

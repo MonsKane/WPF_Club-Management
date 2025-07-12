@@ -80,6 +80,11 @@ namespace ClubManagementApp.Services
             return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
         }
 
+        public bool CanJoinEvents(UserRole role)
+        {
+            return true;
+        }
+
         public bool CanEditEvents(UserRole role, int? userClubId = null, int? eventClubId = null, bool isOwnEvent = false)
         {
             return role switch
@@ -167,7 +172,7 @@ namespace ClubManagementApp.Services
                 "UserManagement" => CanCreateUsers(role) || CanEditUsers(role) || CanDeleteUsers(role),
                 "MemberManagement" => CanCreateUsers(role) || CanCreateUsers(role) || CanCreateUsers(role),
                 "ClubManagement" => CanCreateClubs(role) || CanEditClubs(role) || CanDeleteClubs(role),
-                "EventManagement" => CanCreateEvents(role) || CanEditEvents(role) || CanDeleteEvents(role),
+                "EventManagement" => CanJoinEvents(role) || CanCreateEvents(role) || CanEditEvents(role) || CanDeleteEvents(role),
                 "ReportView" => CanGenerateReports(role),
                 "Dashboard" => true, // Everyone can access dashboard
                 _ => false
@@ -261,6 +266,32 @@ namespace ClubManagementApp.Services
                 "ViewReports" => CanAccessFeature(user.Role, "ReportView"),
                 "GenerateReports" => CanGenerateReports(user.Role),
                 _ => false
+            };
+        }
+
+        public bool CanViewEvent(UserRole role)
+        {
+            return role switch
+            {
+                _ => true
+            };
+        }
+
+        public bool CanViewClub(UserRole role)
+        {
+            return role switch
+            {
+                UserRole.Member => false,
+                _ => true
+            };
+        }
+
+        public bool CanViewUser(UserRole role)
+        {
+            return role switch
+            {
+                UserRole.Member => false,
+                _ => true
             };
         }
     }

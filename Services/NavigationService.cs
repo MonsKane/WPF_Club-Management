@@ -131,7 +131,7 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                var userService = _serviceProvider.GetService(typeof(IUserService)) as IUserService;
+                var userService = _serviceProvider.GetRequiredService<IUserService>();
                 var clubService = _serviceProvider.GetService(typeof(IClubService)) as IClubService;
 
                 if (userService == null || clubService == null)
@@ -143,11 +143,10 @@ namespace ClubManagementApp.Services
                 if (dialog.ShowDialog() == true && dialog.UpdatedUser != null)
                 {
                     // Save the updated user
-                    _ = Task.Run(async () =>
+                    _ = Task.Run(() =>
                     {
                         try
                         {
-                            await userService.UpdateUserAsync(dialog.UpdatedUser);
                             Application.Current.Dispatcher.Invoke(() =>
                             {
                                 ShowNotification("User updated successfully!");

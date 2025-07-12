@@ -212,6 +212,8 @@ namespace ClubManagementApp.ViewModels
         public ICommand AddEventCommand { get; private set; } = null!;
         public ICommand EditEventCommand { get; private set; } = null!;
         public ICommand DeleteEventCommand { get; private set; } = null!;
+
+        public ICommand JoinEventCommand { get; private set; } = null!;
         public ICommand ViewEventCommand { get; private set; } = null!;
         public ICommand RefreshCommand { get; private set; } = null!;
         public ICommand ExportEventsCommand { get; private set; } = null!;
@@ -229,6 +231,7 @@ namespace ClubManagementApp.ViewModels
             AddEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
             EditEventCommand = new RelayCommand<Event>(EditEvent, CanExecuteEditEvent);
             DeleteEventCommand = new RelayCommand<Event>(DeleteEvent, CanExecuteDeleteEvent);
+            JoinEventCommand = new RelayCommand<Event>(JoinEvent, CanExecuteJoinEvent);
             ViewEventCommand = new RelayCommand<Event>(ViewEvent, CanExecuteViewEvent);
             RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
             ExportEventsCommand = new RelayCommand(ExportEvents, CanExecuteExportEvents);
@@ -274,6 +277,11 @@ namespace ClubManagementApp.ViewModels
         {
             return eventItem != null && CurrentUser != null &&
                    _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+        }
+
+        private bool CanExecuteJoinEvent(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null && _authorizationService.CanJoinEvents(CurrentUser.Role);
         }
 
         private bool CanExecuteViewEvent(Event? eventItem)
@@ -481,6 +489,112 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error updating event {eventItem.Name}: {ex.Message}");
                 System.Windows.MessageBox.Show($"Error updating event: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+
+        private async void JoinEvent(Event? eventItem)
+        {
+            if (eventItem == null)
+            {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Join Event command called with null event");
+                return;
+            }
+
+            if (CurrentUser == null)
+            {
+                Console.WriteLine("[EVENT_MANAGEMENT_VM] Join Event command called with null current user");
+                return;
+            }
+
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] Join Event command executed for: {eventItem.Name} (ID: {eventItem.EventID}) by user: {CurrentUser.FullName} (ID: {CurrentUser.UserID})");
+
+            try
+            {
+                // Check if registration deadline has passed
+                if (eventItem.RegistrationDeadline.HasValue && DateTime.Now > eventItem.RegistrationDeadline.Value)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Registration deadline has passed for this event.",
+                        "Registration Closed",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Check if event has already occurred
+                if (eventItem.EventDate < DateTime.Now)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Cannot register for past events.",
+                        "Event Already Occurred",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Check if event has reached maximum participants
+                if (eventItem.MaxParticipants.HasValue)
+                {
+                    var participants = await _eventService.GetEventParticipantsAsync(eventItem.EventID);
+                    if (participants.Count() >= eventItem.MaxParticipants.Value)
+                    {
+                        System.Windows.MessageBox.Show(
+                            "This event has reached its maximum number of participants.",
+                            "Event Full",
+                            System.Windows.MessageBoxButton.OK,
+                            System.Windows.MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+
+                // Confirm registration
+                var result = System.Windows.MessageBox.Show(
+                    $"Do you want to register for the event '{eventItem.Name}'?",
+                    "Confirm Registration",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Question);
+
+                if (result == System.Windows.MessageBoxResult.Yes)
+                {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] User confirmed registration for event: {eventItem.Name}");
+                    
+                    bool success = await _eventService.RegisterUserForEventAsync(eventItem.EventID, CurrentUser.UserID);
+                    
+                    if (success)
+                    {
+                        Console.WriteLine($"[EVENT_MANAGEMENT_VM] User successfully registered for event: {eventItem.Name}");
+                        System.Windows.MessageBox.Show(
+                            $"You have successfully registered for '{eventItem.Name}'.",
+                            "Registration Successful",
+                            System.Windows.MessageBoxButton.OK,
+                            System.Windows.MessageBoxImage.Information);
+                        
+                        // Notify other ViewModels about event change
+                        EventChanged?.Invoke();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[EVENT_MANAGEMENT_VM] Failed to register user for event: {eventItem.Name}");
+                        System.Windows.MessageBox.Show(
+                            "Registration failed. You may already be registered for this event.",
+                            "Registration Failed",
+                            System.Windows.MessageBoxButton.OK,
+                            System.Windows.MessageBoxImage.Warning);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] User cancelled registration for event: {eventItem.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error registering for event {eventItem.Name}: {ex.Message}");
+                System.Windows.MessageBox.Show(
+                    $"Error registering for event: {ex.Message}",
+                    "Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
             }
         }
 

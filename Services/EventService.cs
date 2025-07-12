@@ -233,7 +233,7 @@ namespace ClubManagementApp.Services
 
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"[EVENT_SERVICE] Event updated successfully: {existingEvent.Name}");
-                
+
                 // Return the updated tracked entity
                 return existingEvent;
             }

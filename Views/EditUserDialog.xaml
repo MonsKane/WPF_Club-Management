@@ -313,7 +313,6 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Role *" Style="{StaticResource ModernLabelStyle}"/>
                                 <ComboBox x:Name="RoleComboBox" Style="{StaticResource ModernComboBoxStyle}"
-                                            SelectedValue="{Binding _originalUser.Role, Mode=TwoWay}"
                                             SelectedValuePath="Tag"
                                             DisplayMemberPath="Content"
                                             >

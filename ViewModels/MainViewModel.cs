@@ -340,6 +340,7 @@ namespace ClubManagementApp.ViewModels
 
         // Club Management Permissions
         public bool CanAccessClubManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+        public bool CanJoinEvents => CurrentUser?.Role != null && _authorizationService.CanJoinEvents(CurrentUser.Role);
         public bool CanCreateClubs => CurrentUser?.Role != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
         public bool CanEditClubs => CurrentUser?.Role != null && _authorizationService.CanEditClubs(CurrentUser.Role, CurrentUser.ClubID);
         public bool CanDeleteClubs => CurrentUser?.Role != null && _authorizationService.CanDeleteClubs(CurrentUser.Role);
