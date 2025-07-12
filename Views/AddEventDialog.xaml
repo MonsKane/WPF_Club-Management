@@ -139,41 +139,13 @@
         
         <!-- Modern DatePicker Style -->
         <Style x:Key="ModernDatePickerStyle" TargetType="DatePicker">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="10,10"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="BorderBrush" Value="#e9ecef"/>
+            <Setter Property="BorderBrush" Value="#e1e5e9"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Background" Value="#ffffff"/>
-            <Setter Property="Foreground" Value="#495057"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="DatePicker">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="8">
-                            <Grid>
-                                <Button x:Name="PART_Button" Background="Transparent" BorderThickness="0" 
-                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                                <DatePickerTextBox x:Name="PART_TextBox" Background="Transparent" BorderThickness="0" 
-                                                   Margin="{TemplateBinding Padding}" 
-                                                   VerticalAlignment="Center" 
-                                                   HorizontalAlignment="Stretch"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter Property="BorderBrush" Value="#007bff"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="BorderBrush" Value="#6c757d"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Background" Value="White"/>
         </Style>
-        
+
         <!-- Modern Label Style -->
         <Style x:Key="ModernLabelStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>

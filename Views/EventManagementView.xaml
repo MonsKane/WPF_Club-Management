@@ -90,6 +90,10 @@
         </Style>
         
         <Style x:Key="CenteredTextColumnStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
+        <Style x:Key="CenteredNumberColumnStyle" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
@@ -107,36 +111,8 @@
         <!-- Header -->
         <TextBlock Grid.Row="0" Text="Event Management" Style="{StaticResource HeaderTextStyle}"/>
         
-        <!-- Report Generation Section -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20">
-            <Border.Effect>
-                <DropShadowEffect Color="Gray" Direction="270" ShadowDepth="2" Opacity="0.3" BlurRadius="5"/>
-            </Border.Effect>
-            <StackPanel>
-                <TextBlock Text="📊 Event Reports" FontSize="18" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
-                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                    <Button Content="📈 Event Statistics" 
-                            Command="{Binding GenerateEventStatisticsReportCommand}"
-                            Style="{StaticResource ReportTypeButtonStyle}"
-                            Margin="0,0,10,10"/>
-                    <Button Content="👥 Attendance Report" 
-                            Command="{Binding GenerateEventAttendanceReportCommand}"
-                            Style="{StaticResource ReportTypeButtonStyle}"
-                            Margin="0,0,10,10"/>
-                    <Button Content="⚡ Performance Report" 
-                            Command="{Binding GenerateEventPerformanceReportCommand}"
-                            Style="{StaticResource ReportTypeButtonStyle}"
-                            Margin="0,0,10,10"/>
-                    <Button Content="📋 Summary Report" 
-                            Command="{Binding GenerateEventSummaryReportCommand}"
-                            Style="{StaticResource ReportTypeButtonStyle}"
-                            Margin="0,0,10,10"/>
-                </WrapPanel>
-            </StackPanel>
-        </Border>
-        
         <!-- Search and Filter Section -->
-        <Grid Grid.Row="2" Margin="0,0,0,20">
+        <Grid Grid.Row="1" Margin="0,0,0,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -181,13 +157,12 @@
                 
                 <!-- Status Filter -->
                 <ComboBox Grid.Column="1" 
-                          SelectedValue="{Binding SelectedStatus}" 
-                          SelectedValuePath="Content"
+                          SelectedValue="{Binding SelectedStatus, Mode=TwoWay}" 
                           Width="150" 
                           Margin="0,0,10,0"
                           Padding="10,8"
                           FontSize="14">
-                    <ComboBoxItem Content="All Events" IsSelected="True"/>
+                    <ComboBoxItem IsSelected="True" Content="All Events"/>
                     <ComboBoxItem Content="Upcoming"/>
                     <ComboBoxItem Content="Ongoing"/>
                     <ComboBoxItem Content="Completed"/>
@@ -218,7 +193,7 @@
         </Grid>
         
         <!-- Events DataGrid -->
-        <DataGrid Grid.Row="3" 
+        <DataGrid Grid.Row="2" 
                   ItemsSource="{Binding FilteredEvents}" 
                   SelectedItem="{Binding SelectedEvent}"
                   AutoGenerateColumns="False" 
@@ -233,7 +208,7 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Title" 
                                     Binding="{Binding Name}" 
-                                    Width="200"
+                                    Width="*"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
@@ -242,7 +217,7 @@
                 
                 <DataGridTextColumn Header="Club" 
                                     Binding="{Binding Club.Name}" 
-                                    Width="150"
+                                    Width="*"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
@@ -260,7 +235,7 @@
                 
                 <DataGridTextColumn Header="Location" 
                                     Binding="{Binding Location}" 
-                                    Width="150"
+                                    Width="*"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
@@ -272,7 +247,7 @@
                                     Width="100"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredNumberColumnStyle}"/>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 
@@ -304,7 +279,7 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 
-                <DataGridTemplateColumn Header="Actions" Width="320">
+                <DataGridTemplateColumn Header="Actions" Width="350">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -368,7 +343,7 @@
         </Grid>
         
         <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="1" 
+        <Grid Grid.RowSpan="5" 
               Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

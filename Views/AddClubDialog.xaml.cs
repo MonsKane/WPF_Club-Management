@@ -18,7 +18,7 @@ namespace ClubManagementApp.Views
             // Validate input
             if (string.IsNullOrWhiteSpace(ClubNameTextBox.Text))
             {
-                MessageBox.Show("Club name is required.", "Validation Error", 
+                MessageBox.Show("Club name is required.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 ClubNameTextBox.Focus();
                 return;
@@ -26,7 +26,7 @@ namespace ClubManagementApp.Views
 
             if (ClubNameTextBox.Text.Length < 3)
             {
-                MessageBox.Show("Club name must be at least 3 characters long.", "Validation Error", 
+                MessageBox.Show("Club name must be at least 3 characters long.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 ClubNameTextBox.Focus();
                 return;
@@ -38,6 +38,7 @@ namespace ClubManagementApp.Views
                 Name = ClubNameTextBox.Text.Trim(),
                 Description = DescriptionTextBox.Text.Trim(),
                 IsActive = GetSelectedStatus() == "Active",
+                FoundedDate = FoundedDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now),
                 CreatedDate = DateTime.Now
             };
 

@@ -85,7 +85,7 @@ namespace ClubManagementApp.Views
                 EventCountTextBlock.Text = clubEvents.Count.ToString();
 
                 // Count active events (events that haven't ended yet)
-                var activeEvents = clubEvents.Where(e => e.EventDate >= DateTime.Now).ToList();
+                var activeEvents = clubEvents.Where(e => e.Status == EventStatus.InProgress).ToList();
                 ActiveEventCountTextBlock.Text = activeEvents.Count.ToString();
             }
             catch (Exception ex)

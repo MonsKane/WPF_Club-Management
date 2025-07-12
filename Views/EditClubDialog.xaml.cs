@@ -21,12 +21,12 @@ namespace ClubManagementApp.Views
             ClubNameTextBox.Text = _originalClub.Name;
             DescriptionTextBox.Text = _originalClub.Description ?? string.Empty;
             FoundedDatePicker.SelectedDate = _originalClub.CreatedDate;
-            
+
             // Set status based on IsActive property
             var status = _originalClub.IsActive ? "Active" : "Inactive";
             for (int i = 0; i < StatusComboBox.Items.Count; i++)
             {
-                if (StatusComboBox.Items[i] is ComboBoxItem item && 
+                if (StatusComboBox.Items[i] is ComboBoxItem item &&
                     item.Content?.ToString() == status)
                 {
                     StatusComboBox.SelectedIndex = i;
@@ -40,7 +40,7 @@ namespace ClubManagementApp.Views
             // Validate input
             if (string.IsNullOrWhiteSpace(ClubNameTextBox.Text))
             {
-                MessageBox.Show("Club name is required.", "Validation Error", 
+                MessageBox.Show("Club name is required.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 ClubNameTextBox.Focus();
                 return;
@@ -48,7 +48,7 @@ namespace ClubManagementApp.Views
 
             if (ClubNameTextBox.Text.Length < 3)
             {
-                MessageBox.Show("Club name must be at least 3 characters long.", "Validation Error", 
+                MessageBox.Show("Club name must be at least 3 characters long.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 ClubNameTextBox.Focus();
                 return;
@@ -58,7 +58,8 @@ namespace ClubManagementApp.Views
             _originalClub.Name = ClubNameTextBox.Text.Trim();
             _originalClub.Description = DescriptionTextBox.Text.Trim();
             _originalClub.IsActive = GetSelectedStatus() == "Active";
-            
+            _originalClub.FoundedDate = FoundedDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now);
+
             UpdatedClub = _originalClub;
 
             this.DialogResult = true;
