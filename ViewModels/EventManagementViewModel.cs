@@ -1,6 +1,7 @@
 using ClubManagementApp.Commands;
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
+using Microsoft.IdentityModel.Tokens;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -404,6 +405,16 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine("[EVENT_MANAGEMENT_VM] Create Event command executed");
             try
             {
+                if (_clubs.IsNullOrEmpty())
+                {
+                    var clubs = await _clubService.GetAllClubsAsync();
+                    Clubs.Clear();
+                    foreach (var club in clubs)
+                    {
+                        Clubs.Add(club);
+                    }
+                }
+
                 // Pass the ClubFilter if we're in club-specific context
                 var addEventDialog = ClubFilter != null
                     ? new Views.AddEventDialog(Clubs, ClubFilter)

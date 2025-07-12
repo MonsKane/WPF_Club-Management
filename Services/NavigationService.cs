@@ -137,7 +137,7 @@ namespace ClubManagementApp.Services
                 if (userService == null || clubService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
 
-                var dialog = new EditUserDialog(user);
+                var dialog = new EditUserDialog(user, userService);
                 dialog.Owner = Application.Current.MainWindow;
 
                 if (dialog.ShowDialog() == true && dialog.UpdatedUser != null)

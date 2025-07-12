@@ -35,6 +35,7 @@ namespace ClubManagementApp.ViewModels
             _clubService = clubService;
             _authorizationService = authorizationService;
             InitializeCommands();
+            LoadCurrentUserAsync();
             Console.WriteLine("[ReportsViewModel] ReportsViewModel initialization completed");
         }
 
@@ -240,9 +241,9 @@ namespace ClubManagementApp.ViewModels
             }
 
             // Filter by report type
-            if (SelectedReportType.Content != "All Types")
+            if (SelectedReportType?.Content != "All Types")
             {
-                var reportType = SelectedReportType.Content switch
+                var reportType = SelectedReportType?.Content switch
                 {
                     "Membership" => ReportType.MemberStatistics,
                     "Activity" => ReportType.ActivityTracking,

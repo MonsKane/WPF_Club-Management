@@ -448,7 +448,7 @@
                                             <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,8"
                                                 BorderBrush="#E2E8F0" BorderThickness="1">
                                                 <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                                    Command="{Binding DashboardViewModel.CreateEventCommand}"
+                                                    Command="{Binding EventManagementViewModel.AddEventCommand}"
                                                     HorizontalContentAlignment="Stretch">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
@@ -456,16 +456,16 @@
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        
-                                                        <Border Grid.Column="0" Background="#3B82F6" CornerRadius="8" 
+
+                                                        <Border Grid.Column="0" Background="#F59E0B" CornerRadius="8" 
                                                             Width="32" Height="32" Margin="0,0,12,0">
-                                                            <TextBlock Text="📅" FontSize="16" HorizontalAlignment="Center" 
+                                                            <TextBlock Text="📅" Foreground="White" FontSize="16" HorizontalAlignment="Center" 
                                                                    VerticalAlignment="Center"/>
                                                         </Border>
                                                         
                                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                             <TextBlock Text="Tạo Sự Kiện Mới" FontSize="14" FontWeight="Medium" 
-                                                                   Foreground="#1F2937"/>
+                                                                   Foreground="#F59E0B"/>
                                                             <TextBlock Text="Thêm sự kiện cho câu lạc bộ" FontSize="12" 
                                                                    Foreground="#6B7280"/>
                                                         </StackPanel>
@@ -480,7 +480,7 @@
                                             <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,8"
                                                 BorderBrush="#E2E8F0" BorderThickness="1">
                                                 <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                                    Command="{Binding DashboardViewModel.AddClubCommand}"
+                                                    Command="{Binding ClubManagementViewModel.AddClubCommand}"
                                                     HorizontalContentAlignment="Stretch">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
@@ -488,16 +488,16 @@
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        
-                                                        <Border Grid.Column="0" Background="#10B981" CornerRadius="8" 
+
+                                                        <Border Grid.Column="0" Background="#8B5CF6" CornerRadius="8" 
                                                             Width="32" Height="32" Margin="0,0,12,0">
-                                                            <TextBlock Text="🏛️" FontSize="16" HorizontalAlignment="Center" 
+                                                            <TextBlock Text="🏛️" Foreground="White" FontSize="16" HorizontalAlignment="Center" 
                                                                    VerticalAlignment="Center"/>
                                                         </Border>
                                                         
                                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                             <TextBlock Text="Tạo Câu Lạc Bộ" FontSize="14" FontWeight="Medium" 
-                                                                   Foreground="#1F2937"/>
+                                                                   Foreground="#8B5CF6"/>
                                                             <TextBlock Text="Tạo câu lạc bộ mới" FontSize="12" 
                                                                    Foreground="#6B7280"/>
                                                         </StackPanel>
@@ -508,12 +508,12 @@
                                                 </Button>
                                             </Border>
 
-                                            <!-- User Management Card -->
+                                            <!-- Report Card -->
                                             <Border Background="#F8FAFC" CornerRadius="12" Padding="16" Margin="0,0,0,8"
                                                 BorderBrush="#E2E8F0" BorderThickness="1"
                                                 Visibility="{Binding CanAccessAdminFeatures, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                 <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                                    Command="{Binding DashboardViewModel.AddMemberCommand}"
+                                                    Command="{Binding ReportsViewModel.GenerateReportCommand}"
                                                     HorizontalContentAlignment="Stretch">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
@@ -522,16 +522,16 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
                                                         
-                                                        <Border Grid.Column="0" Background="#8B5CF6" CornerRadius="8" 
+                                                        <Border Grid.Column="0" Background="#EF4444" CornerRadius="8" 
                                                             Width="32" Height="32" Margin="0,0,12,0">
-                                                            <TextBlock Text="👥" FontSize="16" HorizontalAlignment="Center" 
+                                                            <TextBlock Text="📈" Foreground="White" FontSize="16" HorizontalAlignment="Center" 
                                                                    VerticalAlignment="Center"/>
                                                         </Border>
                                                         
                                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                            <TextBlock Text="Quản Lý Người Dùng" FontSize="14" FontWeight="Medium" 
+                                                            <TextBlock Text="Tạo thống kê" FontSize="14" FontWeight="Medium" 
                                                                    Foreground="#1F2937"/>
-                                                            <TextBlock Text="Thêm và quản lý thành viên" FontSize="12" 
+                                                            <TextBlock Text="Xuất thống kê hàng tháng" FontSize="12" 
                                                                    Foreground="#6B7280"/>
                                                         </StackPanel>
                                                         

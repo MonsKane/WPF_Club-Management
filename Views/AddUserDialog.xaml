@@ -51,7 +51,36 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
+        <Style x:Key="ModernTextBoxStyleSmall" TargetType="TextBox">
+            <Setter Property="Padding" Value="6,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#e9ecef"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Background" Value="#ffffff"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}" 
+                        CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#007bff"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#6c757d"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Modern ComboBox Style -->
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Padding" Value="15,12"/>
@@ -141,6 +170,8 @@
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
         
+        
+        
         <!-- Primary Button Style -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#007bff"/>
@@ -212,7 +243,7 @@
 
         <!-- Header -->
         <TextBlock Grid.Row="0" 
-                   Text="👤 Add New User" 
+                   Text="👤 Thêm mới tài khoản" 
                    FontSize="28" 
                    FontWeight="Bold" 
                    Foreground="#2c3e50" 
@@ -262,21 +293,24 @@
                                 <TextBlock Text="Role" Style="{StaticResource ModernLabelStyle}"/>
                                 <ComboBox x:Name="RoleComboBox" Style="{StaticResource ModernComboBoxStyle}"
                                           SelectedValuePath="Tag"
-                                          DisplayMemberPath="Content">
+                                          DisplayMemberPath="Content"
+                                          >
                                     <ComboBoxItem Content="System Admin" Tag="{x:Static models:UserRole.SystemAdmin}"/>
                                     <ComboBoxItem Content="Admin" Tag="{x:Static models:UserRole.Admin}"/>
+                                    <!--
                                     <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
                                     <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
                                     <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
                                     <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
                                     <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
-                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}"/>
+                                    -->
+                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
                             
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Phone Number" Style="{StaticResource ModernLabelStyle}"/>
-                                <TextBox x:Name="PhoneTextBox" Style="{StaticResource ModernTextBoxStyle}"/>
+                                <TextBox x:Name="PhoneTextBox" Style="{StaticResource ModernTextBoxStyleSmall}"/>
                             </StackPanel>
                         </Grid>
                         

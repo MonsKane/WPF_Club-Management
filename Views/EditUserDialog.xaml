@@ -50,10 +50,41 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
+        <Style x:Key="ModernTextBoxStyleSmall" TargetType="TextBox">
+            <Setter Property="Padding" Value="5,5"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#e9ecef"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Background" Value="#ffffff"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                        BorderBrush="{TemplateBinding BorderBrush}" 
+                        BorderThickness="{TemplateBinding BorderThickness}" 
+                        CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#007bff"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#6c757d"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+
         <!-- Modern PasswordBox Style -->
         <Style x:Key="ModernPasswordBoxStyle" TargetType="PasswordBox">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="15,12"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="BorderBrush" Value="#e9ecef"/>
             <Setter Property="BorderThickness" Value="2"/>
@@ -281,19 +312,21 @@
                             <!-- Role -->
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Role *" Style="{StaticResource ModernLabelStyle}"/>
-                                <ComboBox x:Name="RoleComboBox" 
-                                          Style="{StaticResource ModernComboBoxStyle}"
-                                          SelectedValuePath="Tag"
-                                          DisplayMemberPath="Content"
-                                          ToolTip="Select the user's role in the organization">
+                                <ComboBox x:Name="RoleComboBox" Style="{StaticResource ModernComboBoxStyle}"
+                                            SelectedValue="{Binding _originalUser.Role, Mode=TwoWay}"
+                                            SelectedValuePath="Tag"
+                                            DisplayMemberPath="Content"
+                                            >
                                     <ComboBoxItem Content="System Admin" Tag="{x:Static models:UserRole.SystemAdmin}"/>
                                     <ComboBoxItem Content="Admin" Tag="{x:Static models:UserRole.Admin}"/>
+                                    <!--
                                     <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
                                     <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
                                     <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
                                     <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
                                     <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
-                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}"/>
+                                    -->
+                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
 
@@ -301,7 +334,7 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Phone Number" Style="{StaticResource ModernLabelStyle}"/>
                                 <TextBox x:Name="PhoneTextBox" 
-                                         Style="{StaticResource ModernTextBoxStyle}"
+                                         Style="{StaticResource ModernTextBoxStyleSmall}"
                                          ToolTip="Enter phone number (optional)"/>
                             </StackPanel>
                         </Grid>

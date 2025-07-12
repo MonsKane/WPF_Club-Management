@@ -212,9 +212,9 @@ CREATE TABLE Notifications (
     IsRead bit NOT NULL DEFAULT 0,
     IsDeleted bit NOT NULL DEFAULT 0,
     ChannelsJson nvarchar(500) NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
-    FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE SET NULL,
-    FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE SET NULL
+    CONSTRAINT FK_Notifications_UserID FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT FK_Notifications_ClubID FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT FK_Notifications_EventID FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 GO
 
@@ -416,13 +416,6 @@ INSERT INTO ScheduledNotifications (Id, Name, NotificationRequest, ScheduledTime
 GO
 
 -- Insert Notifications
--- Ensure the Notifications table exists before inserting data
-IF OBJECT_ID('Notifications', 'U') IS NULL
-BEGIN
-    PRINT 'ERROR: Notifications table does not exist. Please run the table creation section first.';
-    RETURN;
-END
-
 INSERT INTO Notifications (Id, Title, Message, Type, Priority, Category, UserID, ClubID, EventID, Data, CreatedAt, ExpiresAt, ReadAt, DeletedAt, IsRead, IsDeleted, ChannelsJson) VALUES
 ('notif-001', 'Welcome to Computer Science Club!', 'Hi Alice, welcome to Computer Science Club! We''re excited to have you join our community.', 'Welcome', 'Normal', 'ClubActivity', 2, 1, NULL, '{"welcomePackage": true}', '2024-01-16', NULL, '2024-01-16', NULL, 1, 0, '["InApp", "Email"]'),
 ('notif-002', 'Event Registration Confirmed', 'Your registration for Python Workshop has been confirmed.', 'EventRegistration', 'Normal', 'ClubActivity', 3, 1, 1, '{"registrationId": "reg-001"}', '2024-11-16', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),

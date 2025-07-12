@@ -1,7 +1,9 @@
 using ClubManagementApp.Models;
+using ClubManagementApp.Services;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls;
+
+using User = ClubManagementApp.Models.User;
 
 namespace ClubManagementApp.Views
 {
@@ -10,8 +12,11 @@ namespace ClubManagementApp.Views
         public User? UpdatedUser { get; private set; }
         private readonly User _originalUser;
 
-        public EditUserDialog(User user)
+        private readonly IUserService _userService;
+
+        public EditUserDialog(User user, IUserService userService)
         {
+            _userService = userService;
             InitializeComponent();
             _originalUser = user ?? throw new ArgumentNullException(nameof(user));
             LoadUserData();
@@ -27,7 +32,7 @@ namespace ClubManagementApp.Views
 
                 // Set the selected role in ComboBox using SelectedValue
                 RoleComboBox.SelectedValue = _originalUser.Role;
-                
+
                 PhoneTextBox.Text = _originalUser.PhoneNumber ?? string.Empty;
             }
             catch (Exception ex)
@@ -36,13 +41,13 @@ namespace ClubManagementApp.Views
             }
         }
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 if (ValidateInput())
                 {
-                    
+
                     UpdatedUser = new User
                     {
                         UserID = _originalUser.UserID,
@@ -69,6 +74,11 @@ namespace ClubManagementApp.Views
                         UpdatedUser.Password = _originalUser.Password;
                     }
 
+                    // Create the user (no club assignment in user creation)
+                    var updatedUser = await _userService.UpdateUserAsync(UpdatedUser);
+
+                    MessageBox.Show("User account updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
                     base.DialogResult = true;
                     Close();
                 }
@@ -90,7 +100,7 @@ namespace ClubManagementApp.Views
             // Validate Full Name
             if (string.IsNullOrWhiteSpace(FullNameTextBox.Text))
             {
-                MessageBox.Show("Please enter the user's full name.", "Validation Error", 
+                MessageBox.Show("Please enter the user's full name.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 FullNameTextBox.Focus();
                 return false;
@@ -98,7 +108,7 @@ namespace ClubManagementApp.Views
 
             if (FullNameTextBox.Text.Trim().Length < 2)
             {
-                MessageBox.Show("Full name must be at least 2 characters long.", "Validation Error", 
+                MessageBox.Show("Full name must be at least 2 characters long.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 FullNameTextBox.Focus();
                 return false;
@@ -107,7 +117,7 @@ namespace ClubManagementApp.Views
             // Validate Email
             if (string.IsNullOrWhiteSpace(EmailTextBox.Text))
             {
-                MessageBox.Show("Please enter an email address.", "Validation Error", 
+                MessageBox.Show("Please enter an email address.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EmailTextBox.Focus();
                 return false;
@@ -115,7 +125,7 @@ namespace ClubManagementApp.Views
 
             if (!IsValidEmail(EmailTextBox.Text.Trim()))
             {
-                MessageBox.Show("Please enter a valid email address.", "Validation Error", 
+                MessageBox.Show("Please enter a valid email address.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EmailTextBox.Focus();
                 return false;
@@ -124,7 +134,7 @@ namespace ClubManagementApp.Views
             // Validate Role
             if (RoleComboBox.SelectedItem == null)
             {
-                MessageBox.Show("Please select a role for the user.", "Validation Error", 
+                MessageBox.Show("Please select a role for the user.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 RoleComboBox.Focus();
                 return false;
@@ -135,7 +145,7 @@ namespace ClubManagementApp.Views
             {
                 if (NewPasswordBox.Password.Length < 6)
                 {
-                    MessageBox.Show("New password must be at least 6 characters long.", "Validation Error", 
+                    MessageBox.Show("New password must be at least 6 characters long.", "Validation Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     NewPasswordBox.Focus();
                     return false;
@@ -143,7 +153,7 @@ namespace ClubManagementApp.Views
 
                 if (NewPasswordBox.Password != ConfirmNewPasswordBox.Password)
                 {
-                    MessageBox.Show("New passwords do not match.", "Validation Error", 
+                    MessageBox.Show("New passwords do not match.", "Validation Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     ConfirmNewPasswordBox.Focus();
                     return false;
@@ -151,7 +161,7 @@ namespace ClubManagementApp.Views
             }
             else if (!string.IsNullOrWhiteSpace(ConfirmNewPasswordBox.Password))
             {
-                MessageBox.Show("Please enter the new password in both fields or leave both blank.", "Validation Error", 
+                MessageBox.Show("Please enter the new password in both fields or leave both blank.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 NewPasswordBox.Focus();
                 return false;
