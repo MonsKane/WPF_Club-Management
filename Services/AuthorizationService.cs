@@ -165,6 +165,7 @@ namespace ClubManagementApp.Services
                 "GlobalSettings" => CanAccessGlobalSettings(role),
                 "ClubSettings" => CanAccessClubSettings(role),
                 "UserManagement" => CanCreateUsers(role) || CanEditUsers(role) || CanDeleteUsers(role),
+                "MemberManagement" => CanCreateUsers(role) || CanCreateUsers(role) || CanCreateUsers(role),
                 "ClubManagement" => CanCreateClubs(role) || CanEditClubs(role) || CanDeleteClubs(role),
                 "EventManagement" => CanCreateEvents(role) || CanEditEvents(role) || CanDeleteEvents(role),
                 "ReportView" => CanGenerateReports(role),

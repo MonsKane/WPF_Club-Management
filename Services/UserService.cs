@@ -1,7 +1,6 @@
+using ClubManagementApp.Configuration;
 using ClubManagementApp.Data;
 using ClubManagementApp.Models;
-using ClubManagementApp.Configuration;
-using ClubManagementApp.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,7 +31,7 @@ namespace ClubManagementApp.Services
     {
         private readonly ClubManagementDbContext _context;
         private readonly ILoggingService _loggingService;
-        private User? _currentUser; // Maintains the currently authenticated user session
+        private static User? _currentUser; // Maintains the currently authenticated user session
 
         /// <summary>
         /// Initializes the UserService with database context and logging dependencies.

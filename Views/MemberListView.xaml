@@ -180,33 +180,33 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Full Name" 
                                     Binding="{Binding FullName}" 
-                                    Width="200"
+                                    Width="*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Email" 
                                     Binding="{Binding Email}" 
-                                    Width="250"
+                                    Width="*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Role" 
                                     Binding="{Binding Role}" 
-                                    Width="120"
+                                    Width="*"
                                     IsReadOnly="True"/>
-                
-                <DataGridTextColumn Header="Club" 
-                                    Binding="{Binding Club.Name}" 
-                                    Width="150"
+
+                <DataGridTextColumn Header="PhoneNumber" 
+                                    Binding="{Binding PhoneNumber}" 
+                                    Width="*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTextColumn Header="Join Date" 
                                     Binding="{Binding JoinDate, StringFormat='{}{0:yyyy-MM-dd}'}" 
-                                    Width="120"
+                                    Width="*"
                                     IsReadOnly="True"/>
                 
                 <DataGridTemplateColumn Header="Actions" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button Content="Remove" 
                                         Command="{Binding DataContext.DeleteMemberCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
                                         CommandParameter="{Binding}"

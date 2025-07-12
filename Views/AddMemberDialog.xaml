@@ -195,20 +195,14 @@
                 <Grid Grid.Row="0" Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     
                     <Button Grid.Column="0" 
+                            Height="50"
                             Content="🔍 Search Existing Users" 
                             Style="{StaticResource TabButtonStyle}"
                             Tag="{Binding IsSearchTabActive}"
                             Click="SearchTabButton_Click"/>
-                    
-                    <Button Grid.Column="1" 
-                            Content="👤 Create New User" 
-                            Style="{StaticResource TabButtonStyle}"
-                            Tag="{Binding IsCreateTabActive}"
-                            Click="CreateTabButton_Click"/>
                 </Grid>
                 
                 <!-- Tab Content -->
@@ -236,7 +230,7 @@
                             </StackPanel>
                             
                             <!-- Role Selection for Existing User -->
-                            <StackPanel Grid.Row="1" Margin="0,0,0,20">
+                            <!-- <StackPanel Grid.Row="1" Margin="0,0,0,20">
                                 <TextBlock Text="Role in Club" Style="{StaticResource ModernLabelStyle}"/>
                                 <ComboBox x:Name="ExistingUserRoleComboBox" 
                                           Style="{StaticResource ModernComboBoxStyle}"
@@ -251,12 +245,14 @@
                                     <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
+                            -->
                             
                             <!-- Search Results -->
                             <Border Grid.Row="2" 
                                     Background="#f8f9fa" 
                                     CornerRadius="8" 
                                     Padding="15"
+                                    BorderThickness="0"
                                     MinHeight="200">
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -277,19 +273,25 @@
                                              BorderThickness="0"
                                              SelectionMode="Single"
                                              SelectionChanged="SearchResultsListBox_SelectionChanged">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Width" Value="Auto" />
+                                                <Setter Property="Margin" Value="0,0,0,10" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
                                         <ListBox.ItemTemplate>
+                                            
                                             <DataTemplate>
                                                 <Border Background="White" 
                                                         CornerRadius="8" 
-                                                        Padding="15" 
-                                                        Margin="0,0,0,10">
+                                                        Padding="15">
                                                     <Border.Effect>
                                                         <DropShadowEffect Color="Black" Direction="270" ShadowDepth="1" Opacity="0.05" BlurRadius="5"/>
                                                     </Border.Effect>
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
                                                         
                                                         <StackPanel Grid.Column="0">
@@ -306,8 +308,6 @@
                                                                        Foreground="#007bff" 
                                                                        Margin="0,2,0,0"/>
                                                         </StackPanel>
-                                                        
-
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

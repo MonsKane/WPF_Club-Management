@@ -67,7 +67,7 @@ namespace ClubManagementApp.Services
                     .Include(c => c.Members)
                     .Include(c => c.Events)
                     .ToListAsync();
-                
+
                 Console.WriteLine($"[CLUB_SERVICE] Found {clubs.Count} clubs");
                 return clubs;
             }
@@ -199,7 +199,7 @@ namespace ClubManagementApp.Services
 
                 // Ensure ClubID is 0 for new entities
                 club.ClubID = 0;
-                
+
                 _context.Clubs.Add(club);
                 await _context.SaveChangesAsync();
 
@@ -247,17 +247,17 @@ namespace ClubManagementApp.Services
 
                 if (string.IsNullOrWhiteSpace(club.Name))
                     throw new ArgumentException("Club name is required", nameof(club));
-                
+
                 // Check if club exists and update properties
                 var existingClub = await _context.Clubs.FindAsync(club.ClubID);
                 if (existingClub == null)
                     throw new InvalidOperationException($"Club with ID {club.ClubID} not found");
-                
+
                 // Update properties instead of replacing the entity
                 existingClub.Name = club.Name;
                 existingClub.Description = club.Description;
                 existingClub.IsActive = club.IsActive;
-                
+
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"[CLUB_SERVICE] Club updated successfully: {existingClub.Name}");
                 return existingClub;
@@ -911,23 +911,25 @@ namespace ClubManagementApp.Services
             {
                 var user = await _context.Users.FindAsync(userId);
                 var club = await _context.Clubs.FindAsync(clubId);
-        
+
                 if (user == null || club == null)
                     return false;
-        
+
                 // If user is already a member of this club, update their role
                 if (user.ClubID == clubId)
                 {
-                    user.Role = role;
+                    //user.Role = role;
+                    _context.Update(user);
                     await _context.SaveChangesAsync();
                     Console.WriteLine($"[CLUB_SERVICE] Updated role for existing member {user.FullName} to {role} in club {clubId}");
                     return true;
                 }
-        
+
                 // Add new user to club with specified role
                 user.ClubID = clubId;
-                user.Role = role;
-        
+                //user.Role = role;
+
+                _context.Update(user);
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"[CLUB_SERVICE] Added new member {user.FullName} with role {role} to club {clubId}");
                 return true;

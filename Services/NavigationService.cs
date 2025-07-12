@@ -1,6 +1,7 @@
 using ClubManagementApp.Models;
 using ClubManagementApp.ViewModels;
 using ClubManagementApp.Views;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace ClubManagementApp.Services
@@ -67,8 +68,8 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                var userService = _serviceProvider.GetService(typeof(IUserService)) as IUserService;
-                var eventService = _serviceProvider.GetService(typeof(IEventService)) as IEventService;
+                var userService = _serviceProvider.GetRequiredService<IUserService>();
+                var eventService = _serviceProvider.GetRequiredService<IEventService>();
 
                 if (userService == null || eventService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
@@ -114,7 +115,7 @@ namespace ClubManagementApp.Services
 
                 var dialog = new AddUserDialog(userService);
                 dialog.Owner = Application.Current.MainWindow;
-                
+
                 if (dialog.ShowDialog() == true && dialog.CreatedUser != null)
                 {
                     ShowNotification("User created successfully!");
@@ -138,7 +139,7 @@ namespace ClubManagementApp.Services
 
                 var dialog = new EditUserDialog(user);
                 dialog.Owner = Application.Current.MainWindow;
-                
+
                 if (dialog.ShowDialog() == true && dialog.UpdatedUser != null)
                 {
                     // Save the updated user

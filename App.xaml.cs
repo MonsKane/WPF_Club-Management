@@ -181,19 +181,19 @@ namespace ClubManagementApp
 
             // User management: Authentication, user CRUD, activity tracking
             // Changed to Singleton to maintain current user session state across the application
-            services.AddSingleton<IUserService, UserService>();
+            services.AddTransient<IUserService, UserService>();
 
             // Member management: Club membership operations, role assignments
-            services.AddScoped<IMemberService, MemberService>();
+            services.AddTransient<IMemberService, MemberService>();
 
             // Club management: Club CRUD, leadership roles, statistics
-            services.AddScoped<IClubService, ClubService>();
+            services.AddTransient<IClubService, ClubService>();
 
             // Event management: Event lifecycle, participant registration, attendance tracking
-            services.AddScoped<IEventService, EventService>();
+            services.AddTransient<IEventService, EventService>();
 
             // Report generation: Various report types, data aggregation, export functionality
-            services.AddScoped<IReportService, ReportService>();
+            services.AddTransient<IReportService, ReportService>();
 
             // Authorization: Role-based access control, permission checking
             services.AddScoped<IAuthorizationService, AuthorizationService>();
@@ -205,19 +205,16 @@ namespace ClubManagementApp
             services.AddScoped<IBusinessLogicManager, BusinessLogicManager>();
 
             // Dashboard data aggregation: Statistics, charts, summary information
-            services.AddScoped<IDashboardService, DashboardService>();
+            services.AddTransient<IDashboardService, DashboardService>();
 
             // Audit logging: Track user actions, system events, security events
-            services.AddScoped<IAuditService, AuditService>();
+            services.AddTransient<IAuditService, AuditService>();
 
             // Application settings: User preferences, system configuration
-            services.AddScoped<ISettingsService, SettingsService>();
+            services.AddTransient<ISettingsService, SettingsService>();
 
             // Data backup and restore: Database backup, file system backup
-            services.AddScoped<IBackupService, BackupService>();
-
-            // UI navigation: Window management, view transitions
-            services.AddSingleton<INavigationService, NavigationService>();
+            services.AddTransient<IBackupService, BackupService>();
 
             // INFRASTRUCTURE SERVICES (Singleton)
             // These services maintain state and configuration throughout the application
@@ -263,6 +260,9 @@ namespace ClubManagementApp
             services.AddTransient<EventManagementView>();
             services.AddTransient<MemberListView>();
             services.AddTransient<ClubManagementView>();
+
+            // UI navigation: Window management, view transitions
+            services.AddSingleton<INavigationService, NavigationService>();
         }
 
         /// <summary>

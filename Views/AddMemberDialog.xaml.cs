@@ -195,17 +195,17 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var selectedRole = ExistingUserRoleComboBox.SelectedValue as UserRole?;
-            if (selectedRole == null)
-            {
-                MessageBox.Show("Please select a role for the user.", "No Role Selected",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            //var selectedRole = ExistingUserRoleComboBox.SelectedValue as UserRole?;
+            //if (selectedRole == null)
+            //{
+            //    MessageBox.Show("Please select a role for the user.", "No Role Selected",
+            //        MessageBoxButton.OK, MessageBoxImage.Warning);
+            //    return;
+            //}
 
             // Add user to club
-            var roleEnum = selectedRole.Value;
-            await _clubService.AddUserToClubAsync(SelectedUser.UserID, _targetClub.ClubID, roleEnum);
+            //var roleEnum = selectedRole.Value;
+            await _clubService.AddUserToClubAsync(SelectedUser.UserID, _targetClub.ClubID, default);
 
             MessageBox.Show($"{SelectedUser.FullName} has been successfully added to {_targetClub.Name}.",
                 "Member Added", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -243,7 +243,6 @@ namespace ClubManagementApp.Views
                 FullName = FullNameTextBox.Text.Trim(),
                 Email = EmailTextBox.Text.Trim(),
                 PhoneNumber = PhoneTextBox.Text.Trim(),
-                Role = selectedRole.Value,
                 IsActive = IsActiveCheckBox.IsChecked ?? true,
                 ClubID = _targetClub?.ClubID
             };
@@ -266,7 +265,7 @@ namespace ClubManagementApp.Views
                 MessageBox.Show("Failed to create user.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            
+
             var roleEnum = selectedRole.Value;
             await _clubService.AddUserToClubAsync(createdUser.UserID, _targetClub!.ClubID, roleEnum);
 

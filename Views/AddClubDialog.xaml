@@ -99,7 +99,7 @@
         </Style>
         
         <Style x:Key="ModernDatePickerStyle" TargetType="DatePicker">
-            <Setter Property="Padding" Value="10,10"/>
+            <Setter Property="Padding" Value="12,10"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="BorderBrush" Value="#e1e5e9"/>
             <Setter Property="BorderThickness" Value="2"/>

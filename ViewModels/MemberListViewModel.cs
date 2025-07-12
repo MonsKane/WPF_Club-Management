@@ -14,22 +14,22 @@ namespace ClubManagementApp.ViewModels
     {
         // Static event for notifying all instances when leadership changes
         private static event Action? LeadershipChanged;
-        
+
         // Static event for member changes
         public static event Action? MemberChanged;
-        
+
         // Public method to trigger the leadership changed event
         public static void NotifyLeadershipChanged()
         {
             LeadershipChanged?.Invoke();
         }
-        
+
         // Public method to trigger the member changed event
-        public static void NotifyMemberChanged()
+        public static async void NotifyMemberChanged()
         {
             MemberChanged?.Invoke();
         }
-        
+
         private readonly IUserService _userService;
         private readonly IClubService _clubService;
         private readonly INotificationService _notificationService;
@@ -60,11 +60,13 @@ namespace ClubManagementApp.ViewModels
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _logger = logger;
 
+            MemberChanged += async () => await LoadMembersAsync();
+            LoadCurrentUserAsync();
             InitializeCommands();
-            
+
             // Subscribe to leadership change notifications
             LeadershipChanged += OnLeadershipChanged;
-            
+
             Console.WriteLine("[MemberListViewModel] MemberListViewModel initialization completed");
         }
 
@@ -154,7 +156,7 @@ namespace ClubManagementApp.ViewModels
         public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.Role);
         public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
         public bool CanExportUsers => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role); // Using CanExportReports as equivalent
-        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "MemberManagement");
 
         // Commands
         public ICommand AddMemberCommand { get; private set; } = null!;
@@ -184,7 +186,7 @@ namespace ClubManagementApp.ViewModels
         private bool CanExportMembers() => FilteredMembers.Any() && CanExportUsers && CanExecuteCommand();
 
         // Load current user method
-        public async Task LoadCurrentUserAsync()
+        public async void LoadCurrentUserAsync()
         {
             try
             {
@@ -221,7 +223,7 @@ namespace ClubManagementApp.ViewModels
                 IsLoading = true;
 
                 IEnumerable<User> members;
-                
+
                 // If a club filter is set, load only members of that club
                 if (ClubFilter != null)
                 {
@@ -233,7 +235,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine("[MemberListViewModel] Loading all users (no club filter)");
                     members = await _userService.GetAllUsersAsync();
                 }
-                
+
                 Console.WriteLine($"[MemberListViewModel] Retrieved {members.Count()} members from service");
 
                 if (_cancellationTokenSource.Token.IsCancellationRequested)
@@ -275,7 +277,7 @@ namespace ClubManagementApp.ViewModels
             await LoadMembersAsync();
             await ShowNotificationAsync("Member list refreshed successfully");
         }
-        
+
         private async void OnLeadershipChanged()
         {
             try
@@ -333,13 +335,13 @@ namespace ClubManagementApp.ViewModels
                 if (addDialog.ShowDialog() == true)
                 {
                     Console.WriteLine("[MemberListViewModel] Member added successfully, refreshing member list");
-                    
+
                     // Refresh the member list to show the new/added member
                     await LoadMembersAsync();
-                    
+
                     // Also refresh the filtered members to update the UI immediately
                     FilterMembers();
-                    
+
                     // Notify other ViewModels about member change
                     MemberChanged?.Invoke();
                 }
@@ -407,7 +409,7 @@ namespace ClubManagementApp.ViewModels
 
                     Console.WriteLine($"[MemberListViewModel] Member {editDialog.UpdatedUser.FullName} updated successfully");
                     await ShowNotificationAsync($"Member {editDialog.UpdatedUser.FullName} updated successfully");
-                    
+
                     // Notify other ViewModels about member change
                     MemberChanged?.Invoke();
                 }
@@ -452,7 +454,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[MemberListViewModel] User confirmed deletion of member: {member.FullName}");
                     IsLoading = true;
 
-                    await _userService.DeleteUserAsync(member.UserID);
+                    await _userService.RemoveUserFromClubAsync(member.UserID);
 
                     // Update UI on main thread
                     await Application.Current.Dispatcher.InvokeAsync(() =>
@@ -468,7 +470,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[MemberListViewModel] Member {member.FullName} deleted successfully");
                     await ShowNotificationAsync($"Member {member.FullName} has been deleted successfully");
                     _logger?.LogInformation("Successfully deleted member {UserId}: {FullName}", member.UserID, member.FullName);
-                    
+
                     // Notify other ViewModels about member change
                     MemberChanged?.Invoke();
                 }

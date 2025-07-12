@@ -103,7 +103,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -314,7 +313,7 @@
         </DataGrid>
         
         <!-- Status Bar -->
-        <Grid Grid.Row="4" Margin="0,20,0,0">
+        <Grid Grid.Row="3" Margin="0,20,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -343,7 +342,7 @@
         </Grid>
         
         <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="5" 
+        <Grid Grid.RowSpan="4" 
               Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

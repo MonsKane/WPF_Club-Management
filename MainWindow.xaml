@@ -1168,7 +1168,6 @@
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
 
                                                     <Button Grid.Column="0" Background="#10B981" Foreground="White" BorderThickness="0"
@@ -1178,14 +1177,15 @@
                                                         <TextBlock Text="Thành Viên" FontSize="10"/>
                                                     </Button>
 
-                                                    <Button Grid.Column="1" Background="#8B5CF6" Foreground="White" BorderThickness="0"
+                                                    <!-- <Button Grid.Column="1" Background="#8B5CF6" Foreground="White" BorderThickness="0"
                                                         Padding="8,6" FontWeight="Medium" Margin="4,0,4,0"
                                                         Command="{Binding DataContext.ClubManagementViewModel.ManageLeadershipCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}">
                                                         <TextBlock Text="Lãnh Đạo" FontSize="10"/>
                                                     </Button>
+                                                    -->
 
-                                                    <Button Grid.Column="2" Background="#EC4899" Foreground="White" BorderThickness="0"
+                                                    <Button Grid.Column="1" Background="#EC4899" Foreground="White" BorderThickness="0"
                                                         Padding="8,6" FontWeight="Medium" Margin="4,0,0,0"
                                                         Command="{Binding DataContext.ClubManagementViewModel.ViewEventsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}">
