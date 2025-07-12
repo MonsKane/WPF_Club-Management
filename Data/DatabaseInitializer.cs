@@ -171,31 +171,47 @@ namespace ClubManagementApp.Data
                 Console.WriteLine($"[DB_SEED] - {admin.Email}: {admin.FullName}");
             }
 
-            // Create sample events
-            var events = new[]
+            // Check if events already exist (to avoid conflicts with seed script)
+            var existingEventCount = await context.Events.CountAsync();
+            Console.WriteLine($"[DB_SEED] Found {existingEventCount} existing events in database.");
+            
+            Event[] events;
+            if (existingEventCount == 0)
             {
-                new Event
+                Console.WriteLine("[DB_SEED] Creating sample events...");
+                // Create sample events only if none exist
+                events = new[]
                 {
-                    Name = "Programming Workshop",
-                    Description = "Learn advanced programming techniques",
-                    EventDate = DateTime.Now.AddDays(7),
-                    Location = "Computer Lab A",
-                    ClubID = clubs[0].ClubID,
-                    CreatedDate = DateTime.Now.AddDays(-10)
-                },
-                new Event
-                {
-                    Name = "Photography Exhibition",
-                    Description = "Showcase of student photography work",
-                    EventDate = DateTime.Now.AddDays(14),
-                    Location = "Art Gallery",
-                    ClubID = clubs[1].ClubID,
-                    CreatedDate = DateTime.Now.AddDays(-5)
-                }
-            };
+                    new Event
+                    {
+                        Name = "Programming Workshop",
+                        Description = "Learn advanced programming techniques",
+                        EventDate = DateTime.Now.AddDays(7),
+                        Location = "Computer Lab A",
+                        ClubID = clubs[0].ClubID,
+                        CreatedDate = DateTime.Now.AddDays(-10)
+                    },
+                    new Event
+                    {
+                        Name = "Photography Exhibition",
+                        Description = "Showcase of student photography work",
+                        EventDate = DateTime.Now.AddDays(14),
+                        Location = "Art Gallery",
+                        ClubID = clubs[1].ClubID,
+                        CreatedDate = DateTime.Now.AddDays(-5)
+                    }
+                };
 
-            context.Events.AddRange(events);
-            await context.SaveChangesAsync();
+                context.Events.AddRange(events);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[DB_SEED] Created {events.Length} sample events successfully.");
+            }
+            else
+            {
+                Console.WriteLine("[DB_SEED] Events already exist, skipping event creation to avoid ID conflicts.");
+                // Get existing events for participant creation
+                events = await context.Events.Take(2).ToArrayAsync();
+            }
 
             // Create sample event participants
             var participants = new[]

@@ -80,10 +80,24 @@
             <Setter Property="Background" Value="#17A2B8"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
+        
+        <Style x:Key="ReportTypeButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+            <Setter Property="Background" Value="#6C757D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+        
+        <Style x:Key="CenteredTextColumnStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
     </Window.Resources>
     
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -93,8 +107,36 @@
         <!-- Header -->
         <TextBlock Grid.Row="0" Text="Event Management" Style="{StaticResource HeaderTextStyle}"/>
         
+        <!-- Report Generation Section -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+            <Border.Effect>
+                <DropShadowEffect Color="Gray" Direction="270" ShadowDepth="2" Opacity="0.3" BlurRadius="5"/>
+            </Border.Effect>
+            <StackPanel>
+                <TextBlock Text="📊 Event Reports" FontSize="18" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,15"/>
+                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Content="📈 Event Statistics" 
+                            Command="{Binding GenerateEventStatisticsReportCommand}"
+                            Style="{StaticResource ReportTypeButtonStyle}"
+                            Margin="0,0,10,10"/>
+                    <Button Content="👥 Attendance Report" 
+                            Command="{Binding GenerateEventAttendanceReportCommand}"
+                            Style="{StaticResource ReportTypeButtonStyle}"
+                            Margin="0,0,10,10"/>
+                    <Button Content="⚡ Performance Report" 
+                            Command="{Binding GenerateEventPerformanceReportCommand}"
+                            Style="{StaticResource ReportTypeButtonStyle}"
+                            Margin="0,0,10,10"/>
+                    <Button Content="📋 Summary Report" 
+                            Command="{Binding GenerateEventSummaryReportCommand}"
+                            Style="{StaticResource ReportTypeButtonStyle}"
+                            Margin="0,0,10,10"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+        
         <!-- Search and Filter Section -->
-        <Grid Grid.Row="1" Margin="0,0,0,20">
+        <Grid Grid.Row="2" Margin="0,0,0,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -104,6 +146,7 @@
             <Grid Grid.Row="0" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
@@ -151,15 +194,23 @@
                     <ComboBoxItem Content="Cancelled"/>
                 </ComboBox>
                 
+                <!-- Date Filter -->
+                <DatePicker Grid.Column="2"
+                           SelectedDate="{Binding SelectedDate}"
+                           Width="150"
+                           Margin="0,0,10,0"
+                           Padding="10,8"
+                           FontSize="14"/>
+                
                 <!-- Refresh Button -->
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         Content="Refresh"
                         Command="{Binding RefreshCommand}"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Margin="0,0,10,0"/>
                 
                 <!-- Add Event Button -->
-                <Button Grid.Column="3"
+                <Button Grid.Column="4"
                         Content="Add Event"
                         Command="{Binding AddEventCommand}"
                         Style="{StaticResource SuccessButtonStyle}"/>
@@ -167,7 +218,7 @@
         </Grid>
         
         <!-- Events DataGrid -->
-        <DataGrid Grid.Row="2" 
+        <DataGrid Grid.Row="3" 
                   ItemsSource="{Binding FilteredEvents}" 
                   SelectedItem="{Binding SelectedEvent}"
                   AutoGenerateColumns="False" 
@@ -183,51 +234,69 @@
                 <DataGridTextColumn Header="Title" 
                                     Binding="{Binding Name}" 
                                     Width="200"
-                                    IsReadOnly="True"/>
+                                    IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 
                 <DataGridTextColumn Header="Club" 
                                     Binding="{Binding Club.Name}" 
                                     Width="150"
-                                    IsReadOnly="True"/>
+                                    IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 
                 <DataGridTextColumn Header="Start Date" 
                                     Binding="{Binding EventDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" 
                                     Width="140"
-                                    IsReadOnly="True"/>
-                
-
+                                    IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 
                 <DataGridTextColumn Header="Location" 
                                     Binding="{Binding Location}" 
                                     Width="150"
-                                    IsReadOnly="True"/>
+                                    IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 
                 <DataGridTextColumn Header="Participants" 
                                     Binding="{Binding ParticipantCount}" 
                                     Width="100"
-                                    IsReadOnly="True"/>
+                                    IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}"/>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 
                 <DataGridTextColumn Header="Status" 
                                     Binding="{Binding Status}" 
                                     Width="100"
                                     IsReadOnly="True">
                     <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource CenteredTextColumnStyle}">
                             <Style.Triggers>
                                 <Trigger Property="Text" Value="Upcoming">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#3498DB"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="Text" Value="Ongoing">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#27AE60"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="Text" Value="Completed">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#6C757D"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                                 <Trigger Property="Text" Value="Cancelled">
-                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Foreground" Value="#E74C3C"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </Trigger>
                             </Style.Triggers>
@@ -270,7 +339,7 @@
         </DataGrid>
         
         <!-- Status Bar -->
-        <Grid Grid.Row="3" Margin="0,20,0,0">
+        <Grid Grid.Row="4" Margin="0,20,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -299,7 +368,7 @@
         </Grid>
         
         <!-- Loading Overlay -->
-        <Grid Grid.RowSpan="4" 
+        <Grid Grid.RowSpan="1" 
               Background="#80000000" 
               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">

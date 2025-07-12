@@ -33,6 +33,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IUserService _userService;
         private readonly IClubService _clubService;
         private readonly INotificationService _notificationService;
+        private readonly IAuthorizationService _authorizationService;
         private readonly ILogger<MemberListViewModel>? _logger;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
 
@@ -49,12 +50,14 @@ namespace ClubManagementApp.ViewModels
             IUserService userService,
             IClubService clubService,
             INotificationService notificationService,
+            IAuthorizationService authorizationService,
             ILogger<MemberListViewModel>? logger = null)
         {
             Console.WriteLine("[MemberListViewModel] Initializing MemberListViewModel with services");
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _clubService = clubService ?? throw new ArgumentNullException(nameof(clubService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _logger = logger;
 
             InitializeCommands();
@@ -128,6 +131,31 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
+        // Current User
+        private User? _currentUser;
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set
+            {
+                if (SetProperty(ref _currentUser, value))
+                {
+                    OnPropertyChanged(nameof(CanCreateUsers));
+                    OnPropertyChanged(nameof(CanEditUsers));
+                    OnPropertyChanged(nameof(CanDeleteUsers));
+                    OnPropertyChanged(nameof(CanExportUsers));
+                    OnPropertyChanged(nameof(CanAccessUserManagement));
+                }
+            }
+        }
+
+        // Authorization Properties
+        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
+        public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.Role);
+        public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
+        public bool CanExportUsers => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role); // Using CanExportReports as equivalent
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+
         // Commands
         public ICommand AddMemberCommand { get; private set; } = null!;
         public ICommand EditMemberCommand { get; private set; } = null!;
@@ -137,20 +165,38 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            AddMemberCommand = new RelayCommand(AddMember, _ => CanExecuteCommand());
+            AddMemberCommand = new RelayCommand(AddMember, _ => CanAddMember());
             EditMemberCommand = new RelayCommand<User>(EditMember, CanEditMember);
             DeleteMemberCommand = new RelayCommand<User>(DeleteMember, CanDeleteMember);
-            RefreshCommand = new RelayCommand(async _ => await RefreshMembersAsync(), _ => CanExecuteCommand());
+            RefreshCommand = new RelayCommand(async _ => await RefreshMembersAsync(), _ => CanAccessUserManagement && !IsLoading && !_disposed);
             ExportMembersCommand = new RelayCommand(ExportMembers, _ => CanExportMembers());
         }
 
         private bool CanExecuteCommand() => !IsLoading && !_disposed;
 
-        private bool CanEditMember(User? member) => member != null && CanExecuteCommand();
+        private bool CanAddMember() => CanCreateUsers && CanExecuteCommand();
 
-        private bool CanDeleteMember(User? member) => member != null && CanExecuteCommand();
+        private bool CanEditMember(User? member) => member != null && CanEditUsers && CanExecuteCommand();
 
-        private bool CanExportMembers() => FilteredMembers.Any() && CanExecuteCommand();
+        private bool CanDeleteMember(User? member) => member != null && CanDeleteUsers && CanExecuteCommand() &&
+            (CurrentUser?.Role == UserRole.SystemAdmin || member.UserID != CurrentUser?.UserID);
+
+        private bool CanExportMembers() => FilteredMembers.Any() && CanExportUsers && CanExecuteCommand();
+
+        // Load current user method
+        public async Task LoadCurrentUserAsync()
+        {
+            try
+            {
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                Console.WriteLine($"[MemberListViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MemberListViewModel] Error loading current user: {ex.Message}");
+                CurrentUser = null;
+            }
+        }
 
         private async Task InitializeAsync()
         {

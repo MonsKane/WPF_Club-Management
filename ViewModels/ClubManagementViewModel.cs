@@ -98,12 +98,29 @@ namespace ClubManagementApp.ViewModels
         public User? CurrentUser
         {
             get => _currentUser;
-            set => SetProperty(ref _currentUser, value);
+            set
+            {
+                if (SetProperty(ref _currentUser, value))
+                {
+                    OnPropertyChanged(nameof(CanAccessClubManagement));
+                    OnPropertyChanged(nameof(CanCreateClubs));
+                    OnPropertyChanged(nameof(CanEditClubs));
+                    OnPropertyChanged(nameof(CanDeleteClubs));
+                    OnPropertyChanged(nameof(CanManageClubs));
+                    OnPropertyChanged(nameof(CanManageSelectedClub));
+                }
+            }
         }
 
+        // Authorization Properties
+        public bool CanAccessClubManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+        public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
+        public bool CanEditClubs => CurrentUser != null && _authorizationService.CanEditClubs(CurrentUser.Role);
+        public bool CanDeleteClubs => CurrentUser != null && _authorizationService.CanDeleteClubs(CurrentUser.Role);
+        
         public bool CanManageClubs
         {
-            get => SelectedClub != null && CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+            get => SelectedClub != null && CanAccessClubManagement;
         }
 
         public bool CanManageSelectedClub
@@ -151,18 +168,18 @@ namespace ClubManagementApp.ViewModels
 
         private bool CanExecuteAddClub(object? parameter)
         {
-            return CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+            return CanCreateClubs;
         }
 
         private bool CanExecuteEditClub(Club? club)
         {
-            return club != null && CurrentUser != null &&
+            return club != null && CanEditClubs && CurrentUser != null &&
                    _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
         }
 
         private bool CanExecuteDeleteClub(Club? club)
         {
-            return club != null && CurrentUser != null &&
+            return club != null && CanDeleteClubs && CurrentUser != null &&
                    _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
         }
 
@@ -186,7 +203,7 @@ namespace ClubManagementApp.ViewModels
         private bool CanExecuteViewEvents(Club? club)
         {
             return club != null && CurrentUser != null &&
-                   _authorizationService.CanManageEvent(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
         }
 
         private async Task LoadClubsAsync()

@@ -18,7 +18,42 @@
         ResizeMode="CanResize"
         MinWidth="1200"
         MinHeight="800">
+
     <Window.Resources>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                        CornerRadius="4" 
+                        Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                    VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ReportTypeButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+            <Setter Property="Background" Value="#6C757D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+        
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
         <!-- Navigation Button Style -->
@@ -714,6 +749,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
@@ -723,8 +759,19 @@
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#10B981" Foreground="White" BorderThickness="0"
-                            Padding="20,12" FontWeight="Medium">
+                        <Button Grid.Column="1" Background="#3498DB" Foreground="White" BorderThickness="0"
+                            Padding="20,12" FontWeight="Medium" Margin="0,0,12,0"
+                            Command="{Binding ReportsViewModel.RefreshCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔄" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Làm Mới" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+
+
+                        <Button Grid.Column="2" Background="#10B981" Foreground="White" BorderThickness="0"
+                            Padding="20,12" FontWeight="Medium"
+                            Command="{Binding ReportsViewModel.GenerateReportCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Tạo Báo Cáo" FontSize="14"/>
@@ -737,53 +784,28 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <Border Grid.Column="0" Background="White" CornerRadius="16" Padding="20" Margin="0,0,10,0">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <Border Background="#EFF6FF" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
-                                    <TextBlock Text="👥" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <TextBlock Text="Thành Viên" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
-                                <TextBlock Text="Phân tích người dùng" FontSize="12" Foreground="Black"/>
-                            </StackPanel>
-                        </Border>
 
-                        <Border Grid.Column="1" Background="White" CornerRadius="16" Padding="20" Margin="5,0">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <Border Background="#FEF3F2" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
-                                    <TextBlock Text="📅" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <TextBlock Text="Sự Kiện" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
-                                <TextBlock Text="Số liệu sự kiện" FontSize="12" Foreground="Black"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Column="2" Background="White" CornerRadius="16" Padding="20" Margin="5,0">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <Border Background="#FFFBEB" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
-                                    <TextBlock Text="💰" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <TextBlock Text="Tài Chính" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
-                                <TextBlock Text="Theo dõi ngân sách" FontSize="12" Foreground="Black"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Border Grid.Column="3" Background="White" CornerRadius="16" Padding="20" Margin="10,0,0,0">
-                            <Border.Effect>
-                                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
-                            </Border.Effect>
+                        <Button Grid.Column="0" Background="White" Padding="20" Margin="5,0" BorderThickness="0" Command="{Binding GenerateEventStatisticsReportCommand}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            CornerRadius="16"
+                                            Padding="{TemplateBinding Padding}">
+                                        <Border.Effect>
+                                            <DropShadowEffect 
+                                                Color="Black" 
+                                                Direction="270" 
+                                                ShadowDepth="2" 
+                                                Opacity="0.05" 
+                                                BlurRadius="8"/>
+                                        </Border.Effect>
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
                             <StackPanel>
                                 <Border Background="#F3F4F6" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
                                     <TextBlock Text="📈" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -791,7 +813,35 @@
                                 <TextBlock Text="Hoạt Động" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
                                 <TextBlock Text="Thống kê sử dụng" FontSize="12" Foreground="Black"/>
                             </StackPanel>
-                        </Border>
+                        </Button>
+
+                        <Button Grid.Column="1" Background="White" Padding="20" Margin="5,0" BorderThickness="0" Command="{Binding GenerateEventStatisticsReportCommand}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            CornerRadius="16"
+                                            Padding="{TemplateBinding Padding}">
+                                         <Border.Effect>
+                                             <DropShadowEffect 
+                                                Color="Black" 
+                                                Direction="270" 
+                                                ShadowDepth="2" 
+                                                Opacity="0.05" 
+                                                BlurRadius="8"/>
+                                        </Border.Effect>
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <StackPanel>
+                                <Border Background="#EFF6FF" CornerRadius="12" Width="48" Height="48" Margin="0,0,0,12">
+                                    <TextBlock Text="👥" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Thành Viên" FontSize="16" FontWeight="Bold" Foreground="Black" Margin="0,0,0,4"/>
+                                <TextBlock Text="Phân tích người dùng" FontSize="12" Foreground="Black"/>
+                            </StackPanel>
+                        </Button>
                     </Grid>
 
                     <!-- Modern Controls -->
@@ -818,7 +868,8 @@
                                 </Border>
                                 <TextBox Grid.Column="1" Name="ReportSearchBox" BorderThickness="0" Background="Transparent"
                                      VerticalAlignment="Center" FontSize="16"
-                                     Foreground="Black" FontWeight="Medium"/>
+                                     Foreground="Black" FontWeight="Medium"
+                                     Text="{Binding ReportsViewModel.SearchText, UpdateSourceTrigger=PropertyChanged}"/>
                             </Grid>
                         </Border>
 
@@ -828,12 +879,13 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
-                                  Foreground="Black" FontWeight="Medium">
-                                <ComboBoxItem Content="Tất Cả Loại"/>
-                                <ComboBoxItem Content="Thành Viên"/>
-                                <ComboBoxItem Content="Sự Kiện"/>
-                                <ComboBoxItem Content="Tài Chính"/>
-                                <ComboBoxItem Content="Hoạt Động"/>
+                                  Foreground="Black" FontWeight="Medium"
+                                  SelectedValue="{Binding ReportsViewModel.SelectedReportType}">
+                                <ComboBoxItem Content="All Types"/>
+                                <ComboBoxItem Content="Membership"/>
+                                <ComboBoxItem Content="Event"/>
+                                <ComboBoxItem Content="Financial"/>
+                                <ComboBoxItem Content="Activity"/>
                             </ComboBox>
                         </Border>
 
@@ -843,7 +895,8 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <DatePicker Background="Transparent" BorderThickness="0" FontSize="16"
-                                    Foreground="Black" FontWeight="Medium"/>
+                                    Foreground="Black" FontWeight="Medium"
+                                    SelectedDate="{Binding ReportsViewModel.SelectedDate}"/>
                         </Border>
                     </Grid>
 
@@ -880,7 +933,7 @@
 
                             <!-- Table Content -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-                                <ItemsControl ItemsSource="{Binding ReportsViewModel.Reports}">
+                                <ItemsControl ItemsSource="{Binding ReportsViewModel.FilteredReports}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="Transparent" Padding="0,16" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
@@ -904,22 +957,30 @@
 
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Button Background="#3B82F6" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="0,0,4,0" ToolTip="View">
+                                                            Padding="8" Margin="0,0,4,0" ToolTip="View"
+                                                            Command="{Binding DataContext.ReportsViewModel.ViewReportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="👁️" FontSize="12"/>
                                                         </Button>
 
                                                         <Button Background="#10B981" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="2,0" ToolTip="Download">
+                                                            Padding="8" Margin="2,0" ToolTip="Download"
+                                                            Command="{Binding DataContext.ReportsViewModel.DownloadReportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="⬇️" FontSize="12"/>
                                                         </Button>
 
                                                         <Button Background="#F59E0B" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="2,0" ToolTip="Email">
+                                                            Padding="8" Margin="2,0" ToolTip="Email"
+                                                            Command="{Binding DataContext.ReportsViewModel.EmailReportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="📧" FontSize="12"/>
                                                         </Button>
 
                                                         <Button Background="#EF4444" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="4,0,0,0" ToolTip="Delete">
+                                                            Padding="8" Margin="4,0,0,0" ToolTip="Delete"
+                                                            Command="{Binding DataContext.ReportsViewModel.DeleteReportCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="🗑️" FontSize="12"/>
                                                         </Button>
                                                     </StackPanel>
@@ -960,7 +1021,7 @@
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#10B981" Foreground="White" BorderThickness="0"
+                        <Button Grid.Column="1" Background="#3498DB" Foreground="White" BorderThickness="0"
                             Padding="16,12" FontWeight="Medium" Margin="0,0,12,0"
                             Command="{Binding ClubManagementViewModel.RefreshCommand}">
                             <StackPanel Orientation="Horizontal">
@@ -1169,7 +1230,8 @@
                         </StackPanel>
 
                         <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0"
-                            Padding="20,12" FontWeight="Medium">
+                            Padding="20,12" FontWeight="Medium"
+                            Command="{Binding EventManagementViewModel.AddEventCommand}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="📅" FontSize="16" Margin="0,0,8,0"/>
                                 <TextBlock Text="Tạo Sự Kiện" FontSize="14"/>
@@ -1199,7 +1261,8 @@
                                 <Border Grid.Column="0" Background="#F1F5F9" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                     <TextBlock Text="🔍" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBox Grid.Column="1" Name="EventSearchBox" BorderThickness="0" Background="Transparent"
+                                <TextBox Grid.Column="1" Text="{Binding EventManagementViewModel.SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                     BorderThickness="0" Background="Transparent"
                                      VerticalAlignment="Center" FontSize="16"
                                      Foreground="Black" FontWeight="Medium"/>
                             </Grid>
@@ -1211,7 +1274,8 @@
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
-                                  Foreground="Black" FontWeight="Medium">
+                                  Foreground="Black" FontWeight="Medium"
+                                  SelectedItem="{Binding EventManagementViewModel.SelectedStatus}">
                                 <ComboBoxItem Content="Tất Cả Sự Kiện"/>
                                 <ComboBoxItem Content="Sắp Tới"/>
                                 <ComboBoxItem Content="Đang Diễn Ra"/>
@@ -1262,7 +1326,7 @@
 
                             <!-- Table Content -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
-                                <ItemsControl ItemsSource="{Binding EventManagementViewModel.Events}">
+                                <ItemsControl ItemsSource="{Binding EventManagementViewModel.FilteredEvents}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="Transparent" Padding="0,16" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
@@ -1293,17 +1357,23 @@
 
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Button Background="#3B82F6" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="0,0,4,0" ToolTip="View">
+                                                            Padding="8" Margin="0,0,4,0" ToolTip="View"
+                                                            Command="{Binding DataContext.EventManagementViewModel.ViewEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="👁️" FontSize="12"/>
                                                         </Button>
 
                                                         <Button Background="#F59E0B" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="2,0" ToolTip="Edit">
+                                                            Padding="8" Margin="2,0" ToolTip="Edit"
+                                                            Command="{Binding DataContext.EventManagementViewModel.EditEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="✏️" FontSize="12"/>
                                                         </Button>
 
                                                         <Button Background="#EF4444" Foreground="White" BorderThickness="0"
-                                                            Padding="8" Margin="4,0,0,0" ToolTip="Delete">
+                                                            Padding="8" Margin="4,0,0,0" ToolTip="Delete"
+                                                            Command="{Binding DataContext.EventManagementViewModel.DeleteEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}">
                                                             <TextBlock Text="🗑️" FontSize="12"/>
                                                         </Button>
                                                     </StackPanel>
@@ -1328,7 +1398,7 @@
                                           ClubsTemplate="{StaticResource ClubsTemplate}"
                                           EventsTemplate="{StaticResource EventsTemplate}"
                                           ReportsTemplate="{StaticResource ReportsTemplate}"/>
-    </Window.Resources>
+ </Window.Resources>
 
     <!-- Main Container with Modern Design -->
     <Border CornerRadius="12" Background="White" BorderThickness="1" BorderBrush="#E0E6ED">

@@ -13,6 +13,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IUserService _userService;
         private readonly INotificationService _notificationService;
         private readonly INavigationService _navigationService;
+        private readonly IAuthorizationService _authorizationService;
         private readonly ILogger<UserManagementViewModel>? _logger;
         
         private ObservableCollection<User> _users = new();
@@ -20,6 +21,7 @@ namespace ClubManagementApp.ViewModels
         private User? _selectedUser;
         private string _searchText = string.Empty;
         private UserRole? _selectedRole;
+        private User? _currentUser;
         
         public ObservableCollection<User> Users
         {
@@ -63,6 +65,26 @@ namespace ClubManagementApp.ViewModels
             }
         }
         
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set
+            {
+                if (SetProperty(ref _currentUser, value))
+                {
+                    OnPropertyChanged(nameof(CanAccessUserManagement));
+                    OnPropertyChanged(nameof(CanCreateUsers));
+                    OnPropertyChanged(nameof(CanEditUsers));
+                    OnPropertyChanged(nameof(CanDeleteUsers));
+                }
+            }
+        }
+        
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
+        public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.Role);
+        public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
+        
         public ICommand RefreshCommand { get; }
         public ICommand CreateAccountCommand { get; }
         public ICommand EditUserCommand { get; }
@@ -72,19 +94,35 @@ namespace ClubManagementApp.ViewModels
             IUserService userService,
             INotificationService notificationService,
             INavigationService navigationService,
+            IAuthorizationService authorizationService,
             ILogger<UserManagementViewModel>? logger = null)
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
             _logger = logger;
             
-            RefreshCommand = new RelayCommand(async () => await LoadUsersAsync());
-            CreateAccountCommand = new RelayCommand(CreateAccount);
-            EditUserCommand = new RelayCommand(EditUser, () => SelectedUser != null);
-            DeleteUserCommand = new RelayCommand(DeleteUser, () => SelectedUser != null);
+            RefreshCommand = new RelayCommand(async () => await LoadUsersAsync(), () => CanAccessUserManagement);
+            CreateAccountCommand = new RelayCommand(CreateAccount, () => CanCreateUsers);
+            EditUserCommand = new RelayCommand(EditUser, () => SelectedUser != null && CanEditUsers);
+            DeleteUserCommand = new RelayCommand(DeleteUser, () => SelectedUser != null && CanDeleteUsers && SelectedUser.UserID != CurrentUser?.UserID);
             
+            _ = LoadCurrentUserAsync();
             _ = LoadUsersAsync();
+        }
+        
+        private async Task LoadCurrentUserAsync()
+        {
+            try
+            {
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                _logger?.LogInformation("Current user loaded successfully: {UserName}", CurrentUser?.FullName);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error loading current user");
+            }
         }
         
         public override async Task LoadAsync()

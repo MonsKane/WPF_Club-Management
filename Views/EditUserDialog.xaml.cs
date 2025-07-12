@@ -53,7 +53,7 @@ namespace ClubManagementApp.Views
                         IsActive = IsActiveCheckBox.IsChecked ?? true,
                         JoinDate = _originalUser.JoinDate,
                         ClubID = _originalUser.ClubID,
-                        Club = _originalUser.Club,
+                        // Don't set Club navigation property to avoid EF tracking conflicts
                         ActivityLevel = _originalUser.ActivityLevel,
                         StudentID = _originalUser.StudentID,
                         TwoFactorEnabled = _originalUser.TwoFactorEnabled

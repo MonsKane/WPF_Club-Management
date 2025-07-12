@@ -1,4 +1,5 @@
 using ClubManagementApp.Data;
+using ClubManagementApp.Helpers;
 using ClubManagementApp.Services;
 using ClubManagementApp.ViewModels;
 using ClubManagementApp.Views;
@@ -72,6 +73,9 @@ namespace ClubManagementApp
                 var services = new ServiceCollection();
                 ConfigureServices(services);
                 _serviceProvider = services.BuildServiceProvider();
+                
+                // Configure ServiceLocator for static access to services
+                ServiceLocator.SetServiceProvider(_serviceProvider);
                 Console.WriteLine("Services configured successfully.");
 
                 // STEP 2: Load application configuration

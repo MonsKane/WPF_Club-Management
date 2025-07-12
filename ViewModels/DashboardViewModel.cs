@@ -13,6 +13,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IEventService _eventService;
         private readonly IReportService _reportService;
         private readonly INavigationService _navigationService;
+        private readonly IAuthorizationService _authorizationService;
         private int _totalUsers;
         private int _totalClubs;
         private int _totalEvents;
@@ -25,7 +26,7 @@ namespace ClubManagementApp.ViewModels
 
         public DashboardViewModel(IUserService userService, IClubService clubService,
                                 IEventService eventService, IReportService reportService,
-                                INavigationService navigationService)
+                                INavigationService navigationService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[DashboardViewModel] Initializing DashboardViewModel with services");
             _userService = userService;
@@ -33,6 +34,7 @@ namespace ClubManagementApp.ViewModels
             _eventService = eventService;
             _reportService = reportService;
             _navigationService = navigationService;
+            _authorizationService = authorizationService;
             InitializeCommands();
             Console.WriteLine("[DashboardViewModel] DashboardViewModel initialization completed");
         }
@@ -99,6 +101,37 @@ namespace ClubManagementApp.ViewModels
             set => SetProperty(ref _recentEvents, value);
         }
 
+        // Current User
+        private User? _currentUser;
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set
+            {
+                if (SetProperty(ref _currentUser, value))
+                {
+                    OnPropertyChanged(nameof(CanCreateUsers));
+                    OnPropertyChanged(nameof(CanCreateClubs));
+                    OnPropertyChanged(nameof(CanCreateEvents));
+                    OnPropertyChanged(nameof(CanGenerateReports));
+                    OnPropertyChanged(nameof(CanAccessUserManagement));
+                    OnPropertyChanged(nameof(CanAccessClubManagement));
+                    OnPropertyChanged(nameof(CanAccessEventManagement));
+                    OnPropertyChanged(nameof(CanAccessReports));
+                }
+            }
+        }
+
+        // Authorization Properties
+        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
+        public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
+        public bool CanCreateEvents => CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+        public bool CanGenerateReports => CurrentUser != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanAccessClubManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
+        public bool CanAccessEventManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
+        public bool CanAccessReports => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "Reports");
+
         // Commands
         public ICommand AddUserCommand { get; private set; } = null!;
         public ICommand CreateEventCommand { get; private set; } = null!;
@@ -120,14 +153,14 @@ namespace ClubManagementApp.ViewModels
 
         private void InitializeCommands()
         {
-            AddUserCommand = new RelayCommand(AddUser);
-            CreateEventCommand = new RelayCommand(CreateEvent);
-            AddClubCommand = new RelayCommand(AddClub);
-            GenerateReportCommand = new RelayCommand(GenerateReport);
-            ViewAllUsersCommand = new RelayCommand(ViewAllUsers);
-            ViewAllClubsCommand = new RelayCommand(ViewAllClubs);
-            ViewAllEventsCommand = new RelayCommand(ViewAllEvents);
-            ViewAllReportsCommand = new RelayCommand(ViewAllReports);
+            AddUserCommand = new RelayCommand(AddUser, _ => CanCreateUsers);
+            CreateEventCommand = new RelayCommand(CreateEvent, _ => CanCreateEvents);
+            AddClubCommand = new RelayCommand(AddClub, _ => CanCreateClubs);
+            GenerateReportCommand = new RelayCommand(GenerateReport, _ => CanGenerateReports);
+            ViewAllUsersCommand = new RelayCommand(ViewAllUsers, _ => CanAccessUserManagement);
+            ViewAllClubsCommand = new RelayCommand(ViewAllClubs, _ => CanAccessClubManagement);
+            ViewAllEventsCommand = new RelayCommand(ViewAllEvents, _ => CanAccessEventManagement);
+            ViewAllReportsCommand = new RelayCommand(ViewAllReports, _ => CanAccessReports);
             RefreshCommand = new RelayCommand(async () =>
             {
                 Console.WriteLine("[DashboardViewModel] RefreshCommand executed - starting refresh");
@@ -137,11 +170,26 @@ namespace ClubManagementApp.ViewModels
 
             // Enhanced Quick Actions Commands
             QuickSearchCommand = new RelayCommand(QuickSearch);
-            ExportDataCommand = new RelayCommand(ExportData);
-            BackupDataCommand = new RelayCommand(BackupData);
+            ExportDataCommand = new RelayCommand(ExportData, _ => CanGenerateReports);
+            BackupDataCommand = new RelayCommand(BackupData, _ => CurrentUser?.Role == UserRole.SystemAdmin);
             ViewNotificationsCommand = new RelayCommand(ViewNotifications);
             SettingsCommand = new RelayCommand(OpenSettings);
-            ViewUpcomingEventsCommand = new RelayCommand(ViewUpcomingEvents);
+            ViewUpcomingEventsCommand = new RelayCommand(ViewUpcomingEvents, _ => CanAccessEventManagement);
+        }
+
+        // Load current user method
+        public async Task LoadCurrentUserAsync()
+        {
+            try
+            {
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                Console.WriteLine($"[DashboardViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DashboardViewModel] Error loading current user: {ex.Message}");
+                CurrentUser = null;
+            }
         }
 
         private async Task LoadDashboardDataAsync()

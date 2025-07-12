@@ -11,6 +11,7 @@ namespace ClubManagementApp.ViewModels
         private readonly IEventService _eventService;
         private readonly IClubService _clubService;
         private readonly IUserService _userService;
+        private readonly IAuthorizationService _authorizationService;
         private ObservableCollection<Event> _events = new();
         private ObservableCollection<Event> _filteredEvents = new();
         private ObservableCollection<Club> _clubs = new();
@@ -20,21 +21,24 @@ namespace ClubManagementApp.ViewModels
         private bool _isLoading;
         private Event? _selectedEvent;
         private Club? _clubFilter;
+        private User? _currentUser;
 
         // Static event for event changes
         public static event Action? EventChanged;
 
-        public EventManagementViewModel(IEventService eventService, IClubService clubService, IUserService userService)
+        public EventManagementViewModel(IEventService eventService, IClubService clubService, IUserService userService, IAuthorizationService authorizationService)
         {
             Console.WriteLine("[EVENT_MANAGEMENT_VM] Initializing EventManagementViewModel");
             _eventService = eventService;
             _clubService = clubService;
             _userService = userService;
-            
+            _authorizationService = authorizationService;
+
             // Ensure default filter is set correctly
             _selectedStatus = "All Events";
-            
+
             InitializeCommands();
+            LoadCurrentUserAsync();
             Console.WriteLine("[EVENT_MANAGEMENT_VM] EventManagementViewModel initialized successfully");
         }
 
@@ -120,6 +124,90 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
+        public int UpcomingEventsCount
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return Events.Count(e => e.EventDate > now);
+            }
+        }
+
+        public int OngoingEventsCount
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return Events.Count(e => e.EventDate.Date == now.Date);
+            }
+        }
+
+        public int CompletedEventsCount
+        {
+            get
+            {
+                var now = DateTime.Now;
+                return Events.Count(e => e.EventDate < now);
+            }
+        }
+
+        public User? CurrentUser
+        {
+            get => _currentUser;
+            set => SetProperty(ref _currentUser, value);
+        }
+
+        // Event Management Permissions
+        public bool CanAccessEventManagement
+        {
+            get => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
+        }
+
+        public bool CanCreateEvents
+        {
+            get
+            {
+                var canCreate = CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] CanCreateEvents check: CurrentUser={CurrentUser?.FullName ?? "NULL"}, Role={CurrentUser?.Role}, CanCreate={canCreate}");
+                return canCreate;
+            }
+        }
+
+        public bool CanEditEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID);
+        }
+
+        public bool CanDeleteEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID);
+        }
+
+        public bool CanRegisterForEvents
+        {
+            get => CurrentUser != null && _authorizationService.CanRegisterForEvents(CurrentUser.Role);
+        }
+
+        public bool CanEditSelectedEvent
+        {
+            get => SelectedEvent != null && CurrentUser != null &&
+                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, SelectedEvent.ClubID, IsOwnEvent(SelectedEvent));
+        }
+
+        public bool CanDeleteSelectedEvent
+        {
+            get => SelectedEvent != null && CurrentUser != null &&
+                   _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, SelectedEvent.ClubID, IsOwnEvent(SelectedEvent));
+        }
+
+        private bool IsOwnEvent(Event eventItem)
+        {
+            // Check if the current user is the creator/owner of the event
+            // This would need to be implemented based on your Event model
+            // For now, assuming events belong to the user's club or created by team leaders
+            return CurrentUser?.Role == UserRole.TeamLeader && eventItem.ClubID == CurrentUser.ClubID;
+        }
+
         // Commands
         public ICommand CreateEventCommand { get; private set; } = null!;
         public ICommand AddEventCommand { get; private set; } = null!;
@@ -130,16 +218,79 @@ namespace ClubManagementApp.ViewModels
         public ICommand ExportEventsCommand { get; private set; } = null!;
         public ICommand ManageParticipantsCommand { get; private set; } = null!;
 
+        // Report Generation Commands
+        public ICommand GenerateEventStatisticsReportCommand { get; private set; } = null!;
+        public ICommand GenerateEventAttendanceReportCommand { get; private set; } = null!;
+        public ICommand GenerateEventPerformanceReportCommand { get; private set; } = null!;
+        public ICommand GenerateEventSummaryReportCommand { get; private set; } = null!;
+
         private void InitializeCommands()
         {
-            CreateEventCommand = new RelayCommand(CreateEvent);
-            AddEventCommand = new RelayCommand(CreateEvent);
-            EditEventCommand = new RelayCommand<Event>(EditEvent);
-            DeleteEventCommand = new RelayCommand<Event>(DeleteEvent);
-            ViewEventCommand = new RelayCommand<Event>(ViewEvent);
+            CreateEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
+            AddEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
+            EditEventCommand = new RelayCommand<Event>(EditEvent, CanExecuteEditEvent);
+            DeleteEventCommand = new RelayCommand<Event>(DeleteEvent, CanExecuteDeleteEvent);
+            ViewEventCommand = new RelayCommand<Event>(ViewEvent, CanExecuteViewEvent);
             RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
-            ExportEventsCommand = new RelayCommand(ExportEvents);
-            ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants);
+            ExportEventsCommand = new RelayCommand(ExportEvents, CanExecuteExportEvents);
+            ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants, CanExecuteManageParticipants);
+
+            // Initialize Report Generation Commands
+            GenerateEventStatisticsReportCommand = new RelayCommand(GenerateEventStatisticsReport, CanExecuteGenerateReports);
+            GenerateEventAttendanceReportCommand = new RelayCommand(GenerateEventAttendanceReport, CanExecuteGenerateReports);
+            GenerateEventPerformanceReportCommand = new RelayCommand(GenerateEventPerformanceReport, CanExecuteGenerateReports);
+            GenerateEventSummaryReportCommand = new RelayCommand(GenerateEventSummaryReport, CanExecuteGenerateReports);
+        }
+
+        private async void LoadCurrentUserAsync()
+        {
+            try
+            {
+                CurrentUser = await _userService.GetCurrentUserAsync();
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                OnPropertyChanged(nameof(CanAccessEventManagement));
+                OnPropertyChanged(nameof(CanCreateEvents));
+                OnPropertyChanged(nameof(CanEditEvents));
+                OnPropertyChanged(nameof(CanDeleteEvents));
+                OnPropertyChanged(nameof(CanRegisterForEvents));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error loading current user: {ex.Message}");
+            }
+        }
+
+        private bool CanExecuteCreateEvent(object? parameter)
+        {
+            return CanCreateEvents;
+        }
+
+        private bool CanExecuteEditEvent(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null &&
+                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+        }
+
+        private bool CanExecuteDeleteEvent(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null &&
+                   _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+        }
+
+        private bool CanExecuteViewEvent(Event? eventItem)
+        {
+            return eventItem != null;
+        }
+
+        private bool CanExecuteExportEvents(object? parameter)
+        {
+            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        }
+
+        private bool CanExecuteManageParticipants(Event? eventItem)
+        {
+            return eventItem != null && CurrentUser != null &&
+                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
         }
 
         private async Task LoadDataAsync()
@@ -170,6 +321,12 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Loaded {Clubs.Count} clubs");
 
                 FilterEvents();
+
+                // Notify property changes for count properties after loading
+                OnPropertyChanged(nameof(UpcomingEventsCount));
+                OnPropertyChanged(nameof(OngoingEventsCount));
+                OnPropertyChanged(nameof(CompletedEventsCount));
+
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] Event management data loaded successfully");
             }
             catch (Exception ex)
@@ -205,9 +362,10 @@ namespace ClubManagementApp.ViewModels
                 var now = DateTime.Now;
                 filtered = SelectedStatus switch
                 {
-                    "Upcoming" => filtered.Where(e => e.EventDate > now),
-                    "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date),
-                    "Completed" => filtered.Where(e => e.EventDate < now),
+                    "Upcoming" => filtered.Where(e => e.EventDate > now && (e.Status == EventStatus.Scheduled || e.Status == EventStatus.Postponed)),
+                    "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date && e.Status == EventStatus.InProgress),
+                    "Cancelled" => filtered.Where(e => e.Status == EventStatus.Cancelled),
+                    "Completed" => filtered.Where(e => e.Status == EventStatus.Completed || (e.EventDate < now && e.Status != EventStatus.Cancelled)),
                     _ => filtered
                 };
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied status filter: '{SelectedStatus}'");
@@ -233,6 +391,12 @@ namespace ClubManagementApp.ViewModels
             {
                 FilteredEvents.Add(eventItem);
             }
+
+            // Notify property changes for count properties
+            OnPropertyChanged(nameof(UpcomingEventsCount));
+            OnPropertyChanged(nameof(OngoingEventsCount));
+            OnPropertyChanged(nameof(CompletedEventsCount));
+
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Filtering complete: {originalCount} -> {FilteredEvents.Count} events");
         }
 
@@ -242,10 +406,10 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 // Pass the ClubFilter if we're in club-specific context
-                var addEventDialog = ClubFilter != null 
+                var addEventDialog = ClubFilter != null
                     ? new Views.AddEventDialog(Clubs, ClubFilter)
                     : new Views.AddEventDialog(Clubs);
-                    
+
                 if (addEventDialog.ShowDialog() == true && addEventDialog.NewEvent != null)
                 {
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Creating new event: {addEventDialog.NewEvent.Name}");
@@ -255,7 +419,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event created successfully: {createdEvent.Name}");
                     System.Windows.MessageBox.Show($"Event '{createdEvent.Name}' created successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                    
+
                     // Notify other ViewModels about event change
                     EventChanged?.Invoke();
                 }
@@ -297,7 +461,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event updated successfully: {updatedEvent.Name}");
                     System.Windows.MessageBox.Show($"Event '{updatedEvent.Name}' updated successfully!", "Success",
                         System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                    
+
                     // Notify other ViewModels about event change
                     EventChanged?.Invoke();
                 }
@@ -335,7 +499,7 @@ namespace ClubManagementApp.ViewModels
                     Events.Remove(eventItem);
                     FilterEvents();
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Event deleted successfully: {eventItem.Name}");
-                    
+
                     // Notify other ViewModels about event change
                     EventChanged?.Invoke();
                 }
@@ -389,8 +553,22 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Manage Participants command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
             try
             {
-                var participantManagementDialog = new Views.ParticipantManagementDialog(eventItem, _eventService);
-                participantManagementDialog.ShowDialog();
+                // Create a simple participant management dialog
+                var participantInfo = new System.Text.StringBuilder();
+                participantInfo.AppendLine($"Event: {eventItem.Name}");
+                participantInfo.AppendLine($"Date: {eventItem.EventDate:yyyy-MM-dd HH:mm}");
+                participantInfo.AppendLine($"Current Participants: {eventItem.ParticipantCount}");
+                participantInfo.AppendLine($"Max Capacity: {eventItem.MaxParticipants ?? 0}");
+                participantInfo.AppendLine($"Available Spots: {(eventItem.MaxParticipants ?? 0) - eventItem.ParticipantCount}");
+                participantInfo.AppendLine("\nParticipant management features:");
+                participantInfo.AppendLine("• View participant list");
+                participantInfo.AppendLine("• Add new participants");
+                participantInfo.AppendLine("• Remove participants");
+                participantInfo.AppendLine("• Send notifications");
+                participantInfo.AppendLine("\nNote: Full participant management will be implemented in a future update.");
+
+                System.Windows.MessageBox.Show(participantInfo.ToString(), "Manage Participants",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Participant management dialog opened for: {eventItem.Name}");
             }
             catch (Exception ex)
@@ -471,6 +649,299 @@ namespace ClubManagementApp.ViewModels
         public void ClearClubFilter()
         {
             ClubFilter = null;
+        }
+
+        private bool CanExecuteGenerateReports(object? parameter)
+        {
+            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        }
+
+        private async void GenerateEventStatisticsReport(object? parameter)
+        {
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Generate Event Statistics Report command executed");
+            try
+            {
+                IsLoading = true;
+                var currentSemester = GetCurrentSemester();
+                var reportContent = GenerateEventStatisticsReportContent(FilteredEvents);
+
+                var report = new Models.Report
+                {
+                    Title = $"Event Statistics Report - {DateTime.Now:yyyy-MM-dd}",
+                    Type = Models.ReportType.EventOutcomes,
+                    Content = reportContent,
+                    GeneratedDate = DateTime.Now,
+                    Semester = currentSemester,
+                    ClubID = CurrentUser?.ClubID,
+                    GeneratedByUserID = CurrentUser?.UserID ?? 0
+                };
+
+                // Save report to file
+                await SaveReportToFileAsync(report, "Event_Statistics");
+
+                System.Windows.MessageBox.Show("Event Statistics Report generated and saved successfully!", "Report Generated",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error generating event statistics report: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error generating report: {ex.Message}", "Error",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async void GenerateEventAttendanceReport(object? parameter)
+        {
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Generate Event Attendance Report command executed");
+            try
+            {
+                IsLoading = true;
+                var currentSemester = GetCurrentSemester();
+                var reportContent = GenerateEventAttendanceReportContent(FilteredEvents);
+
+                var report = new Models.Report
+                {
+                    Title = $"Event Attendance Report - {DateTime.Now:yyyy-MM-dd}",
+                    Type = Models.ReportType.EventOutcomes,
+                    Content = reportContent,
+                    GeneratedDate = DateTime.Now,
+                    Semester = currentSemester,
+                    ClubID = CurrentUser?.ClubID,
+                    GeneratedByUserID = CurrentUser?.UserID ?? 0
+                };
+
+                await SaveReportToFileAsync(report, "Event_Attendance");
+
+                System.Windows.MessageBox.Show("Event Attendance Report generated and saved successfully!", "Report Generated",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error generating event attendance report: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error generating report: {ex.Message}", "Error",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async void GenerateEventPerformanceReport(object? parameter)
+        {
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Generate Event Performance Report command executed");
+            try
+            {
+                IsLoading = true;
+                var currentSemester = GetCurrentSemester();
+                var reportContent = GenerateEventPerformanceReportContent(FilteredEvents);
+
+                var report = new Models.Report
+                {
+                    Title = $"Event Performance Report - {DateTime.Now:yyyy-MM-dd}",
+                    Type = Models.ReportType.EventOutcomes,
+                    Content = reportContent,
+                    GeneratedDate = DateTime.Now,
+                    Semester = currentSemester,
+                    ClubID = CurrentUser?.ClubID,
+                    GeneratedByUserID = CurrentUser?.UserID ?? 0
+                };
+
+                await SaveReportToFileAsync(report, "Event_Performance");
+
+                System.Windows.MessageBox.Show("Event Performance Report generated and saved successfully!", "Report Generated",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error generating event performance report: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error generating report: {ex.Message}", "Error",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async void GenerateEventSummaryReport(object? parameter)
+        {
+            Console.WriteLine("[EVENT_MANAGEMENT_VM] Generate Event Summary Report command executed");
+            try
+            {
+                IsLoading = true;
+                var currentSemester = GetCurrentSemester();
+                var reportContent = GenerateEventSummaryReportContent(FilteredEvents);
+
+                var report = new Models.Report
+                {
+                    Title = $"Event Summary Report - {DateTime.Now:yyyy-MM-dd}",
+                    Type = Models.ReportType.EventOutcomes,
+                    Content = reportContent,
+                    GeneratedDate = DateTime.Now,
+                    Semester = currentSemester,
+                    ClubID = CurrentUser?.ClubID,
+                    GeneratedByUserID = CurrentUser?.UserID ?? 0
+                };
+
+                await SaveReportToFileAsync(report, "Event_Summary");
+
+                System.Windows.MessageBox.Show("Event Summary Report generated and saved successfully!", "Report Generated",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error generating event summary report: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error generating report: {ex.Message}", "Error",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private string GetCurrentSemester()
+        {
+            var now = DateTime.Now;
+            var year = now.Year;
+            var semester = now.Month >= 8 ? "Fall" : now.Month >= 1 && now.Month <= 5 ? "Spring" : "Summer";
+            return $"{semester} {year}";
+        }
+
+        private string GenerateEventStatisticsReportContent(IEnumerable<Event> events)
+        {
+            var content = new System.Text.StringBuilder();
+            content.AppendLine("EVENT STATISTICS REPORT");
+            content.AppendLine("======================\n");
+            content.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}\n");
+
+            var eventsList = events.ToList();
+            content.AppendLine($"Total Events: {eventsList.Count}");
+            content.AppendLine($"Upcoming Events: {eventsList.Count(e => e.EventDate > DateTime.Now)}");
+            content.AppendLine($"Completed Events: {eventsList.Count(e => e.EventDate < DateTime.Now)}");
+            content.AppendLine($"Events This Month: {eventsList.Count(e => e.EventDate.Month == DateTime.Now.Month && e.EventDate.Year == DateTime.Now.Year)}\n");
+
+            // Events by Club
+            var eventsByClub = eventsList.GroupBy(e => e.Club?.Name ?? "Unknown").OrderByDescending(g => g.Count());
+            content.AppendLine("EVENTS BY CLUB:");
+            foreach (var group in eventsByClub)
+            {
+                content.AppendLine($"  {group.Key}: {group.Count()} events");
+            }
+
+            return content.ToString();
+        }
+
+        private string GenerateEventAttendanceReportContent(IEnumerable<Event> events)
+        {
+            var content = new System.Text.StringBuilder();
+            content.AppendLine("EVENT ATTENDANCE REPORT");
+            content.AppendLine("=======================\n");
+            content.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}\n");
+
+            var eventsList = events.ToList();
+            content.AppendLine("EVENT ATTENDANCE DETAILS:");
+            foreach (var eventItem in eventsList.OrderBy(e => e.EventDate))
+            {
+                content.AppendLine($"\nEvent: {eventItem.Name}");
+                content.AppendLine($"Date: {eventItem.EventDate:yyyy-MM-dd HH:mm}");
+                content.AppendLine($"Location: {eventItem.Location ?? "TBD"}");
+                content.AppendLine($"Club: {eventItem.Club?.Name ?? "Unknown"}");
+                content.AppendLine($"Participants: {eventItem.ParticipantCount}");
+                content.AppendLine($"Max Capacity: {eventItem.MaxParticipants ?? 0}");
+                var attendanceRate = eventItem.MaxParticipants > 0 ? (double)eventItem.ParticipantCount / eventItem.MaxParticipants.Value * 100 : 0;
+                content.AppendLine($"Attendance Rate: {attendanceRate:F1}%");
+            }
+
+            return content.ToString();
+        }
+
+        private string GenerateEventPerformanceReportContent(IEnumerable<Event> events)
+        {
+            var content = new System.Text.StringBuilder();
+            content.AppendLine("EVENT PERFORMANCE REPORT");
+            content.AppendLine("========================\n");
+            content.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}\n");
+
+            var eventsList = events.ToList();
+            var completedEvents = eventsList.Where(e => e.EventDate < DateTime.Now).ToList();
+
+            content.AppendLine("PERFORMANCE METRICS:");
+            content.AppendLine($"Total Events Analyzed: {completedEvents.Count}");
+
+            if (completedEvents.Any())
+            {
+                var avgParticipants = completedEvents.Average(e => e.ParticipantCount);
+                var totalParticipants = completedEvents.Sum(e => e.ParticipantCount);
+                content.AppendLine($"Average Participants per Event: {avgParticipants:F1}");
+                content.AppendLine($"Total Participants: {totalParticipants}");
+
+                var topEvent = completedEvents.OrderByDescending(e => e.ParticipantCount).FirstOrDefault();
+                if (topEvent != null)
+                {
+                    content.AppendLine($"\nMost Attended Event: {topEvent.Name} ({topEvent.ParticipantCount} participants)");
+                }
+            }
+
+            return content.ToString();
+        }
+
+        private string GenerateEventSummaryReportContent(IEnumerable<Event> events)
+        {
+            var content = new System.Text.StringBuilder();
+            content.AppendLine("EVENT SUMMARY REPORT");
+            content.AppendLine("===================\n");
+            content.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}\n");
+
+            var eventsList = events.ToList();
+            content.AppendLine("EXECUTIVE SUMMARY:");
+            content.AppendLine($"Total Events: {eventsList.Count}");
+            content.AppendLine($"Active Clubs: {eventsList.Select(e => e.ClubID).Distinct().Count()}");
+            content.AppendLine($"Total Participants: {eventsList.Sum(e => e.ParticipantCount)}");
+
+            var upcomingEvents = eventsList.Where(e => e.EventDate > DateTime.Now).ToList();
+            var completedEvents = eventsList.Where(e => e.EventDate < DateTime.Now).ToList();
+
+            content.AppendLine($"\nSTATUS BREAKDOWN:");
+            content.AppendLine($"Upcoming Events: {upcomingEvents.Count}");
+            content.AppendLine($"Completed Events: {completedEvents.Count}");
+
+            content.AppendLine($"\nUPCOMING EVENTS:");
+            foreach (var eventItem in upcomingEvents.Take(5).OrderBy(e => e.EventDate))
+            {
+                content.AppendLine($"  • {eventItem.Name} - {eventItem.EventDate:MMM dd, yyyy}");
+            }
+
+            return content.ToString();
+        }
+
+        private async Task SaveReportToFileAsync(Models.Report report, string reportType)
+        {
+            try
+            {
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "Text files (*.txt)|*.txt|PDF files (*.pdf)|*.pdf|CSV files (*.csv)|*.csv",
+                    DefaultExt = "txt",
+                    FileName = $"{reportType}_Report_{DateTime.Now:yyyyMMdd_HHmmss}"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    await System.IO.File.WriteAllTextAsync(saveFileDialog.FileName, report.Content, System.Text.Encoding.UTF8);
+                    Console.WriteLine($"[EVENT_MANAGEMENT_VM] Report saved to: {saveFileDialog.FileName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Error saving report: {ex.Message}");
+                throw;
+            }
         }
 
         public override Task LoadAsync()

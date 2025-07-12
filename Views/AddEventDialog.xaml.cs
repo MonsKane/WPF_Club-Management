@@ -9,6 +9,7 @@ namespace ClubManagementApp.Views
     public partial class AddEventDialog : Window
     {
         public Event Event { get; private set; }
+        public Event NewEvent { get; private set; }
         private Club _preSelectedClub; // Store the pre-selected club as fallback
 
         public AddEventDialog()
@@ -79,7 +80,7 @@ namespace ClubManagementApp.Views
                         EventDate = eventDateTime,
                         Location = LocationTextBox.Text.Trim(),
                         ClubID = finalSelectedClub!.ClubID,
-                        Club = finalSelectedClub,
+                        // Don't set Club navigation property to avoid EF tracking conflicts
                         Status = selectedStatus,
                         CreatedDate = DateTime.Now
                     };

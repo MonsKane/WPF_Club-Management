@@ -137,16 +137,16 @@ namespace ClubManagementApp.Services
                 if (string.IsNullOrWhiteSpace(report.Semester))
                     throw new ArgumentException("Semester is required", nameof(report));
 
-                if (report.ClubID <= 0)
-                    throw new ArgumentException("Valid club ID is required", nameof(report));
-
                 if (report.GeneratedByUserID <= 0)
                     throw new ArgumentException("Valid user ID is required", nameof(report));
 
-                // Verify club exists
-                var club = await _context.Clubs.FindAsync(report.ClubID);
-                if (club == null)
-                    throw new InvalidOperationException($"Club with ID {report.ClubID} not found");
+                // Verify club exists (only if ClubID is provided)
+                if (report.ClubID.HasValue && report.ClubID > 0)
+                {
+                    var club = await _context.Clubs.FindAsync(report.ClubID);
+                    if (club == null)
+                        throw new InvalidOperationException($"Club with ID {report.ClubID} not found");
+                }
 
                 // Verify user exists
                 var user = await _context.Users.FindAsync(report.GeneratedByUserID);
@@ -162,6 +162,50 @@ namespace ClubManagementApp.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"[REPORT_SERVICE] Error creating report: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<Report> UpdateReportAsync(Report report)
+        {
+            try
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Updating report: {report.Title} (ID: {report.ReportID})");
+
+                // Input validation
+                if (report == null)
+                    throw new ArgumentNullException(nameof(report), "Report cannot be null");
+
+                if (report.ReportID <= 0)
+                    throw new ArgumentException("Valid report ID is required", nameof(report));
+
+                if (string.IsNullOrWhiteSpace(report.Title))
+                    throw new ArgumentException("Report title is required", nameof(report));
+
+                if (string.IsNullOrWhiteSpace(report.Content))
+                    throw new ArgumentException("Report content is required", nameof(report));
+
+                // Check if report exists
+                var existingReport = await _context.Reports.FindAsync(report.ReportID);
+                if (existingReport == null)
+                    throw new InvalidOperationException($"Report with ID {report.ReportID} not found");
+
+                // Update properties
+                existingReport.Title = report.Title;
+                existingReport.Content = report.Content;
+                existingReport.Type = report.Type;
+                existingReport.Semester = report.Semester;
+                // Note: We don't update GeneratedDate, ClubID, or GeneratedByUserID for audit purposes
+
+                _context.Reports.Update(existingReport);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[REPORT_SERVICE] Report updated successfully: {existingReport.Title}");
+                return existingReport;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[REPORT_SERVICE] Error updating report: {ex.Message}");
                 throw;
             }
         }
