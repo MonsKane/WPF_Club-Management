@@ -73,23 +73,12 @@ namespace ClubManagementApp
                 var services = new ServiceCollection();
                 ConfigureServices(services);
                 _serviceProvider = services.BuildServiceProvider();
-                
+
                 // Configure ServiceLocator for static access to services
                 ServiceLocator.SetServiceProvider(_serviceProvider);
                 Console.WriteLine("Services configured successfully.");
 
-                // STEP 2: Load application configuration
-                // Loads settings from appsettings.json including database connections,
-                // email configuration, security settings, and feature flags
-                Console.WriteLine("Loading configuration...");
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var configService = scope.ServiceProvider.GetRequiredService<IConfigurationService>();
-                    await configService.LoadAsync();
-                }
-                Console.WriteLine("Configuration loaded successfully.");
-
-                // STEP 3: Initialize database
+                // STEP 2: Initialize database
                 // Ensures database exists, applies migrations, and seeds initial data
                 // This includes creating default admin user and sample clubs/events
                 Console.WriteLine("Initializing database...");
@@ -111,7 +100,7 @@ namespace ClubManagementApp
                 }
                 Console.WriteLine("Database initialized successfully.");
 
-                // STEP 4: Create and display login window
+                // STEP 3: Create and display login window
                 // The login window is the entry point for user authentication
                 Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
                 Console.WriteLine("Creating login window...");
@@ -119,7 +108,7 @@ namespace ClubManagementApp
                 var loginWindow = new LoginWindow(loginViewModel);
                 Console.WriteLine("Login window created successfully.");
 
-                // STEP 5: Set up login success event handler
+                // STEP 4: Set up login success event handler
                 // When user successfully logs in, transition to main application window
                 loginViewModel.LoginSuccessful += async (sender, e) => await OnLoginSuccessful();
 
@@ -235,9 +224,6 @@ namespace ClubManagementApp
 
             // Application logging: File and console logging coordination
             services.AddSingleton<ILoggingService, LoggingService>();
-
-            // Configuration management: appsettings.json loading, environment variables
-            services.AddSingleton<IConfigurationService, ConfigurationService>();
 
             // Email service: SMTP configuration, email templates, delivery
             services.AddSingleton<IEmailService, EmailService>();

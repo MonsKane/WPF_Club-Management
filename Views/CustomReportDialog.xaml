@@ -185,12 +185,11 @@
                         <StackPanel Margin="0,0,0,20">
                             <TextBlock Text="Report Type" Style="{StaticResource ModernLabelStyle}"/>
                             <ComboBox x:Name="ReportTypeComboBox" 
+                                      SelectionChanged="ReportTypeComboBox_SelectionChanged"
                                       Style="{StaticResource ModernComboBoxStyle}"
                                       SelectedIndex="0">
-                                <ComboBoxItem Content="Membership Statistics" Tag="MemberStatistics"/>
-                                <ComboBoxItem Content="Event Outcomes" Tag="EventOutcomes"/>
-                                <ComboBoxItem Content="Financial Summary" Tag="SemesterSummary"/>
                                 <ComboBoxItem Content="Activity Tracking" Tag="ActivityTracking"/>
+                                <ComboBoxItem Content="Membership Statistics" Tag="MemberStatistics"/>
                             </ComboBox>
                         </StackPanel>
 
@@ -214,37 +213,20 @@
                                             Style="{StaticResource ModernDatePickerStyle}"/>
                             </StackPanel>
                         </Grid>
-
-                        <!-- Include Options -->
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Include Options" Style="{StaticResource ModernLabelStyle}"/>
-                            <StackPanel>
-                                <CheckBox x:Name="IncludeChartsCheckBox" 
-                                          Content="Include Charts and Graphs" 
-                                          IsChecked="True" 
-                                          Margin="0,5"/>
-                                <CheckBox x:Name="IncludeDetailsCheckBox" 
-                                          Content="Include Detailed Breakdown" 
-                                          IsChecked="True" 
-                                          Margin="0,5"/>
-                                <CheckBox x:Name="IncludeSummaryCheckBox" 
-                                          Content="Include Executive Summary" 
-                                          IsChecked="True" 
-                                          Margin="0,5"/>
-                            </StackPanel>
+                        <StackPanel x:Name="ClubSelectionPanel"
+                                    Margin="0,0,0,20"
+                                    Visibility="Collapsed">
+                            <TextBlock Text="Select Club" Style="{StaticResource ModernLabelStyle}"/>
+                            <ComboBox x:Name="ClubComboBox" 
+                                      Style="{StaticResource ModernComboBoxStyle}"
+                                      SelectedIndex="-1">
+                                <ComboBoxItem Content="All Clubs" Tag="{x:Null}" IsSelected="True"/>
+                                <ComboBoxItem Content="Tech Club"/>
+                                <ComboBoxItem Content="Art Club"/>
+                                <ComboBoxItem Content="Sports Club"/>
+                            </ComboBox>
                         </StackPanel>
 
-                        <!-- Additional Notes -->
-                        <StackPanel>
-                            <TextBlock Text="Additional Notes (Optional)" Style="{StaticResource ModernLabelStyle}"/>
-                            <TextBox x:Name="NotesTextBox" 
-                                     Style="{StaticResource ModernTextBoxStyle}"
-                                     Height="80"
-                                     TextWrapping="Wrap"
-                                     AcceptsReturn="True"
-                                     VerticalScrollBarVisibility="Auto"/>
-                        </StackPanel>
-                        
                     </StackPanel>
                 </ScrollViewer>
 

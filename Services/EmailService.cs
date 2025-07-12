@@ -1,8 +1,8 @@
 using ClubManagementApp.Models;
+using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
 using System.Text.Json;
 
 namespace ClubManagementApp.Services
@@ -13,7 +13,7 @@ namespace ClubManagementApp.Services
         Task<bool> SendEmailAsync(EmailMessage message);
         Task<bool> SendEmailAsync(string to, string subject, string body, bool isHtml = false);
         Task<bool> SendBulkEmailAsync(List<EmailMessage> messages);
-        
+
         // Template-based emails
         Task<bool> SendWelcomeEmailAsync(User user);
         Task<bool> SendEventNotificationAsync(User user, Event eventInfo);
@@ -22,18 +22,18 @@ namespace ClubManagementApp.Services
         Task<bool> SendPasswordResetAsync(User user, string resetToken);
         Task<bool> SendReportGeneratedAsync(User user, Report report);
         Task<bool> SendClubInvitationAsync(User user, Club club, User invitedBy);
-        
+
         // Email queue management
         Task QueueEmailAsync(EmailMessage message, DateTime? scheduledTime = null);
         Task ProcessEmailQueueAsync();
         Task<List<QueuedEmail>> GetPendingEmailsAsync();
         Task<EmailStatistics> GetEmailStatisticsAsync(DateTime? fromDate = null, DateTime? toDate = null);
-        
+
         // Email templates
         Task<string> GetEmailTemplateAsync(EmailTemplateType templateType);
         Task SaveEmailTemplateAsync(EmailTemplateType templateType, string template);
         Task<string> ProcessTemplateAsync(string template, Dictionary<string, object> variables);
-        
+
         // Configuration and testing
         Task<bool> TestEmailConfigurationAsync();
         Task<EmailConfiguration> GetEmailConfigurationAsync();
@@ -44,14 +44,14 @@ namespace ClubManagementApp.Services
     {
         private readonly ILoggingService _loggingService;
         private readonly IAuditService _auditService;
-        private readonly IConfigurationService _configurationService;
+        private readonly IConfiguration _configurationService;
         private readonly ISettingsService _settingsService;
         private EmailConfiguration? _emailConfiguration;
 
         public EmailService(
             ILoggingService loggingService,
             IAuditService auditService,
-            IConfigurationService configurationService,
+            IConfiguration configurationService,
             ISettingsService settingsService)
         {
             _loggingService = loggingService;
@@ -80,18 +80,18 @@ namespace ClubManagementApp.Services
                     using (var mailMessage = new MailMessage())
                     {
                         mailMessage.From = new MailAddress(config.FromEmail, config.FromName);
-                        
+
                         // Add recipients
                         foreach (var to in message.ToAddresses)
                         {
                             mailMessage.To.Add(to);
                         }
-                        
+
                         foreach (var cc in message.CcAddresses ?? new List<string>())
                         {
                             mailMessage.CC.Add(cc);
                         }
-                        
+
                         foreach (var bcc in message.BccAddresses ?? new List<string>())
                         {
                             mailMessage.Bcc.Add(bcc);
@@ -123,10 +123,10 @@ namespace ClubManagementApp.Services
                     }
                 }
 
-                await _auditService.LogSystemEventAsync("Email Sent", 
+                await _auditService.LogSystemEventAsync("Email Sent",
                     $"Email sent to {string.Join(", ", message.ToAddresses)} - Subject: {message.Subject}");
                 await _loggingService.LogInformationAsync($"Email sent successfully to {string.Join(", ", message.ToAddresses)}");
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -160,7 +160,7 @@ namespace ClubManagementApp.Services
                 {
                     successCount++;
                 }
-                
+
                 // Add small delay to avoid overwhelming the SMTP server
                 await Task.Delay(100);
             }
@@ -184,7 +184,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, "Welcome to Club Management System", body, true);
             }
             catch (Exception ex)
@@ -212,7 +212,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, $"New Event: {eventInfo.Name}", body, true);
             }
             catch (Exception ex)
@@ -228,7 +228,7 @@ namespace ClubManagementApp.Services
             {
                 var template = await GetEmailTemplateAsync(EmailTemplateType.EventReminder);
                 var hoursUntilEvent = (eventInfo.EventDate - DateTime.Now).TotalHours;
-                
+
                 var variables = new Dictionary<string, object>
                 {
                     { "UserName", user.FullName },
@@ -241,7 +241,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, $"Reminder: {eventInfo.Name}", body, true);
             }
             catch (Exception ex)
@@ -265,7 +265,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, $"Membership Approved: {club.Name}", body, true);
             }
             catch (Exception ex)
@@ -281,7 +281,7 @@ namespace ClubManagementApp.Services
             {
                 var template = await GetEmailTemplateAsync(EmailTemplateType.PasswordReset);
                 var resetLink = $"https://clubmanagement.app/reset-password?token={resetToken}";
-                
+
                 var variables = new Dictionary<string, object>
                 {
                     { "UserName", user.FullName },
@@ -291,7 +291,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, "Password Reset Request", body, true);
             }
             catch (Exception ex)
@@ -316,7 +316,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, $"Report Generated: {report.Title}", body, true);
             }
             catch (Exception ex)
@@ -341,7 +341,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var body = await ProcessTemplateAsync(template, variables);
-                
+
                 return await SendEmailAsync(user.Email, $"Invitation to Join {club.Name}", body, true);
             }
             catch (Exception ex)
@@ -393,7 +393,7 @@ namespace ClubManagementApp.Services
                         queuedEmail.LastAttemptAt = DateTime.UtcNow;
 
                         var success = await SendEmailAsync(queuedEmail.Message);
-                        
+
                         if (success)
                         {
                             queuedEmail.Status = EmailStatus.Sent;
@@ -443,7 +443,7 @@ namespace ClubManagementApp.Services
 
                 var jsonData = await File.ReadAllTextAsync(queuePath);
                 var allEmails = JsonSerializer.Deserialize<List<QueuedEmail>>(jsonData) ?? new List<QueuedEmail>();
-                
+
                 return allEmails.Where(e => e.Status == EmailStatus.Queued).ToList();
             }
             catch (Exception ex)
@@ -465,10 +465,10 @@ namespace ClubManagementApp.Services
                 var allEmails = JsonSerializer.Deserialize<List<QueuedEmail>>(jsonData) ?? new List<QueuedEmail>();
 
                 var filteredEmails = allEmails.AsQueryable();
-                
+
                 if (fromDate.HasValue)
                     filteredEmails = filteredEmails.Where(e => e.CreatedAt >= fromDate.Value);
-                
+
                 if (toDate.HasValue)
                     filteredEmails = filteredEmails.Where(e => e.CreatedAt <= toDate.Value);
 
@@ -500,7 +500,7 @@ namespace ClubManagementApp.Services
             {
                 var templateKey = $"email.template.{templateType.ToString().ToLower()}";
                 var template = await _settingsService.GetGlobalSettingAsync<string>(templateKey);
-                
+
                 if (string.IsNullOrEmpty(template))
                 {
                     template = GetDefaultTemplate(templateType);
@@ -536,7 +536,7 @@ namespace ClubManagementApp.Services
             try
             {
                 var result = template;
-                
+
                 foreach (var variable in variables)
                 {
                     var placeholder = $"{{{{{variable.Key}}}}}";
@@ -583,44 +583,44 @@ namespace ClubManagementApp.Services
             {
                 _emailConfiguration = new EmailConfiguration
                 {
-                    SmtpServer = _configurationService.GetValue<string>("Email:SmtpServer", "smtp.gmail.com"),
-                SmtpPort = _configurationService.GetValue<int>("Email:SmtpPort", 587),
-                EnableSsl = _configurationService.GetValue<bool>("Email:EnableSsl", true),
-                Username = _configurationService.GetValue<string>("Email:Username", ""),
-                Password = _configurationService.GetValue<string>("Email:Password", ""),
-                FromEmail = _configurationService.GetValue<string>("Email:FromEmail", ""),
-                FromName = _configurationService.GetValue<string>("Email:FromName", "Club Management System"),
-                IsEnabled = _configurationService.GetValue<bool>("Email:IsEnabled", false)
+                    SmtpServer = _configurationService.GetValue<string>("EmailSettings:SmtpServer", "smtp.gmail.com"),
+                    SmtpPort = _configurationService.GetValue<int>("EmailSettings:SmtpPort", 587),
+                    EnableSsl = _configurationService.GetValue<bool>("EmailSettings:EnableSsl", true),
+                    Username = _configurationService.GetValue<string>("EmailSettings:Username", ""),
+                    Password = _configurationService.GetValue<string>("EmailSettings:Password", ""),
+                    FromEmail = _configurationService.GetValue<string>("EmailSettings:FromEmail", ""),
+                    FromName = _configurationService.GetValue<string>("EmailSettings:FromName", "Club Management System"),
+                    IsEnabled = _configurationService.GetValue<bool>("EmailSettings:IsEnabled", false)
                 };
             }
 
             return Task.FromResult(_emailConfiguration);
         }
 
-        public async Task UpdateEmailConfigurationAsync(EmailConfiguration configuration)
-        {
-            try
-            {
-                await _configurationService.SetAsync("Email:SmtpServer", configuration.SmtpServer);
-                await _configurationService.SetAsync("Email:SmtpPort", configuration.SmtpPort);
-                await _configurationService.SetAsync("Email:EnableSsl", configuration.EnableSsl);
-                await _configurationService.SetAsync("Email:Username", configuration.Username);
-                await _configurationService.SetAsync("Email:Password", configuration.Password);
-                await _configurationService.SetAsync("Email:FromEmail", configuration.FromEmail);
-                await _configurationService.SetAsync("Email:FromName", configuration.FromName);
-                await _configurationService.SetAsync("Email:IsEnabled", configuration.IsEnabled);
-                
-                await _configurationService.SaveAsync();
-                _emailConfiguration = null; // Reset cache
-                
-                await _auditService.LogSystemEventAsync("Email Configuration Updated", "Email settings have been updated");
-            }
-            catch (Exception ex)
-            {
-                await _loggingService.LogErrorAsync("Failed to update email configuration", ex);
-                throw;
-            }
-        }
+        //public async Task UpdateEmailConfigurationAsync(EmailConfiguration configuration)
+        //{
+        //    try
+        //    {
+        //        await _configurationService.SetAsync("EmailSettings:SmtpServer", configuration.SmtpServer);
+        //        await _configurationService.SetAsync("EmailSettings:SmtpPort", configuration.SmtpPort);
+        //        await _configurationService.SetAsync("EmailSettings:EnableSsl", configuration.EnableSsl);
+        //        await _configurationService.SetAsync("EmailSettings:Username", configuration.Username);
+        //        await _configurationService.SetAsync("EmailSettings:Password", configuration.Password);
+        //        await _configurationService.SetAsync("EmailSettings:FromEmail", configuration.FromEmail);
+        //        await _configurationService.SetAsync("EmailSettings:FromName", configuration.FromName);
+        //        await _configurationService.SetAsync("EmailSettings:IsEnabled", configuration.IsEnabled);
+
+        //        await _configurationService.SaveAsync();
+        //        _emailConfiguration = null; // Reset cache
+
+        //        await _auditService.LogSystemEventAsync("Email Configuration Updated", "Email settings have been updated");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await _loggingService.LogErrorAsync("Failed to update email configuration", ex);
+        //        throw;
+        //    }
+        //}
 
         private string GetDefaultTemplate(EmailTemplateType templateType)
         {
@@ -639,7 +639,7 @@ namespace ClubManagementApp.Services
                     </ul>
                     <p>You can now log in and start participating in club activities.</p>
                     <p>Best regards,<br>Club Management Team</p>",
-                    
+
                 EmailTemplateType.EventNotification => @"
                     <h2>New Event: {{EventName}}</h2>
                     <p>Dear {{UserName}},</p>
@@ -655,7 +655,7 @@ namespace ClubManagementApp.Services
                     <p>{{EventDescription}}</p>
                     <p>Don't miss out on this exciting opportunity!</p>
                     <p>Best regards,<br>{{ClubName}}</p>",
-                    
+
                 EmailTemplateType.EventReminder => @"
                     <h2>Event Reminder: {{EventName}}</h2>
                     <p>Dear {{UserName}},</p>
@@ -666,7 +666,7 @@ namespace ClubManagementApp.Services
                     <p>The event is starting in approximately {{HoursUntilEvent}} hours.</p>
                     <p>We look forward to seeing you there!</p>
                     <p>Best regards,<br>{{ClubName}}</p>",
-                    
+
                 EmailTemplateType.MembershipApproval => @"
                     <h2>Membership Approved!</h2>
                     <p>Dear {{UserName}},</p>
@@ -677,7 +677,7 @@ namespace ClubManagementApp.Services
                     <p>You can now participate in all club activities and events.</p>
                     <p>Welcome to the club!</p>
                     <p>Best regards,<br>{{ClubName}} Leadership</p>",
-                    
+
                 EmailTemplateType.PasswordReset => @"
                     <h2>Password Reset Request</h2>
                     <p>Dear {{UserName}},</p>
@@ -687,7 +687,7 @@ namespace ClubManagementApp.Services
                     <p>This link will expire in {{ExpirationTime}}.</p>
                     <p>If you didn't request this password reset, please ignore this email.</p>
                     <p>Best regards,<br>Club Management Team</p>",
-                    
+
                 EmailTemplateType.ReportGenerated => @"
                     <h2>Report Generated</h2>
                     <p>Dear {{UserName}},</p>
@@ -701,7 +701,7 @@ namespace ClubManagementApp.Services
                     </ul>
                     <p>The report is now available in the system.</p>
                     <p>Best regards,<br>Club Management Team</p>",
-                    
+
                 EmailTemplateType.ClubInvitation => @"
                     <h2>Club Invitation</h2>
                     <p>Dear {{UserName}},</p>
@@ -711,7 +711,7 @@ namespace ClubManagementApp.Services
                     <p>Invitation Date: {{InvitationDate}}</p>
                     <p>If you're interested in joining, please contact the club leadership or log into the system to accept the invitation.</p>
                     <p>Best regards,<br>{{ClubName}}</p>",
-                    
+
                 _ => "<p>Default email template</p>"
             };
         }
@@ -720,15 +720,15 @@ namespace ClubManagementApp.Services
         {
             var queuePath = GetEmailQueuePath();
             var allEmails = new List<QueuedEmail>();
-            
+
             if (File.Exists(queuePath))
             {
                 var jsonData = await File.ReadAllTextAsync(queuePath);
                 allEmails = JsonSerializer.Deserialize<List<QueuedEmail>>(jsonData) ?? new List<QueuedEmail>();
             }
-            
+
             allEmails.Add(queuedEmail);
-            
+
             var updatedJsonData = JsonSerializer.Serialize(allEmails, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(queuePath, updatedJsonData);
         }
@@ -741,13 +741,13 @@ namespace ClubManagementApp.Services
 
             var jsonData = await File.ReadAllTextAsync(queuePath);
             var allEmails = JsonSerializer.Deserialize<List<QueuedEmail>>(jsonData) ?? new List<QueuedEmail>();
-            
+
             var existingEmail = allEmails.FirstOrDefault(e => e.Id == queuedEmail.Id);
             if (existingEmail != null)
             {
                 var index = allEmails.IndexOf(existingEmail);
                 allEmails[index] = queuedEmail;
-                
+
                 var updatedJsonData = JsonSerializer.Serialize(allEmails, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(queuePath, updatedJsonData);
             }
@@ -759,6 +759,11 @@ namespace ClubManagementApp.Services
             var clubManagementPath = Path.Combine(appDataPath, "ClubManagement");
             Directory.CreateDirectory(clubManagementPath);
             return Path.Combine(clubManagementPath, "email_queue.json");
+        }
+
+        public Task UpdateEmailConfigurationAsync(EmailConfiguration configuration)
+        {
+            throw new NotImplementedException();
         }
     }
 

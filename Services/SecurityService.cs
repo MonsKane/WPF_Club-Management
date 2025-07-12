@@ -1,11 +1,10 @@
-using ClubManagementApp.Models;
 using ClubManagementApp.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.IO;
 
 namespace ClubManagementApp.Services
 {
@@ -16,27 +15,27 @@ namespace ClubManagementApp.Services
         Task<bool> VerifyPasswordAsync(string password, string hashedPassword);
         Task<bool> ValidatePasswordStrengthAsync(string password);
         Task<string> GenerateSecurePasswordAsync(int length = 12);
-        
+
         // Token management
         Task<string> GenerateTokenAsync(TokenType tokenType, string userId, TimeSpan? expiration = null);
         Task<bool> ValidateTokenAsync(string token, TokenType tokenType, string userId);
         Task<bool> RevokeTokenAsync(string token);
         Task<List<SecurityToken>> GetActiveTokensAsync(string userId);
         Task CleanupExpiredTokensAsync();
-        
+
         // Session management
         Task<string> CreateSessionAsync(string userId, string ipAddress, string userAgent);
         Task<bool> ValidateSessionAsync(string sessionId, string userId);
         Task<bool> RevokeSessionAsync(string sessionId);
         Task<List<UserSession>> GetActiveSessionsAsync(string userId);
         Task RevokeAllSessionsAsync(string userId);
-        
+
         // Security monitoring
         Task LogSecurityEventAsync(SecurityEventType eventType, string userId, string details, string? ipAddress = null);
         Task<List<SecurityEvent>> GetSecurityEventsAsync(string? userId = null, DateTime? fromDate = null, DateTime? toDate = null);
         Task<bool> CheckSuspiciousActivityAsync(string userId, string ipAddress);
         Task<SecurityReport> GenerateSecurityReportAsync(DateTime fromDate, DateTime toDate);
-        
+
         // Account security
         Task<bool> IsAccountLockedAsync(string userId);
         Task LockAccountAsync(string userId, TimeSpan? lockDuration = null, string? reason = null);
@@ -44,19 +43,19 @@ namespace ClubManagementApp.Services
         Task<int> GetFailedLoginAttemptsAsync(string userId);
         Task IncrementFailedLoginAttemptsAsync(string userId);
         Task ResetFailedLoginAttemptsAsync(string userId);
-        
+
         // Two-factor authentication
         Task<string> GenerateTwoFactorCodeAsync(string userId);
         Task<bool> ValidateTwoFactorCodeAsync(string userId, string code);
         Task<bool> IsTwoFactorEnabledAsync(string userId);
         Task EnableTwoFactorAsync(string userId);
         Task DisableTwoFactorAsync(string userId);
-        
+
         // Data encryption
         Task<string> EncryptDataAsync(string data, string? key = null);
         Task<string> DecryptDataAsync(string encryptedData, string? key = null);
         Task<string> GenerateEncryptionKeyAsync();
-        
+
         // Security configuration
         Task<SecurityConfiguration> GetSecurityConfigurationAsync();
         Task UpdateSecurityConfigurationAsync(SecurityConfiguration configuration);
@@ -68,7 +67,7 @@ namespace ClubManagementApp.Services
         private readonly ClubManagementDbContext _context;
         private readonly ILoggingService _loggingService;
         private readonly IAuditService _auditService;
-        private readonly IConfigurationService _configurationService;
+        private readonly IConfiguration _configurationService;
         private SecurityConfiguration? _securityConfiguration;
         private readonly string _encryptionKey;
 
@@ -76,7 +75,7 @@ namespace ClubManagementApp.Services
             ClubManagementDbContext context,
             ILoggingService loggingService,
             IAuditService auditService,
-            IConfigurationService configurationService)
+            IConfiguration configurationService)
         {
             _context = context;
             _loggingService = loggingService;
@@ -142,7 +141,7 @@ namespace ClubManagementApp.Services
             try
             {
                 var config = await GetSecurityConfigurationAsync();
-                
+
                 if (password.Length < config.MinPasswordLength)
                     return false;
 
@@ -189,7 +188,7 @@ namespace ClubManagementApp.Services
                     }
 
                     var generatedPassword = password.ToString();
-                    
+
                     // Ensure it meets strength requirements
                     if (await ValidatePasswordStrengthAsync(generatedPassword))
                         return generatedPassword;
@@ -211,7 +210,7 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-                
+
                 if (expiration.HasValue && expiration.Value <= TimeSpan.Zero)
                     throw new ArgumentException("Expiration time must be positive", nameof(expiration));
 
@@ -231,7 +230,7 @@ namespace ClubManagementApp.Services
 
                 await SaveTokenAsync(securityToken);
                 await LogSecurityEventAsync(SecurityEventType.TokenGenerated, userId, $"Token generated: {tokenType}");
-                
+
                 return token;
             }
             catch (Exception ex)
@@ -248,13 +247,13 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(token))
                     throw new ArgumentException("Token cannot be null or empty", nameof(token));
-                
+
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
                 var securityToken = await GetTokenAsync(token);
-                
-                if (securityToken == null || 
+
+                if (securityToken == null ||
                     securityToken.TokenType != tokenType ||
                     securityToken.UserId != userId ||
                     securityToken.IsRevoked ||
@@ -286,7 +285,7 @@ namespace ClubManagementApp.Services
                     securityToken.IsRevoked = true;
                     securityToken.RevokedAt = DateTime.UtcNow;
                     await UpdateTokenAsync(securityToken);
-                    
+
                     await LogSecurityEventAsync(SecurityEventType.TokenRevoked, securityToken.UserId, $"Token revoked: {securityToken.TokenType}");
                     return true;
                 }
@@ -345,7 +344,7 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-                
+
                 if (string.IsNullOrWhiteSpace(ipAddress))
                     throw new ArgumentException("IP address cannot be null or empty", nameof(ipAddress));
 
@@ -363,7 +362,7 @@ namespace ClubManagementApp.Services
 
                 await SaveSessionAsync(session);
                 await LogSecurityEventAsync(SecurityEventType.SessionCreated, userId, $"Session created from {ipAddress}", ipAddress);
-                
+
                 return sessionId;
             }
             catch (Exception ex)
@@ -380,13 +379,13 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(sessionId))
                     throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
-                
+
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
                 var session = await GetSessionAsync(sessionId);
-                
-                if (session == null || 
+
+                if (session == null ||
                     session.UserId != userId ||
                     !session.IsActive ||
                     session.LastActivityAt < DateTime.UtcNow.AddHours(-24)) // 24-hour timeout
@@ -397,7 +396,7 @@ namespace ClubManagementApp.Services
                 // Update last activity
                 session.LastActivityAt = DateTime.UtcNow;
                 await UpdateSessionAsync(session);
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -421,7 +420,7 @@ namespace ClubManagementApp.Services
                     session.IsActive = false;
                     session.EndedAt = DateTime.UtcNow;
                     await UpdateSessionAsync(session);
-                    
+
                     await LogSecurityEventAsync(SecurityEventType.SessionEnded, session.UserId, "Session revoked");
                     return true;
                 }
@@ -481,7 +480,7 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-                
+
                 if (string.IsNullOrWhiteSpace(details))
                     throw new ArgumentException("Details cannot be null or empty", nameof(details));
 
@@ -516,13 +515,13 @@ namespace ClubManagementApp.Services
             try
             {
                 var events = await GetAllSecurityEventsAsync();
-                
+
                 if (!string.IsNullOrEmpty(userId))
                     events = events.Where(e => e.UserId == userId).ToList();
-                
+
                 if (fromDate.HasValue)
                     events = events.Where(e => e.Timestamp >= fromDate.Value).ToList();
-                
+
                 if (toDate.HasValue)
                     events = events.Where(e => e.Timestamp <= toDate.Value).ToList();
 
@@ -542,12 +541,12 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-                
+
                 if (string.IsNullOrWhiteSpace(ipAddress))
                     throw new ArgumentException("IP address cannot be null or empty", nameof(ipAddress));
 
                 var recentEvents = await GetSecurityEventsAsync(userId, DateTime.UtcNow.AddHours(-1));
-                
+
                 return await CheckFailedLoginAttemptsAsync(userId, ipAddress, recentEvents) ||
                        await CheckMultipleIpLoginsAsync(userId, ipAddress, recentEvents);
             }
@@ -562,10 +561,10 @@ namespace ClubManagementApp.Services
         {
             const int maxFailedLogins = 5;
             var failedLogins = recentEvents.Count(e => e.EventType == SecurityEventType.LoginFailed);
-            
+
             if (failedLogins >= maxFailedLogins)
             {
-                await LogSecurityEventAsync(SecurityEventType.SuspiciousActivity, userId, 
+                await LogSecurityEventAsync(SecurityEventType.SuspiciousActivity, userId,
                     $"Multiple failed login attempts: {failedLogins}", ipAddress);
                 return true;
             }
@@ -580,10 +579,10 @@ namespace ClubManagementApp.Services
                 .Select(e => e.IpAddress)
                 .Distinct()
                 .Count();
-            
+
             if (uniqueIPs >= maxUniqueIps)
             {
-                await LogSecurityEventAsync(SecurityEventType.SuspiciousActivity, userId, 
+                await LogSecurityEventAsync(SecurityEventType.SuspiciousActivity, userId,
                     $"Login from multiple IPs: {uniqueIPs}", ipAddress);
                 return true;
             }
@@ -595,7 +594,7 @@ namespace ClubManagementApp.Services
             try
             {
                 var events = await GetSecurityEventsAsync(null, fromDate, toDate);
-                
+
                 return new SecurityReport
                 {
                     FromDate = fromDate,
@@ -629,7 +628,7 @@ namespace ClubManagementApp.Services
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
                 var lockInfo = await GetAccountLockInfoAsync(userId);
-                return lockInfo != null && lockInfo.IsLocked && 
+                return lockInfo != null && lockInfo.IsLocked &&
                        (lockInfo.LockExpiresAt == null || lockInfo.LockExpiresAt > DateTime.UtcNow);
             }
             catch (Exception ex)
@@ -646,7 +645,7 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-                
+
                 if (lockDuration.HasValue && lockDuration.Value <= TimeSpan.Zero)
                     throw new ArgumentException("Lock duration must be positive", nameof(lockDuration));
 
@@ -725,7 +724,7 @@ namespace ClubManagementApp.Services
                 var loginInfo = await GetLoginInfoAsync(userId) ?? new LoginInfo { UserId = userId };
                 loginInfo.FailedAttempts++;
                 loginInfo.LastFailedAttempt = DateTime.UtcNow;
-                
+
                 await SaveLoginInfoAsync(loginInfo);
                 await LogSecurityEventAsync(SecurityEventType.LoginFailed, userId, $"Failed login attempt #{loginInfo.FailedAttempts}");
 
@@ -733,7 +732,7 @@ namespace ClubManagementApp.Services
                 var config = await GetSecurityConfigurationAsync();
                 if (loginInfo.FailedAttempts >= config.MaxFailedLoginAttempts)
                 {
-                    await LockAccountAsync(userId, TimeSpan.FromMinutes(config.AccountLockoutDurationMinutes), 
+                    await LockAccountAsync(userId, TimeSpan.FromMinutes(config.AccountLockoutDurationMinutes),
                         "Too many failed login attempts");
                 }
             }
@@ -785,7 +784,7 @@ namespace ClubManagementApp.Services
 
                 await SaveTwoFactorInfoAsync(twoFactorInfo);
                 await LogSecurityEventAsync(SecurityEventType.TwoFactorCodeGenerated, userId, "2FA code generated");
-                
+
                 return code;
             }
             catch (Exception ex)
@@ -802,13 +801,13 @@ namespace ClubManagementApp.Services
                 // Input validation
                 if (string.IsNullOrWhiteSpace(userId))
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-                
+
                 if (string.IsNullOrWhiteSpace(code))
                     throw new ArgumentException("Code cannot be null or empty", nameof(code));
 
                 var twoFactorInfo = await GetTwoFactorInfoAsync(userId, code);
-                
-                if (twoFactorInfo == null || 
+
+                if (twoFactorInfo == null ||
                     twoFactorInfo.IsUsed ||
                     twoFactorInfo.ExpiresAt < DateTime.UtcNow)
                 {
@@ -819,7 +818,7 @@ namespace ClubManagementApp.Services
                 twoFactorInfo.IsUsed = true;
                 twoFactorInfo.UsedAt = DateTime.UtcNow;
                 await UpdateTwoFactorInfoAsync(twoFactorInfo);
-                
+
                 await LogSecurityEventAsync(SecurityEventType.TwoFactorCodeValidated, userId, "2FA code validated");
                 return true;
             }
@@ -989,54 +988,54 @@ namespace ClubManagementApp.Services
                 _securityConfiguration = new SecurityConfiguration
                 {
                     MinPasswordLength = _configurationService.GetValue<int>("Security:MinPasswordLength", 8),
-                RequireUppercase = _configurationService.GetValue<bool>("Security:RequireUppercase", true),
-                RequireLowercase = _configurationService.GetValue<bool>("Security:RequireLowercase", true),
-                RequireDigits = _configurationService.GetValue<bool>("Security:RequireDigits", true),
-                RequireSpecialCharacters = _configurationService.GetValue<bool>("Security:RequireSpecialCharacters", true),
-                MaxFailedLoginAttempts = _configurationService.GetValue<int>("Security:MaxFailedLoginAttempts", 5),
-                AccountLockoutDurationMinutes = _configurationService.GetValue<int>("Security:AccountLockoutDurationMinutes", 30),
-                SessionTimeoutMinutes = _configurationService.GetValue<int>("Security:SessionTimeoutMinutes", 1440),
-                RequireTwoFactor = _configurationService.GetValue<bool>("Security:RequireTwoFactor", false),
-                PasswordExpirationDays = _configurationService.GetValue<int>("Security:PasswordExpirationDays", 90)
+                    RequireUppercase = _configurationService.GetValue<bool>("Security:RequireUppercase", true),
+                    RequireLowercase = _configurationService.GetValue<bool>("Security:RequireLowercase", true),
+                    RequireDigits = _configurationService.GetValue<bool>("Security:RequireDigits", true),
+                    RequireSpecialCharacters = _configurationService.GetValue<bool>("Security:RequireSpecialCharacters", true),
+                    MaxFailedLoginAttempts = _configurationService.GetValue<int>("Security:MaxFailedLoginAttempts", 5),
+                    AccountLockoutDurationMinutes = _configurationService.GetValue<int>("Security:AccountLockoutDurationMinutes", 30),
+                    SessionTimeoutMinutes = _configurationService.GetValue<int>("Security:SessionTimeoutMinutes", 1440),
+                    RequireTwoFactor = _configurationService.GetValue<bool>("Security:RequireTwoFactor", false),
+                    PasswordExpirationDays = _configurationService.GetValue<int>("Security:PasswordExpirationDays", 90)
                 };
             }
 
             return Task.FromResult(_securityConfiguration);
         }
 
-        public async Task UpdateSecurityConfigurationAsync(SecurityConfiguration configuration)
-        {
-            try
-            {
-                // Input validation
-                if (configuration == null)
-                    throw new ArgumentNullException(nameof(configuration));
-                
-                if (!await ValidateSecurityConfigurationAsync(configuration))
-                    throw new ArgumentException("Invalid security configuration", nameof(configuration));
+        //public async Task UpdateSecurityConfigurationAsync(SecurityConfiguration configuration)
+        //{
+        //    try
+        //    {
+        //        // Input validation
+        //        if (configuration == null)
+        //            throw new ArgumentNullException(nameof(configuration));
 
-                _configurationService.SetValue("Security:MinPasswordLength", configuration.MinPasswordLength);
-                _configurationService.SetValue("Security:RequireUppercase", configuration.RequireUppercase);
-                _configurationService.SetValue("Security:RequireLowercase", configuration.RequireLowercase);
-                _configurationService.SetValue("Security:RequireDigits", configuration.RequireDigits);
-                _configurationService.SetValue("Security:RequireSpecialCharacters", configuration.RequireSpecialCharacters);
-                _configurationService.SetValue("Security:MaxFailedLoginAttempts", configuration.MaxFailedLoginAttempts);
-                _configurationService.SetValue("Security:AccountLockoutDurationMinutes", configuration.AccountLockoutDurationMinutes);
-                _configurationService.SetValue("Security:SessionTimeoutMinutes", configuration.SessionTimeoutMinutes);
-                _configurationService.SetValue("Security:RequireTwoFactor", configuration.RequireTwoFactor);
-                _configurationService.SetValue("Security:PasswordExpirationDays", configuration.PasswordExpirationDays);
-                
-                await _configurationService.SaveAsync();
-                _securityConfiguration = null; // Reset cache
-                
-                await _auditService.LogSystemEventAsync("Security Configuration Updated", "Security settings have been updated");
-            }
-            catch (Exception ex)
-            {
-                await _loggingService.LogErrorAsync("Failed to update security configuration", ex);
-                throw;
-            }
-        }
+        //        if (!await ValidateSecurityConfigurationAsync(configuration))
+        //            throw new ArgumentException("Invalid security configuration", nameof(configuration));
+
+        //        _configurationService.SetValue("Security:MinPasswordLength", configuration.MinPasswordLength);
+        //        _configurationService.SetValue("Security:RequireUppercase", configuration.RequireUppercase);
+        //        _configurationService.SetValue("Security:RequireLowercase", configuration.RequireLowercase);
+        //        _configurationService.SetValue("Security:RequireDigits", configuration.RequireDigits);
+        //        _configurationService.SetValue("Security:RequireSpecialCharacters", configuration.RequireSpecialCharacters);
+        //        _configurationService.SetValue("Security:MaxFailedLoginAttempts", configuration.MaxFailedLoginAttempts);
+        //        _configurationService.SetValue("Security:AccountLockoutDurationMinutes", configuration.AccountLockoutDurationMinutes);
+        //        _configurationService.SetValue("Security:SessionTimeoutMinutes", configuration.SessionTimeoutMinutes);
+        //        _configurationService.SetValue("Security:RequireTwoFactor", configuration.RequireTwoFactor);
+        //        _configurationService.SetValue("Security:PasswordExpirationDays", configuration.PasswordExpirationDays);
+
+        //        await _configurationService.SaveAsync();
+        //        _securityConfiguration = null; // Reset cache
+
+        //        await _auditService.LogSystemEventAsync("Security Configuration Updated", "Security settings have been updated");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await _loggingService.LogErrorAsync("Failed to update security configuration", ex);
+        //        throw;
+        //    }
+        //}
 
         public async Task<bool> ValidateSecurityConfigurationAsync(SecurityConfiguration configuration)
         {
@@ -1251,13 +1250,13 @@ namespace ClubManagementApp.Services
         {
             var filePath = GetSecurityDataPath("account_locks.json");
             var lockInfos = new List<AccountLockInfo>();
-            
+
             if (File.Exists(filePath))
             {
                 var jsonData = await File.ReadAllTextAsync(filePath);
                 lockInfos = JsonSerializer.Deserialize<List<AccountLockInfo>>(jsonData) ?? new List<AccountLockInfo>();
             }
-            
+
             var existing = lockInfos.FirstOrDefault(l => l.UserId == lockInfo.UserId);
             if (existing != null)
             {
@@ -1268,7 +1267,7 @@ namespace ClubManagementApp.Services
             {
                 lockInfos.Add(lockInfo);
             }
-            
+
             var updatedJsonData = JsonSerializer.Serialize(lockInfos, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(filePath, updatedJsonData);
         }
@@ -1293,13 +1292,13 @@ namespace ClubManagementApp.Services
         {
             var filePath = GetSecurityDataPath("login_info.json");
             var loginInfos = new List<LoginInfo>();
-            
+
             if (File.Exists(filePath))
             {
                 var jsonData = await File.ReadAllTextAsync(filePath);
                 loginInfos = JsonSerializer.Deserialize<List<LoginInfo>>(jsonData) ?? new List<LoginInfo>();
             }
-            
+
             var existing = loginInfos.FirstOrDefault(l => l.UserId == loginInfo.UserId);
             if (existing != null)
             {
@@ -1310,7 +1309,7 @@ namespace ClubManagementApp.Services
             {
                 loginInfos.Add(loginInfo);
             }
-            
+
             var updatedJsonData = JsonSerializer.Serialize(loginInfos, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(filePath, updatedJsonData);
         }
@@ -1319,15 +1318,15 @@ namespace ClubManagementApp.Services
         {
             var filePath = GetSecurityDataPath("two_factor.json");
             var twoFactorInfos = new List<TwoFactorInfo>();
-            
+
             if (File.Exists(filePath))
             {
                 var jsonData = await File.ReadAllTextAsync(filePath);
                 twoFactorInfos = JsonSerializer.Deserialize<List<TwoFactorInfo>>(jsonData) ?? new List<TwoFactorInfo>();
             }
-            
+
             twoFactorInfos.Add(twoFactorInfo);
-            
+
             var updatedJsonData = JsonSerializer.Serialize(twoFactorInfos, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(filePath, updatedJsonData);
         }
@@ -1351,16 +1350,21 @@ namespace ClubManagementApp.Services
 
             var jsonData = await File.ReadAllTextAsync(filePath);
             var twoFactorInfos = JsonSerializer.Deserialize<List<TwoFactorInfo>>(jsonData) ?? new List<TwoFactorInfo>();
-            
+
             var existing = twoFactorInfos.FirstOrDefault(t => t.UserId == twoFactorInfo.UserId && t.Code == twoFactorInfo.Code);
             if (existing != null)
             {
                 var index = twoFactorInfos.IndexOf(existing);
                 twoFactorInfos[index] = twoFactorInfo;
-                
+
                 var updatedJsonData = JsonSerializer.Serialize(twoFactorInfos, new JsonSerializerOptions { WriteIndented = true });
                 await File.WriteAllTextAsync(filePath, updatedJsonData);
             }
+        }
+
+        public Task UpdateSecurityConfigurationAsync(SecurityConfiguration configuration)
+        {
+            throw new NotImplementedException();
         }
     }
 

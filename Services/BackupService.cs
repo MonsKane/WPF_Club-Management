@@ -2,6 +2,7 @@ using ClubManagementApp.Data;
 using ClubManagementApp.Exceptions;
 using ClubManagementApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
@@ -18,21 +19,21 @@ namespace ClubManagementApp.Services
         Task<string> CreateDatabaseBackupAsync(string? backupPath = null);
         Task RestoreDatabaseBackupAsync(string backupPath);
         Task<bool> ValidateBackupFileAsync(string backupPath);
-        
+
         // Data export/import operations
         Task<string> ExportDataAsync(ExportOptions options);
         Task ImportDataAsync(string dataPath, ImportOptions options);
-        
+
         // Scheduled backup management
         Task<List<BackupInfo>> GetBackupHistoryAsync();
         Task DeleteOldBackupsAsync(int retentionDays = 30);
         Task<BackupInfo> GetLatestBackupAsync();
-        
+
         // System maintenance
         Task<MaintenanceReport> PerformMaintenanceAsync(MaintenanceOptions options);
         Task<SystemHealthReport> CheckSystemHealthAsync();
         Task CleanupTemporaryFilesAsync();
-        
+
         // Configuration backup
         Task<string> BackupConfigurationAsync();
         Task RestoreConfigurationAsync(string configBackupPath);
@@ -66,7 +67,7 @@ namespace ClubManagementApp.Services
         private readonly ClubManagementDbContext _context;
         private readonly ILoggingService _loggingService;
         private readonly IAuditService _auditService;
-        private readonly IConfigurationService _configurationService;
+        private readonly IConfiguration _configurationService;
         private readonly string _backupDirectory;
 
         /// <summary>
@@ -83,15 +84,15 @@ namespace ClubManagementApp.Services
             ClubManagementDbContext context,
             ILoggingService loggingService,
             IAuditService auditService,
-            IConfigurationService configurationService)
+            IConfiguration configurationService)
         {
             _context = context;
             _loggingService = loggingService;
             _auditService = auditService;
             _configurationService = configurationService;
-            _backupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+            _backupDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "ClubManagement", "Backups");
-            
+
             Directory.CreateDirectory(_backupDirectory);
         }
 
@@ -147,7 +148,7 @@ namespace ClubManagementApp.Services
                 };
 
                 var jsonData = JsonSerializer.Serialize(backupData, jsonOptions);
-                
+
                 // Compress the backup
                 var compressedPath = fullPath.Replace(".json", ".zip");
                 using (var fileStream = new FileStream(compressedPath, FileMode.Create))
@@ -215,7 +216,7 @@ namespace ClubManagementApp.Services
                     throw new ArgumentException("Invalid backup file");
 
                 DatabaseBackup? backupData;
-                
+
                 // Extract and read backup data
                 using (var fileStream = new FileStream(backupPath, FileMode.Open))
                 using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read))
@@ -251,7 +252,7 @@ namespace ClubManagementApp.Services
                         _context.Events.RemoveRange(_context.Events);
                         _context.Users.RemoveRange(_context.Users);
                         _context.Clubs.RemoveRange(_context.Clubs);
-                        
+
                         await _context.SaveChangesAsync();
 
                         // Restore data (in order of dependencies)
@@ -493,7 +494,7 @@ namespace ClubManagementApp.Services
                             {
                                 if (options.ClearExistingData)
                                     _context.Users.RemoveRange(_context.Users);
-                                
+
                                 _context.Users.AddRange(users);
                             }
                         }
@@ -505,7 +506,7 @@ namespace ClubManagementApp.Services
                             {
                                 if (options.ClearExistingData)
                                     _context.Clubs.RemoveRange(_context.Clubs);
-                                
+
                                 _context.Clubs.AddRange(clubs);
                             }
                         }
@@ -517,7 +518,7 @@ namespace ClubManagementApp.Services
                             {
                                 if (options.ClearExistingData)
                                     _context.Events.RemoveRange(_context.Events);
-                                
+
                                 _context.Events.AddRange(events);
                             }
                         }
@@ -529,7 +530,7 @@ namespace ClubManagementApp.Services
                             {
                                 if (options.ClearExistingData)
                                     _context.Reports.RemoveRange(_context.Reports);
-                                
+
                                 _context.Reports.AddRange(reports);
                             }
                         }
@@ -668,7 +669,7 @@ namespace ClubManagementApp.Services
         public async Task<BackupInfo> GetLatestBackupAsync()
         {
             var backupHistory = await GetBackupHistoryAsync();
-            return backupHistory.Where(b => b.IsValid).OrderByDescending(b => b.CreatedAt).FirstOrDefault() 
+            return backupHistory.Where(b => b.IsValid).OrderByDescending(b => b.CreatedAt).FirstOrDefault()
                 ?? new BackupInfo { FileName = "No backups found", CreatedAt = DateTime.MinValue };
         }
 
@@ -748,7 +749,7 @@ namespace ClubManagementApp.Services
                 report.Success = true;
                 report.Duration = report.EndTime - report.StartTime;
 
-                await _auditService.LogSystemEventAsync("Maintenance Completed", 
+                await _auditService.LogSystemEventAsync("Maintenance Completed",
                     $"Maintenance completed successfully. Tasks: {string.Join(", ", report.TasksPerformed)}");
             }
             catch (Exception ex)
@@ -815,7 +816,7 @@ namespace ClubManagementApp.Services
                 var backupDriveInfo = new DriveInfo(Path.GetPathRoot(_backupDirectory) ?? "C:\\");
                 var freeSpaceGB = backupDriveInfo.AvailableFreeSpace / (1024 * 1024 * 1024);
                 report.DiskSpaceGB = freeSpaceGB;
-                
+
                 if (freeSpaceGB < 1)
                 {
                     report.Issues.Add("Low disk space (< 1GB available)");
@@ -832,7 +833,7 @@ namespace ClubManagementApp.Services
                 var latestBackup = await GetLatestBackupAsync();
                 var daysSinceLastBackup = (DateTime.UtcNow - latestBackup.CreatedAt).TotalDays;
                 report.DaysSinceLastBackup = (int)daysSinceLastBackup;
-                
+
                 if (daysSinceLastBackup > 7)
                 {
                     report.Issues.Add($"No recent backup (last backup: {daysSinceLastBackup:F0} days ago)");
@@ -844,7 +845,7 @@ namespace ClubManagementApp.Services
                 // Check audit log size
                 var auditLogCount = await _context.AuditLogs.CountAsync();
                 report.AuditLogCount = auditLogCount;
-                
+
                 if (auditLogCount > 100000)
                 {
                     report.Issues.Add($"Large number of audit logs ({auditLogCount:N0})");
@@ -892,9 +893,9 @@ namespace ClubManagementApp.Services
         {
             try
             {
-                var tempDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), 
+                var tempDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "ClubManagement", "Temp");
-                
+
                 if (Directory.Exists(tempDirectory))
                 {
                     var tempFiles = Directory.GetFiles(tempDirectory, "*", SearchOption.AllDirectories)
@@ -954,7 +955,7 @@ namespace ClubManagementApp.Services
                 {
                     CreatedAt = DateTime.UtcNow,
                     GlobalSettings = await _context.Settings.Where(s => s.Scope == SettingsScope.Global).ToListAsync(),
-                    ApplicationConfig = await _configurationService.GetAllAsync()
+                    //ApplicationConfig = await _configurationService.GetAllAsync()
                 };
 
                 var jsonData = JsonSerializer.Serialize(configData, new JsonSerializerOptions
@@ -1020,7 +1021,7 @@ namespace ClubManagementApp.Services
                         var existingGlobalSettings = await _context.Settings
                             .Where(s => s.Scope == SettingsScope.Global)
                             .ToListAsync();
-                        
+
                         _context.Settings.RemoveRange(existingGlobalSettings);
                         _context.Settings.AddRange(globalSettings);
                         await _context.SaveChangesAsync();
@@ -1033,11 +1034,11 @@ namespace ClubManagementApp.Services
                     var appConfig = JsonSerializer.Deserialize<Dictionary<string, object>>(configData["applicationConfig"].GetRawText());
                     if (appConfig?.Any() == true)
                     {
-                        foreach (var kvp in appConfig)
-                        {
-                            await _configurationService.SetAsync(kvp.Key, kvp.Value);
-                        }
-                        await _configurationService.SaveAsync();
+                        //foreach (var kvp in appConfig)
+                        //{
+                        //    await _configurationService.SetAsync(kvp.Key, kvp.Value);
+                        //}
+                        //await _configurationService.SaveAsync();
                     }
                 }
 
@@ -1116,7 +1117,7 @@ namespace ClubManagementApp.Services
     }
 
     // Supporting classes and enums
-    
+
     /// <summary>
     /// Data transfer object representing a complete database backup.
     /// Contains all core entities and metadata for full system restoration.
@@ -1131,28 +1132,28 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Timestamp when the backup was created</summary>
         public DateTime CreatedAt { get; set; }
-        
+
         /// <summary>Backup format version for compatibility checking</summary>
         public string Version { get; set; } = string.Empty;
-        
+
         /// <summary>All user accounts and profiles</summary>
         public List<User>? Users { get; set; }
-        
+
         /// <summary>All club definitions and metadata</summary>
         public List<Club>? Clubs { get; set; }
-        
+
         /// <summary>All events and their details</summary>
         public List<Event>? Events { get; set; }
-        
+
         /// <summary>All event participation records</summary>
         public List<EventParticipant>? EventParticipants { get; set; }
-        
+
         /// <summary>All generated reports</summary>
         public List<Report>? Reports { get; set; }
-        
+
         /// <summary>All system and user settings</summary>
         public List<Setting>? Settings { get; set; }
-        
+
         /// <summary>Audit logs (limited to last 90 days for size optimization)</summary>
         public List<AuditLog>? AuditLogs { get; set; }
     }
@@ -1171,19 +1172,19 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Display name of the backup file</summary>
         public string FileName { get; set; } = string.Empty;
-        
+
         /// <summary>Full path to the backup file on disk</summary>
         public string FilePath { get; set; } = string.Empty;
-        
+
         /// <summary>Timestamp when the backup was created</summary>
         public DateTime CreatedAt { get; set; }
-        
+
         /// <summary>Size of the backup file in bytes</summary>
         public long FileSize { get; set; }
-        
+
         /// <summary>Type of backup (Full, Incremental, Configuration)</summary>
         public BackupType BackupType { get; set; }
-        
+
         /// <summary>Whether the backup file still exists and is accessible</summary>
         public bool IsValid { get; set; }
     }
@@ -1202,19 +1203,19 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Include user accounts and profiles in export</summary>
         public bool IncludeUsers { get; set; } = true;
-        
+
         /// <summary>Include club definitions and metadata in export</summary>
         public bool IncludeClubs { get; set; } = true;
-        
+
         /// <summary>Include events and their details in export</summary>
         public bool IncludeEvents { get; set; } = true;
-        
+
         /// <summary>Include generated reports in export</summary>
         public bool IncludeReports { get; set; } = true;
-        
+
         /// <summary>Start date for date-range filtering (future enhancement)</summary>
         public DateTime? FromDate { get; set; }
-        
+
         /// <summary>End date for date-range filtering (future enhancement)</summary>
         public DateTime? ToDate { get; set; }
     }
@@ -1233,19 +1234,19 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Import user accounts and profiles</summary>
         public bool ImportUsers { get; set; } = true;
-        
+
         /// <summary>Import club definitions and metadata</summary>
         public bool ImportClubs { get; set; } = true;
-        
+
         /// <summary>Import events and their details</summary>
         public bool ImportEvents { get; set; } = true;
-        
+
         /// <summary>Import generated reports</summary>
         public bool ImportReports { get; set; } = true;
-        
+
         /// <summary>Whether to clear existing data before import (destructive operation)</summary>
         public bool ClearExistingData { get; set; } = false;
-        
+
         /// <summary>Whether to validate imported data integrity (future enhancement)</summary>
         public bool ValidateData { get; set; } = true;
     }
@@ -1264,22 +1265,22 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Remove old audit logs based on retention policy</summary>
         public bool CleanupOldLogs { get; set; } = true;
-        
+
         /// <summary>Perform database optimization and statistics updates</summary>
         public bool OptimizeDatabase { get; set; } = true;
-        
+
         /// <summary>Clean up temporary files and free disk space</summary>
         public bool CleanupTempFiles { get; set; } = true;
-        
+
         /// <summary>Delete old backup files based on retention policy</summary>
         public bool DeleteOldBackups { get; set; } = true;
-        
+
         /// <summary>Create a fresh backup during maintenance</summary>
         public bool CreateBackup { get; set; } = true;
-        
+
         /// <summary>Number of days to retain audit logs (default: 90)</summary>
         public int LogRetentionDays { get; set; } = 90;
-        
+
         /// <summary>Number of days to retain backup files (default: 30)</summary>
         public int BackupRetentionDays { get; set; } = 30;
     }
@@ -1298,19 +1299,19 @@ namespace ClubManagementApp.Services
     {
         /// <summary>When the maintenance operation began</summary>
         public DateTime StartTime { get; set; }
-        
+
         /// <summary>When the maintenance operation completed</summary>
         public DateTime EndTime { get; set; }
-        
+
         /// <summary>Total duration of the maintenance operation</summary>
         public TimeSpan Duration { get; set; }
-        
+
         /// <summary>Whether the maintenance operation completed successfully</summary>
         public bool Success { get; set; }
-        
+
         /// <summary>Error message if the operation failed</summary>
         public string? ErrorMessage { get; set; }
-        
+
         /// <summary>List of maintenance tasks that were performed</summary>
         public List<string> TasksPerformed { get; set; } = new();
     }
@@ -1329,25 +1330,25 @@ namespace ClubManagementApp.Services
     {
         /// <summary>When the health check was performed</summary>
         public DateTime CheckTime { get; set; }
-        
+
         /// <summary>Overall system health status (Healthy, Info, Warning, Critical)</summary>
         public HealthStatus OverallHealth { get; set; } = HealthStatus.Unknown;
-        
+
         /// <summary>Whether the database is accessible and responsive</summary>
         public bool DatabaseConnectivity { get; set; }
-        
+
         /// <summary>Available disk space in gigabytes</summary>
         public long DiskSpaceGB { get; set; }
-        
+
         /// <summary>Number of days since the last valid backup</summary>
         public int DaysSinceLastBackup { get; set; }
-        
+
         /// <summary>Total number of audit log entries in the system</summary>
         public int AuditLogCount { get; set; }
-        
+
         /// <summary>List of identified system issues</summary>
         public List<string> Issues { get; set; } = new();
-        
+
         /// <summary>List of recommended actions to address issues</summary>
         public List<string> Recommendations { get; set; } = new();
     }
@@ -1366,10 +1367,10 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Complete database backup including all entities</summary>
         Full,
-        
+
         /// <summary>Incremental backup with only changes (future enhancement)</summary>
         Incremental,
-        
+
         /// <summary>Configuration and settings backup only</summary>
         Configuration
     }
@@ -1388,16 +1389,16 @@ namespace ClubManagementApp.Services
     {
         /// <summary>Health status could not be determined</summary>
         Unknown,
-        
+
         /// <summary>System is operating normally with no issues</summary>
         Healthy,
-        
+
         /// <summary>Informational status with minor observations</summary>
         Info,
-        
+
         /// <summary>Warning status requiring attention but not critical</summary>
         Warning,
-        
+
         /// <summary>Critical status requiring immediate attention</summary>
         Critical
     }

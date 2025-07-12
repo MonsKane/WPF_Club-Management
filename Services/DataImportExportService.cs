@@ -1,16 +1,15 @@
-using ClubManagementApp.Models;
-using ClubManagementApp.Data;
 using ClubManagementApp.Configuration;
+using ClubManagementApp.Data;
 using ClubManagementApp.Helpers;
+using ClubManagementApp.Models;
+using CsvHelper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Xml;
 using System.Xml.Serialization;
-using CsvHelper;
-using System.Globalization;
-using CsvHelper.Configuration;
 
 namespace ClubManagementApp.Services
 {
@@ -22,31 +21,31 @@ namespace ClubManagementApp.Services
         Task<string> ExportEventsAsync(ExportFormat format, ExportOptions? options = null);
         Task<string> ExportReportsAsync(ExportFormat format, ExportOptions? options = null);
         Task<string> ExportAllDataAsync(ExportFormat format, ExportOptions? options = null);
-        
+
         // Import operations
         Task<ImportResult> ImportUsersAsync(string filePath, ImportFormat format, ImportOptions? options = null);
         Task<ImportResult> ImportClubsAsync(string filePath, ImportFormat format, ImportOptions? options = null);
         Task<ImportResult> ImportEventsAsync(string filePath, ImportFormat format, ImportOptions? options = null);
         Task<ImportResult> ImportAllDataAsync(string filePath, ImportFormat format, ImportOptions? options = null);
-        
+
         // Template generation
         Task<string> GenerateImportTemplateAsync(DataType dataType, ExportFormat format);
         Task<List<string>> GetSupportedFormatsAsync();
-        
+
         // Data validation
         Task<ValidationResult> ValidateImportDataAsync(string filePath, ImportFormat format, DataType dataType);
         Task<List<DataConflict>> CheckForConflictsAsync(string filePath, ImportFormat format, DataType dataType);
-        
+
         // Batch operations
         Task<string> ExportFilteredDataAsync(DataFilter filter, ExportFormat format, ExportOptions? options = null);
         Task<ImportResult> ImportWithMappingAsync(string filePath, ImportFormat format, FieldMapping mapping, ImportOptions? options = null);
-        
+
         // Scheduled exports
         Task ScheduleExportAsync(ExportSchedule schedule);
         Task<List<ExportSchedule>> GetScheduledExportsAsync();
         Task CancelScheduledExportAsync(string scheduleId);
         Task ProcessScheduledExportsAsync();
-        
+
         // Data transformation
         Task<string> TransformDataAsync(string inputPath, ImportFormat inputFormat, ExportFormat outputFormat, TransformOptions? options = null);
         Task<string> MergeDataFilesAsync(List<string> filePaths, ExportFormat outputFormat, MergeOptions? options = null);
@@ -57,14 +56,14 @@ namespace ClubManagementApp.Services
         private readonly ClubManagementDbContext _context;
         private readonly ILoggingService _loggingService;
         private readonly IAuditService _auditService;
-        private readonly IConfigurationService _configurationService;
+        private readonly IConfiguration _configurationService;
         private readonly ISecurityService _securityService;
 
         public DataImportExportService(
             ClubManagementDbContext context,
             ILoggingService loggingService,
             IAuditService auditService,
-            IConfigurationService configurationService,
+            IConfiguration configurationService,
             ISecurityService securityService)
         {
             _context = context;
@@ -100,7 +99,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(exportData, format, "users", options);
                 await _auditService.LogSystemEventAsync("Data Export", $"Users exported to {format} format");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -132,7 +131,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(exportData, format, "clubs", options);
                 await _auditService.LogSystemEventAsync("Data Export", $"Clubs exported to {format} format");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -168,7 +167,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(exportData, format, "events", options);
                 await _auditService.LogSystemEventAsync("Data Export", $"Events exported to {format} format");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -201,7 +200,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(exportData, format, "reports", options);
                 await _auditService.LogSystemEventAsync("Data Export", $"Reports exported to {format} format");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -231,7 +230,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(allData, format, "complete_backup", options);
                 await _auditService.LogSystemEventAsync("Complete Data Export", $"All data exported to {format} format");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -246,9 +245,9 @@ namespace ClubManagementApp.Services
             try
             {
                 var result = new ImportResult { DataType = DataType.Users };
-                
+
                 var userData = await ReadImportDataAsync<UserImportModel>(filePath, format);
-                
+
                 foreach (var userModel in userData)
                 {
                     try
@@ -292,7 +291,7 @@ namespace ClubManagementApp.Services
 
                 await _context.SaveChangesAsync();
                 await _auditService.LogSystemEventAsync("Data Import", $"Users imported: {result.ImportedRecords} new, {result.UpdatedRecords} updated");
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -307,9 +306,9 @@ namespace ClubManagementApp.Services
             try
             {
                 var result = new ImportResult { DataType = DataType.Clubs };
-                
+
                 var clubData = await ReadImportDataAsync<ClubImportModel>(filePath, format);
-                
+
                 foreach (var clubModel in clubData)
                 {
                     try
@@ -350,7 +349,7 @@ namespace ClubManagementApp.Services
 
                 await _context.SaveChangesAsync();
                 await _auditService.LogSystemEventAsync("Data Import", $"Clubs imported: {result.ImportedRecords} new, {result.UpdatedRecords} updated");
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -365,9 +364,9 @@ namespace ClubManagementApp.Services
             try
             {
                 var result = new ImportResult { DataType = DataType.Events };
-                
+
                 var eventData = await ReadImportDataAsync<EventImportModel>(filePath, format);
-                
+
                 foreach (var eventModel in eventData)
                 {
                     try
@@ -421,7 +420,7 @@ namespace ClubManagementApp.Services
 
                 await _context.SaveChangesAsync();
                 await _auditService.LogSystemEventAsync("Data Import", $"Events imported: {result.ImportedRecords} new, {result.UpdatedRecords} updated");
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -436,11 +435,11 @@ namespace ClubManagementApp.Services
             try
             {
                 var result = new ImportResult { DataType = DataType.All };
-                
+
                 // Read the complete backup file
                 var allData = await ReadImportDataAsync<CompleteBackupModel>(filePath, format);
                 var backupData = allData.FirstOrDefault();
-                
+
                 if (backupData == null)
                 {
                     throw new InvalidOperationException("Invalid backup file format");
@@ -474,9 +473,9 @@ namespace ClubManagementApp.Services
                     result.Errors.AddRange(eventResult.Errors);
                 }
 
-                await _auditService.LogSystemEventAsync("Complete Data Import", 
+                await _auditService.LogSystemEventAsync("Complete Data Import",
                     $"All data imported: {result.ImportedRecords} new, {result.UpdatedRecords} updated, {result.ErrorRecords} errors");
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -535,7 +534,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(templateData, format, $"{dataType.ToString().ToLower()}_template", null);
                 await _loggingService.LogInformationAsync($"Import template generated for {dataType}: {filePath}");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -555,7 +554,7 @@ namespace ClubManagementApp.Services
             try
             {
                 var result = new ValidationResult { IsValid = true };
-                
+
                 if (!File.Exists(filePath))
                 {
                     result.IsValid = false;
@@ -630,7 +629,7 @@ namespace ClubManagementApp.Services
                         {
                             var existingUser = await _context.Users
                                 .FirstOrDefaultAsync(u => u.Email == user.Email || u.StudentID == user.StudentID);
-                            
+
                             if (existingUser != null)
                             {
                                 conflicts.Add(new DataConflict
@@ -644,14 +643,14 @@ namespace ClubManagementApp.Services
                             }
                         }
                         break;
-                        
+
                     case DataType.Clubs:
                         var clubData = await ReadImportDataAsync<ClubImportModel>(filePath, format);
                         foreach (var club in clubData)
                         {
                             var existingClub = await _context.Clubs
                                 .FirstOrDefaultAsync(c => c.Name == club.Name);
-                            
+
                             if (existingClub != null)
                             {
                                 conflicts.Add(new DataConflict
@@ -665,14 +664,14 @@ namespace ClubManagementApp.Services
                             }
                         }
                         break;
-                        
+
                     case DataType.Events:
                         var eventData = await ReadImportDataAsync<EventImportModel>(filePath, format);
                         foreach (var eventModel in eventData)
                         {
                             var existingEvent = await _context.Events
                                 .FirstOrDefaultAsync(e => e.Name == eventModel.Name && e.EventDate == eventModel.Date);
-                            
+
                             if (existingEvent != null)
                             {
                                 conflicts.Add(new DataConflict
@@ -712,7 +711,7 @@ namespace ClubManagementApp.Services
 
                 var filePath = await ExportDataAsync(filteredData, format, $"filtered_{filter.DataType.ToString().ToLower()}", options);
                 await _auditService.LogSystemEventAsync("Filtered Data Export", $"Filtered {filter.DataType} exported to {format} format");
-                
+
                 return filePath;
             }
             catch (Exception ex)
@@ -751,10 +750,10 @@ namespace ClubManagementApp.Services
                 schedule.Id = Guid.NewGuid().ToString();
                 schedule.CreatedAt = DateTime.UtcNow;
                 schedule.IsActive = true;
-                
+
                 schedules.Add(schedule);
                 await SaveScheduledExportsAsync(schedules);
-                
+
                 await _auditService.LogSystemEventAsync("Export Scheduled", $"Export scheduled: {schedule.Name}");
             }
             catch (Exception ex)
@@ -784,13 +783,13 @@ namespace ClubManagementApp.Services
             {
                 var schedules = await GetAllScheduledExportsAsync();
                 var schedule = schedules.FirstOrDefault(s => s.Id == scheduleId);
-                
+
                 if (schedule != null)
                 {
                     schedule.IsActive = false;
                     schedule.CancelledAt = DateTime.UtcNow;
                     await SaveScheduledExportsAsync(schedules);
-                    
+
                     await _auditService.LogSystemEventAsync("Export Cancelled", $"Scheduled export cancelled: {schedule.Name}");
                 }
             }
@@ -824,7 +823,7 @@ namespace ClubManagementApp.Services
                         schedule.LastRunTime = DateTime.UtcNow;
                         schedule.NextRunTime = CalculateNextRunTime(schedule);
                         schedule.RunCount++;
-                        
+
                         await _loggingService.LogInformationAsync($"Scheduled export completed: {schedule.Name} -> {filePath}");
                     }
                     catch (Exception ex)
@@ -850,17 +849,17 @@ namespace ClubManagementApp.Services
             {
                 // Read data in input format
                 var data = await ReadRawDataAsync(inputPath, inputFormat);
-                
+
                 // Apply transformations if specified
                 if (options?.Transformations?.Any() == true)
                 {
                     data = ApplyTransformations(data, options.Transformations);
                 }
-                
+
                 // Export in output format
                 var outputPath = Path.ChangeExtension(inputPath, GetFileExtension(outputFormat));
                 await WriteDataAsync(data, outputPath, outputFormat);
-                
+
                 await _loggingService.LogInformationAsync($"Data transformed from {inputFormat} to {outputFormat}: {outputPath}");
                 return outputPath;
             }
@@ -876,25 +875,25 @@ namespace ClubManagementApp.Services
             try
             {
                 var mergedData = new List<object>();
-                
+
                 foreach (var filePath in filePaths)
                 {
                     var format = DetermineFormatFromExtension(filePath);
                     var data = await ReadRawDataAsync(filePath, format);
                     mergedData.AddRange(data);
                 }
-                
+
                 // Remove duplicates if specified
                 if (options?.RemoveDuplicates == true)
                 {
                     mergedData = RemoveDuplicates(mergedData, options.DuplicateKeyFields);
                 }
-                
-                var outputPath = Path.Combine(Path.GetDirectoryName(filePaths.First()) ?? "", 
+
+                var outputPath = Path.Combine(Path.GetDirectoryName(filePaths.First()) ?? "",
                     $"merged_data_{DateTime.Now:yyyyMMdd_HHmmss}.{GetFileExtension(outputFormat)}");
-                
+
                 await WriteDataAsync(mergedData, outputPath, outputFormat);
-                
+
                 await _loggingService.LogInformationAsync($"Data files merged: {filePaths.Count} files -> {outputPath}");
                 return outputPath;
             }
@@ -916,23 +915,23 @@ namespace ClubManagementApp.Services
             switch (format)
             {
                 case ExportFormat.JSON:
-                    var jsonOptions = new JsonSerializerOptions 
-                    { 
+                    var jsonOptions = new JsonSerializerOptions
+                    {
                         WriteIndented = true,
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     };
                     var jsonData = JsonSerializer.Serialize(data, jsonOptions);
                     await File.WriteAllTextAsync(filePath, jsonData);
                     break;
-                    
+
                 case ExportFormat.CSV:
                     await WriteCsvDataAsync(data, filePath);
                     break;
-                    
+
                 case ExportFormat.XML:
                     await WriteXmlDataAsync(data, filePath);
                     break;
-                    
+
                 default:
                     throw new ArgumentException($"Unsupported export format: {format}");
             }
@@ -947,13 +946,13 @@ namespace ClubManagementApp.Services
                 case ImportFormat.JSON:
                     var jsonData = await File.ReadAllTextAsync(filePath);
                     return JsonSerializer.Deserialize<List<T>>(jsonData) ?? new List<T>();
-                    
+
                 case ImportFormat.CSV:
                     return await ReadCsvDataAsync<T>(filePath);
-                    
+
                 case ImportFormat.XML:
                     return await ReadXmlDataAsync<T>(filePath);
-                    
+
                 default:
                     throw new ArgumentException($"Unsupported import format: {format}");
             }
@@ -977,7 +976,7 @@ namespace ClubManagementApp.Services
         {
             using var writer = new StringWriter();
             using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-            
+
             if (data is IEnumerable<object> enumerable)
             {
                 await csv.WriteRecordsAsync(enumerable);
@@ -986,7 +985,7 @@ namespace ClubManagementApp.Services
             {
                 await csv.WriteRecordsAsync(new[] { data });
             }
-            
+
             await File.WriteAllTextAsync(filePath, writer.ToString());
         }
 
@@ -1031,7 +1030,7 @@ namespace ClubManagementApp.Services
 
         // Additional helper methods would be implemented here...
         // For brevity, I'm including just the essential structure
-        
+
         private async Task<object> GetUsersForExportAsync()
         {
             return await _context.Users.Include(u => u.Club).ToListAsync();
@@ -1054,9 +1053,9 @@ namespace ClubManagementApp.Services
 
         private async Task<int> GetTotalRecordCountAsync()
         {
-            return await _context.Users.CountAsync() + 
-                   await _context.Clubs.CountAsync() + 
-                   await _context.Events.CountAsync() + 
+            return await _context.Users.CountAsync() +
+                   await _context.Clubs.CountAsync() +
+                   await _context.Events.CountAsync() +
                    await _context.Reports.CountAsync();
         }
 
@@ -1155,56 +1154,56 @@ namespace ClubManagementApp.Services
         private async Task<object> GetFilteredUsersAsync(DataFilter filter)
         {
             var query = _context.Users.Include(u => u.Club).AsQueryable();
-            
+
             if (filter.DateFrom.HasValue)
                 query = query.Where(u => u.JoinDate >= filter.DateFrom.Value);
             if (filter.DateTo.HasValue)
                 query = query.Where(u => u.JoinDate <= filter.DateTo.Value);
             if (!string.IsNullOrEmpty(filter.SearchTerm))
                 query = query.Where(u => u.FullName.Contains(filter.SearchTerm) || u.Email.Contains(filter.SearchTerm));
-                
+
             return await query.ToListAsync();
         }
 
         private async Task<object> GetFilteredClubsAsync(DataFilter filter)
         {
             var query = _context.Clubs.Include(c => c.Members).AsQueryable();
-            
+
             if (filter.DateFrom.HasValue)
                 query = query.Where(c => c.CreatedDate >= filter.DateFrom.Value);
             if (filter.DateTo.HasValue)
                 query = query.Where(c => c.CreatedDate <= filter.DateTo.Value);
             if (!string.IsNullOrEmpty(filter.SearchTerm))
                 query = query.Where(c => c.Name.Contains(filter.SearchTerm) || (c.Description != null && c.Description.Contains(filter.SearchTerm)));
-                
+
             return await query.ToListAsync();
         }
 
         private async Task<object> GetFilteredEventsAsync(DataFilter filter)
         {
             var query = _context.Events.Include(e => e.Club).Include(e => e.Participants).AsQueryable();
-            
+
             if (filter.DateFrom.HasValue)
                 query = query.Where(e => e.EventDate >= filter.DateFrom.Value);
             if (filter.DateTo.HasValue)
                 query = query.Where(e => e.EventDate <= filter.DateTo.Value);
             if (!string.IsNullOrEmpty(filter.SearchTerm))
                 query = query.Where(e => e.Name.Contains(filter.SearchTerm) || (e.Description != null && e.Description.Contains(filter.SearchTerm)));
-                
+
             return await query.ToListAsync();
         }
 
         private async Task<object> GetFilteredReportsAsync(DataFilter filter)
         {
             var query = _context.Reports.Include(r => r.GeneratedByUser).Include(r => r.Club).AsQueryable();
-            
+
             if (filter.DateFrom.HasValue)
                 query = query.Where(r => r.GeneratedDate >= filter.DateFrom.Value);
             if (filter.DateTo.HasValue)
                 query = query.Where(r => r.GeneratedDate <= filter.DateTo.Value);
             if (!string.IsNullOrEmpty(filter.SearchTerm))
                 query = query.Where(r => r.Title.Contains(filter.SearchTerm) || (r.Content != null && r.Content.Contains(filter.SearchTerm)));
-                
+
             return await query.ToListAsync();
         }
 
@@ -1254,15 +1253,15 @@ namespace ClubManagementApp.Services
                     var jsonData = await File.ReadAllTextAsync(filePath);
                     var jsonDoc = JsonDocument.Parse(jsonData);
                     return new List<object> { jsonDoc.RootElement };
-                    
+
                 case ImportFormat.CSV:
                     var csvLines = await File.ReadAllLinesAsync(filePath);
                     return csvLines.Cast<object>().ToList();
-                    
+
                 case ImportFormat.XML:
                     var xmlData = await File.ReadAllTextAsync(filePath);
                     return new List<object> { xmlData };
-                    
+
                 default:
                     throw new ArgumentException($"Unsupported format: {format}");
             }
@@ -1291,25 +1290,25 @@ namespace ClubManagementApp.Services
         private Task<ValidationResult> ValidateUserImportModelAsync(UserImportModel userModel)
         {
             var result = new ValidationResult { IsValid = true };
-            
+
             if (!ServiceValidationHelper.IsValidEmail(userModel.Email))
             {
                 result.IsValid = false;
                 result.Errors.Add($"Invalid email format: {userModel.Email}");
             }
-            
+
             if (string.IsNullOrWhiteSpace(userModel.FullName) || userModel.FullName.Length > ServiceConfiguration.Users.MaxNameLength)
             {
                 result.IsValid = false;
                 result.Errors.Add($"Invalid full name: {userModel.FullName}");
             }
-            
+
             if (!string.IsNullOrEmpty(userModel.StudentID) && userModel.StudentID.Length > ServiceConfiguration.Users.MaxStudentIdLength)
             {
                 result.IsValid = false;
                 result.Errors.Add($"Student ID too long: {userModel.StudentID}");
             }
-            
+
             return Task.FromResult(result);
         }
 
@@ -1337,7 +1336,7 @@ namespace ClubManagementApp.Services
             existingUser.ActivityLevel = newUser.ActivityLevel;
             existingUser.IsActive = newUser.IsActive;
             existingUser.TwoFactorEnabled = newUser.TwoFactorEnabled;
-            
+
             await Task.CompletedTask;
         }
     }

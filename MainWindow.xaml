@@ -787,7 +787,7 @@
                         </Grid.ColumnDefinitions>
 
 
-                        <Button Grid.Column="0" Background="White" Padding="20" Margin="5,0" BorderThickness="0" Command="{Binding GenerateEventStatisticsReportCommand}">
+                        <Button Grid.Column="0" Background="White" Padding="20" Margin="5,0" BorderThickness="0" Command="{Binding ReportsViewModel.GenerateActivityReportCommand}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}"
@@ -815,7 +815,7 @@
                             </StackPanel>
                         </Button>
 
-                        <Button Grid.Column="1" Background="White" Padding="20" Margin="5,0" BorderThickness="0" Command="{Binding GenerateEventStatisticsReportCommand}">
+                        <Button Grid.Column="1" Background="White" Padding="20" Margin="5,0" BorderThickness="0" Command="{Binding ReportsViewModel.GenerateMembershipReportCommand}">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border Background="{TemplateBinding Background}"
@@ -880,12 +880,10 @@
                             </Border.Effect>
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
                                   Foreground="Black" FontWeight="Medium"
-                                  SelectedValue="{Binding ReportsViewModel.SelectedReportType}">
-                                <ComboBoxItem Content="All Types"/>
-                                <ComboBoxItem Content="Membership"/>
-                                <ComboBoxItem Content="Event"/>
-                                <ComboBoxItem Content="Financial"/>
+                                  SelectedItem="{Binding ReportsViewModel.SelectedReportType, Mode=TwoWay}">
+                                <ComboBoxItem IsSelected="true" Content="All Types"/>
                                 <ComboBoxItem Content="Activity"/>
+                                <ComboBoxItem Content="Membership"/>
                             </ComboBox>
                         </Border>
 

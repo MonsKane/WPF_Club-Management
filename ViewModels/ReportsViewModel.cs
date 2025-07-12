@@ -3,6 +3,7 @@ using ClubManagementApp.Helpers;
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using System.Collections.ObjectModel;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ClubManagementApp.ViewModels
@@ -17,7 +18,7 @@ namespace ClubManagementApp.ViewModels
         private ObservableCollection<Report> _reports = new();
         private ObservableCollection<Report> _filteredReports = new();
         private string _searchText = string.Empty;
-        private string _selectedReportType = "All Types";
+        private ComboBoxItem? _selectedReportType;
         private DateTime? _selectedDate;
         private Report? _selectedReport;
         private int _todayReportsCount;
@@ -72,7 +73,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public string SelectedReportType
+        public ComboBoxItem SelectedReportType
         {
             get => _selectedReportType;
             set
@@ -161,8 +162,6 @@ namespace ClubManagementApp.ViewModels
         {
             GenerateReportCommand = new RelayCommand(GenerateReport, CanGenerateReport);
             GenerateMembershipReportCommand = new RelayCommand(async () => await GenerateMembershipReportAsync(), CanGenerateReport);
-            GenerateEventReportCommand = new RelayCommand(async () => await GenerateEventReportAsync(), CanGenerateReport);
-            GenerateFinancialReportCommand = new RelayCommand(async () => await GenerateFinancialReportAsync(), CanGenerateReport);
             GenerateActivityReportCommand = new RelayCommand(async () => await GenerateActivityReportAsync(), CanGenerateReport);
             ViewReportCommand = new RelayCommand<Report>(ViewReport, CanViewReport);
             UpdateReportCommand = new RelayCommand<Report>(UpdateReport, CanUpdateReport);
@@ -241,17 +240,15 @@ namespace ClubManagementApp.ViewModels
             }
 
             // Filter by report type
-            if (SelectedReportType != "All Types")
+            if (SelectedReportType.Content != "All Types")
             {
-                var reportType = SelectedReportType switch
+                var reportType = SelectedReportType.Content switch
                 {
                     "Membership" => ReportType.MemberStatistics,
-                    "Events" => ReportType.EventOutcomes,
-                    "Financial" => ReportType.SemesterSummary,
                     "Activity" => ReportType.ActivityTracking,
                     _ => (ReportType?)null
                 };
-                
+
                 if (reportType.HasValue)
                 {
                     filtered = filtered.Where(r => r.Type == reportType.Value);
@@ -261,8 +258,10 @@ namespace ClubManagementApp.ViewModels
             // Filter by date
             if (SelectedDate.HasValue)
             {
-                var selectedDate = SelectedDate.Value.Date;
-                filtered = filtered.Where(r => r.GeneratedDate.Date == selectedDate);
+                var date = SelectedDate.Value.Date;
+                var nextDate = date.AddDays(1);
+
+                filtered = filtered.Where(r => r.GeneratedDate >= date && r.GeneratedDate < nextDate);
             }
 
             FilteredReports.Clear();
@@ -285,7 +284,7 @@ namespace ClubManagementApp.ViewModels
 
             try
             {
-                var dialog = new Views.CustomReportDialog();
+                var dialog = new Views.CustomReportDialog(_clubService);
                 var result = dialog.ShowDialog();
 
                 if (result == true && dialog.ReportParameters != null)
@@ -318,19 +317,12 @@ namespace ClubManagementApp.ViewModels
                 switch (parameters.Type)
                 {
                     case ReportType.MemberStatistics:
-                        await GenerateMembershipReportAsync();
-                        break;
-                    case ReportType.EventOutcomes:
-                        await GenerateEventReportAsync();
-                        break;
-                    case ReportType.SemesterSummary:
-                        await GenerateFinancialReportAsync();
+                        await GenerateCustomMembershipReportAsync(parameters);
                         break;
                     case ReportType.ActivityTracking:
-                        await GenerateActivityReportAsync();
+                        await GenerateCustomActivityReportAsync(parameters);
                         break;
                     default:
-                        await GenerateMembershipReportAsync();
                         break;
                 }
 
@@ -366,9 +358,15 @@ namespace ClubManagementApp.ViewModels
                 var currentSemester = GetCurrentSemester();
                 var users = await _userService.GetAllUsersAsync();
                 var clubs = await _clubService.GetAllClubsAsync();
+                var events = await _eventService.GetAllEventsAsync();
+
+                // For regular report, use beginning of month to end of month
+                var now = DateTime.Now;
+                var startDate = new DateTime(now.Year, now.Month, 1);
+                var endDate = now;
 
                 // Generate report content
-                var reportContent = GenerateMembershipReportContent(users, clubs);
+                var reportContent = GenerateMembershipReportContent(users, clubs, events, startDate, endDate, null);
 
                 var report = new Report
                 {
@@ -400,6 +398,62 @@ namespace ClubManagementApp.ViewModels
                     "Error",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task GenerateCustomMembershipReportAsync(Views.CustomReportDialog.CustomReportParameters parameters)
+        {
+            try
+            {
+                Console.WriteLine("[ReportsViewModel] Starting custom membership report generation");
+                IsLoading = true;
+
+                var currentUser = await _userService.GetCurrentUserAsync();
+                if (currentUser == null)
+                {
+                    throw new InvalidOperationException("No current user found. Please log in again.");
+                }
+
+                var currentSemester = GetCurrentSemester();
+                var users = await _userService.GetAllUsersAsync();
+                var clubs = await _clubService.GetAllClubsAsync();
+                var events = await _eventService.GetAllEventsAsync();
+
+                // Use custom date range
+                var startDate = parameters.StartDate ?? DateTime.Now.AddMonths(-1);
+                var endDate = parameters.EndDate ?? DateTime.Now;
+
+                // For custom reports, allow club selection (null means all clubs)
+                int? selectedClubId = parameters.SelectedClubId;
+                // TODO: Add club selection UI to CustomReportDialog for membership reports
+
+                // Generate report content
+                var reportContent = GenerateMembershipReportContent(users, clubs, events, startDate, endDate, selectedClubId);
+
+                var report = new Report
+                {
+                    Title = parameters.Title,
+                    Type = ReportType.MemberStatistics,
+                    Content = reportContent,
+                    GeneratedDate = DateTime.Now,
+                    Semester = currentSemester,
+                    ClubID = selectedClubId ?? currentUser.ClubID,
+                    GeneratedByUserID = currentUser.UserID
+                };
+
+                var createdReport = await _reportService.CreateReportAsync(report);
+                Reports.Insert(0, createdReport);
+                FilterReports();
+                Console.WriteLine($"[ReportsViewModel] Custom membership report created successfully with ID: {createdReport.ReportID}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportsViewModel] Error generating custom membership report: {ex.Message}");
+                throw;
             }
             finally
             {
@@ -538,10 +592,16 @@ namespace ClubManagementApp.ViewModels
                 var currentSemester = GetCurrentSemester();
                 var events = await _eventService.GetAllEventsAsync();
                 var users = await _userService.GetAllUsersAsync();
+                var clubs = await _clubService.GetAllClubsAsync();
                 Console.WriteLine($"[ReportsViewModel] Retrieved {events.Count()} events and {users.Count()} users for activity report");
 
+                // For regular report, use beginning of month to end of month
+                var now = DateTime.Now;
+                var startDate = new DateTime(now.Year, now.Month, 1);
+                var endDate = now;
+
                 // Generate activity report content
-                var reportContent = GenerateActivityReportContent(events, users);
+                var reportContent = GenerateActivityReportContent(events, users, clubs, startDate, endDate);
 
                 var report = new Report
                 {
@@ -580,25 +640,161 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        private string GenerateMembershipReportContent(IEnumerable<User> users, IEnumerable<Club> clubs)
+        private async Task GenerateCustomActivityReportAsync(Views.CustomReportDialog.CustomReportParameters parameters)
         {
-            var content = $"MEMBERSHIP REPORT\n";
-            content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n\n";
-            content += $"Total Users: {users.Count()}\n";
-            content += $"Total Clubs: {clubs.Count()}\n\n";
-
-            content += "USERS BY ROLE:\n";
-            var usersByRole = users.GroupBy(u => u.Role);
-            foreach (var group in usersByRole)
+            try
             {
-                content += $"- {group.Key}: {group.Count()}\n";
+                Console.WriteLine("[ReportsViewModel] Starting custom activity report generation");
+                IsLoading = true;
+
+                var currentUser = await _userService.GetCurrentUserAsync();
+                if (currentUser == null)
+                {
+                    throw new InvalidOperationException("No current user found. Please log in again.");
+                }
+
+                var currentSemester = GetCurrentSemester();
+                var events = await _eventService.GetAllEventsAsync();
+                var users = await _userService.GetAllUsersAsync();
+                var clubs = await _clubService.GetAllClubsAsync();
+                Console.WriteLine($"[ReportsViewModel] Retrieved {events.Count()} events and {users.Count()} users for custom activity report");
+
+                // Use custom date range
+                var startDate = parameters.StartDate ?? DateTime.Now.AddMonths(-1);
+                var endDate = parameters.EndDate ?? DateTime.Now;
+
+                // Generate activity report content
+                var reportContent = GenerateActivityReportContent(events, users, clubs, startDate, endDate);
+
+                var report = new Report
+                {
+                    Title = parameters.Title,
+                    Type = ReportType.ActivityTracking,
+                    Content = reportContent,
+                    GeneratedDate = DateTime.Now,
+                    Semester = currentSemester,
+                    ClubID = currentUser.ClubID,
+                    GeneratedByUserID = currentUser.UserID
+                };
+
+                var createdReport = await _reportService.CreateReportAsync(report);
+                Reports.Insert(0, createdReport);
+                FilterReports();
+                Console.WriteLine($"[ReportsViewModel] Custom activity report created successfully with ID: {createdReport.ReportID}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ReportsViewModel] Error generating custom activity report: {ex.Message}");
+                throw;
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private string GenerateMembershipReportContent(IEnumerable<User> users, IEnumerable<Club> clubs, IEnumerable<Event> events, DateTime startDate, DateTime endDate, int? selectedClubId)
+        {
+            var content = $"MEMBERSHIP ANALYSIS REPORT\n";
+            content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n";
+            content += $"Analysis Period: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}\n\n";
+
+            // Filter events within the date range
+            var periodEvents = events.Where(e => e.EventDate >= startDate && e.EventDate <= endDate).ToList();
+
+            // Filter clubs if specific club is selected
+            var targetClubs = selectedClubId.HasValue ? clubs.Where(c => c.ClubID == selectedClubId.Value) : clubs;
+
+            content += $"SUMMARY:\n";
+            content += $"Total Users: {users.Count()}\n";
+            content += $"Total Clubs Analyzed: {targetClubs.Count()}\n";
+            content += $"Events in Period: {periodEvents.Count}\n\n";
+
+            foreach (var club in targetClubs.OrderBy(c => c.Name))
+            {
+                var clubMembers = users.Where(u => u.ClubID == club.ClubID && u.IsActive).ToList();
+                var clubEvents = periodEvents.Where(e => e.ClubID == club.ClubID).ToList();
+
+                content += $"\n=== {club.Name.ToUpper()} CLUB ANALYSIS ===\n";
+                content += $"Total Members: {clubMembers.Count}\n";
+                content += $"Events in Period: {clubEvents.Count}\n\n";
+
+                if (clubMembers.Any())
+                {
+                    content += "MEMBER ACTIVITY ANALYSIS:\n";
+                    content += "Member Name\t\tTotal Events\tActivity Level\n";
+                    content += "─────────────────────────────────────────────────\n";
+
+                    foreach (var member in clubMembers.OrderBy(m => m.FullName))
+                    {
+                        // Count events this member participated in during the period
+                        var memberEventCount = 0;
+                        if (member.EventParticipations != null)
+                        {
+                            memberEventCount = member.EventParticipations
+                                .Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                           clubEvents.Any(ce => ce.EventID == ep.EventID));
+                        }
+
+                        // Determine activity level based on event participation
+                        string activityLevel;
+                        if (memberEventCount >= 5)
+                            activityLevel = "Active";
+                        else if (memberEventCount >= 2)
+                            activityLevel = "Normal";
+                        else
+                            activityLevel = "Inactive";
+
+                        var memberName = member.FullName.Length > 20 ? member.FullName.Substring(0, 17) + "..." : member.FullName;
+                        content += $"{memberName,-20}\t{memberEventCount,2}\t\t{activityLevel}\n";
+                    }
+
+                    // Activity level summary for this club
+                    var activeCount = clubMembers.Count(m =>
+                        (m.EventParticipations?.Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                                           clubEvents.Any(ce => ce.EventID == ep.EventID)) ?? 0) >= 5);
+                    var normalCount = clubMembers.Count(m =>
+                    {
+                        var eventCount = m.EventParticipations?.Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                                                           clubEvents.Any(ce => ce.EventID == ep.EventID)) ?? 0;
+                        return eventCount >= 2 && eventCount < 5;
+                    });
+                    var inactiveCount = clubMembers.Count(m =>
+                        (m.EventParticipations?.Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                                           clubEvents.Any(ce => ce.EventID == ep.EventID)) ?? 0) < 2);
+
+                    content += $"\nACTIVITY LEVEL SUMMARY:\n";
+                    content += $"• Active (5+ events): {activeCount} members ({(clubMembers.Count > 0 ? (activeCount * 100.0 / clubMembers.Count) : 0):F1}%)\n";
+                    content += $"• Normal (2-4 events): {normalCount} members ({(clubMembers.Count > 0 ? (normalCount * 100.0 / clubMembers.Count) : 0):F1}%)\n";
+                    content += $"• Inactive (0-1 events): {inactiveCount} members ({(clubMembers.Count > 0 ? (inactiveCount * 100.0 / clubMembers.Count) : 0):F1}%)\n";
+                }
+                else
+                {
+                    content += "No active members found for this club.\n";
+                }
             }
 
-            content += "\nCLUBS SUMMARY:\n";
-            foreach (var club in clubs)
+            // Overall statistics across all analyzed clubs
+            if (targetClubs.Count() > 1)
             {
-                var memberCount = users.Count(u => u.ClubID == club.ClubID);
-                content += $"- {club.Name}: {memberCount} members\n";
+                var allMembers = users.Where(u => targetClubs.Any(c => c.ClubID == u.ClubID) && u.IsActive).ToList();
+                var totalActiveMembers = allMembers.Count(m =>
+                    (m.EventParticipations?.Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                                       periodEvents.Any(pe => pe.EventID == ep.EventID)) ?? 0) >= 5);
+                var totalNormalMembers = allMembers.Count(m =>
+                {
+                    var eventCount = m.EventParticipations?.Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                                                       periodEvents.Any(pe => pe.EventID == ep.EventID)) ?? 0;
+                    return eventCount >= 2 && eventCount < 5;
+                });
+                var totalInactiveMembers = allMembers.Count(m =>
+                    (m.EventParticipations?.Count(ep => ep.Status == AttendanceStatus.Attended &&
+                                                       periodEvents.Any(pe => pe.EventID == ep.EventID)) ?? 0) < 2);
+
+                content += $"\n=== OVERALL STATISTICS ===\n";
+                content += $"Total Active Members: {totalActiveMembers} ({(allMembers.Count > 0 ? (totalActiveMembers * 100.0 / allMembers.Count) : 0):F1}%)\n";
+                content += $"Total Normal Members: {totalNormalMembers} ({(allMembers.Count > 0 ? (totalNormalMembers * 100.0 / allMembers.Count) : 0):F1}%)\n";
+                content += $"Total Inactive Members: {totalInactiveMembers} ({(allMembers.Count > 0 ? (totalInactiveMembers * 100.0 / allMembers.Count) : 0):F1}%)\n";
             }
 
             return content;
@@ -629,22 +825,120 @@ namespace ClubManagementApp.ViewModels
             return content;
         }
 
-        private string GenerateActivityReportContent(IEnumerable<Event> events, IEnumerable<User> users)
+        private string GenerateActivityReportContent(IEnumerable<Event> events, IEnumerable<User> users, IEnumerable<Club> clubs, DateTime startDate, DateTime endDate)
         {
-            var content = $"ACTIVITY REPORT\n";
-            content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n\n";
+            var content = $"ACTIVITY TRACKING REPORT\n";
+            content += $"Generated on: {DateTime.Now:yyyy-MM-dd HH:mm}\n";
+            content += $"Analysis Period: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}\n\n";
 
-            var recentEvents = events.Where(e => e.EventDate >= DateTime.Now.AddDays(-30));
-            content += $"Events in Last 30 Days: {recentEvents.Count()}\n";
+            // Filter data within the specified date range
+            var periodEvents = events.Where(e => e.CreatedDate >= startDate && e.CreatedDate <= endDate).ToList();
+            var periodUsers = users.Where(u => u.JoinDate >= startDate && u.JoinDate <= endDate).ToList();
+            var periodClubs = clubs.Where(c => c.CreatedDate >= startDate && c.CreatedDate <= endDate).ToList();
 
-            var recentUsers = users.Where(u => u.JoinDate >= DateTime.Now.AddDays(-30));
-            content += $"New Users in Last 30 Days: {recentUsers.Count()}\n\n";
+            content += $"=== CREATION STATISTICS ===\n";
+            content += $"New Accounts Created: {periodUsers.Count}\n";
+            content += $"New Clubs Created: {periodClubs.Count}\n";
+            content += $"New Events Created: {periodEvents.Count}\n\n";
 
-            content += "RECENT ACTIVITY:\n";
-            foreach (var eventItem in recentEvents.OrderByDescending(e => e.EventDate).Take(5))
+            // Account creation breakdown by role
+            if (periodUsers.Any())
             {
-                content += $"- Event: {eventItem.Name} ({eventItem.EventDate:yyyy-MM-dd})\n";
+                content += $"NEW ACCOUNTS BY ROLE:\n";
+                var usersByRole = periodUsers.GroupBy(u => u.Role);
+                foreach (var group in usersByRole.OrderBy(g => g.Key))
+                {
+                    content += $"• {group.Key}: {group.Count()} accounts\n";
+                }
+                content += $"\n";
+
+                content += $"NEW ACCOUNT DETAILS:\n";
+                content += $"Date\t\tName\t\t\tRole\t\tClub\n";
+                content += $"─────────────────────────────────────────────────────────────\n";
+                foreach (var user in periodUsers.OrderBy(u => u.JoinDate))
+                {
+                    var userName = user.FullName.Length > 15 ? user.FullName.Substring(0, 12) + "..." : user.FullName;
+                    var clubName = clubs.FirstOrDefault(c => c.ClubID == user.ClubID)?.Name ?? "N/A";
+                    if (clubName.Length > 12) clubName = clubName.Substring(0, 9) + "...";
+                    content += $"{user.JoinDate:MM-dd}\t\t{userName,-15}\t{user.Role,-10}\t{clubName}\n";
+                }
+                content += $"\n";
             }
+
+            // Club creation details
+            if (periodClubs.Any())
+            {
+                content += $"NEW CLUBS CREATED:\n";
+                content += $"Date\t\tClub Name\t\tDescription\n";
+                content += $"─────────────────────────────────────────────────────────────\n";
+                foreach (var club in periodClubs.OrderBy(c => c.CreatedDate))
+                {
+                    var clubName = club.Name.Length > 15 ? club.Name.Substring(0, 12) + "..." : club.Name;
+                    var description = (club.Description?.Length > 20 ? club.Description.Substring(0, 17) + "..." : club.Description) ?? "No description";
+                    content += $"{club.CreatedDate:MM-dd}\t\t{clubName,-15}\t{description}\n";
+                }
+                content += $"\n";
+            }
+
+            // Event creation details
+            if (periodEvents.Any())
+            {
+                content += $"NEW EVENTS CREATED:\n";
+                content += $"Date\t\tEvent Name\t\tClub\t\tEvent Date\n";
+                content += $"─────────────────────────────────────────────────────────────\n";
+                foreach (var eventItem in periodEvents.OrderBy(e => e.CreatedDate))
+                {
+                    var eventName = eventItem.Name.Length > 15 ? eventItem.Name.Substring(0, 12) + "..." : eventItem.Name;
+                    var clubName = clubs.FirstOrDefault(c => c.ClubID == eventItem.ClubID)?.Name ?? "N/A";
+                    if (clubName.Length > 10) clubName = clubName.Substring(0, 7) + "...";
+                    content += $"{eventItem.CreatedDate:MM-dd}\t\t{eventName,-15}\t{clubName,-10}\t{eventItem.EventDate:MM-dd}\n";
+                }
+                content += $"\n";
+            }
+
+            // Daily activity breakdown
+            content += $"=== DAILY ACTIVITY BREAKDOWN ===\n";
+            var dailyStats = new Dictionary<DateTime, (int Users, int Clubs, int Events)>();
+
+            for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+            {
+                var dayUsers = periodUsers.Count(u => u.JoinDate.Date == date);
+                var dayClubs = periodClubs.Count(c => c.CreatedDate.Date == date);
+                var dayEvents = periodEvents.Count(e => e.CreatedDate.Date == date);
+
+                if (dayUsers > 0 || dayClubs > 0 || dayEvents > 0)
+                {
+                    dailyStats[date] = (dayUsers, dayClubs, dayEvents);
+                }
+            }
+
+            if (dailyStats.Any())
+            {
+                content += $"Date\t\tAccounts\tClubs\tEvents\tTotal\n";
+                content += $"─────────────────────────────────────────────────\n";
+                foreach (var stat in dailyStats.OrderBy(s => s.Key))
+                {
+                    var total = stat.Value.Users + stat.Value.Clubs + stat.Value.Events;
+                    content += $"{stat.Key:MM-dd}\t\t{stat.Value.Users,2}\t\t{stat.Value.Clubs,2}\t{stat.Value.Events,2}\t{total,2}\n";
+                }
+            }
+            else
+            {
+                content += $"No creation activity found in the specified period.\n";
+            }
+
+            // Summary statistics
+            content += $"\n=== SUMMARY STATISTICS ===\n";
+            var totalDays = (endDate.Date - startDate.Date).Days + 1;
+            var avgUsersPerDay = totalDays > 0 ? (double)periodUsers.Count / totalDays : 0;
+            var avgClubsPerDay = totalDays > 0 ? (double)periodClubs.Count / totalDays : 0;
+            var avgEventsPerDay = totalDays > 0 ? (double)periodEvents.Count / totalDays : 0;
+
+            content += $"Analysis Period: {totalDays} days\n";
+            content += $"Average Accounts/Day: {avgUsersPerDay:F2}\n";
+            content += $"Average Clubs/Day: {avgClubsPerDay:F2}\n";
+            content += $"Average Events/Day: {avgEventsPerDay:F2}\n";
+            content += $"Total Activity Items: {periodUsers.Count + periodClubs.Count + periodEvents.Count}\n";
 
             return content;
         }
@@ -825,7 +1119,8 @@ namespace ClubManagementApp.ViewModels
                     HorizontalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto,
                     Margin = new System.Windows.Thickness(20, 0, 20, 20),
                     BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(189, 195, 199)),
-                    BorderThickness = new System.Windows.Thickness(1)
+                    BorderThickness = new System.Windows.Thickness(1),
+                    MaxHeight = 400
                 };
 
                 var contentText = string.IsNullOrWhiteSpace(report.Content) ? "No content available for this report." : report.Content;

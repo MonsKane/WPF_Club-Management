@@ -1,8 +1,8 @@
 using ClubManagementApp.Data;
-using ClubManagementApp.Models;
-using ClubManagementApp.DTOs;
 using ClubManagementApp.Exceptions;
+using ClubManagementApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 
 namespace ClubManagementApp.Services
@@ -14,12 +14,12 @@ namespace ClubManagementApp.Services
         Task LogDataChangeAsync(string tableName, int recordId, string operation, object? oldValues = null, object? newValues = null, int? userId = null);
         Task LogSecurityEventAsync(string eventType, string description, int? userId = null, string? ipAddress = null);
         Task LogErrorAsync(string errorType, string message, string? stackTrace = null, int? userId = null);
-        
+
         Task<IEnumerable<AuditLogDto>> GetAuditLogsAsync(AuditLogFilter filter);
         Task<IEnumerable<AuditLogDto>> GetUserAuditLogsAsync(int userId, DateTime? fromDate = null, DateTime? toDate = null);
         Task<IEnumerable<AuditLogDto>> GetSystemAuditLogsAsync(DateTime? fromDate = null, DateTime? toDate = null);
         Task<IEnumerable<AuditLogDto>> GetSecurityAuditLogsAsync(DateTime? fromDate = null, DateTime? toDate = null);
-        
+
         Task<int> GetAuditLogCountAsync(AuditLogFilter filter);
         Task CleanupOldLogsAsync(int retentionDays = 365);
         Task<byte[]> ExportAuditLogsAsync(AuditLogFilter filter, string format = "CSV");
@@ -29,12 +29,12 @@ namespace ClubManagementApp.Services
     {
         private readonly ClubManagementDbContext _context;
         private readonly ILoggingService _loggingService;
-        private readonly IConfigurationService _configurationService;
+        private readonly IConfiguration _configurationService;
 
         public AuditService(
             ClubManagementDbContext context,
             ILoggingService loggingService,
-            IConfigurationService configurationService)
+            IConfiguration configurationService)
         {
             _context = context;
             _loggingService = loggingService;
@@ -197,7 +197,7 @@ namespace ClubManagementApp.Services
                     query = query.Where(al => al.Action.Contains(filter.Action));
 
                 if (!string.IsNullOrEmpty(filter.SearchTerm))
-                    query = query.Where(al => al.Details.Contains(filter.SearchTerm) || 
+                    query = query.Where(al => al.Details.Contains(filter.SearchTerm) ||
                                             al.Action.Contains(filter.SearchTerm));
 
                 var logs = await query
@@ -290,7 +290,7 @@ namespace ClubManagementApp.Services
                     query = query.Where(al => al.Action.Contains(filter.Action));
 
                 if (!string.IsNullOrEmpty(filter.SearchTerm))
-                    query = query.Where(al => al.Details.Contains(filter.SearchTerm) || 
+                    query = query.Where(al => al.Details.Contains(filter.SearchTerm) ||
                                             al.Action.Contains(filter.SearchTerm));
 
                 return await query.CountAsync();
@@ -316,7 +316,7 @@ namespace ClubManagementApp.Services
                     _context.AuditLogs.RemoveRange(oldLogs);
                     await _context.SaveChangesAsync();
 
-                    await LogSystemEventAsync("Audit Cleanup", 
+                    await LogSystemEventAsync("Audit Cleanup",
                         $"Removed {oldLogs.Count} audit logs older than {retentionDays} days");
                 }
             }
