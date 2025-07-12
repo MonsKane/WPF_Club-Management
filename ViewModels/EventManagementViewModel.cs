@@ -2,6 +2,7 @@ using ClubManagementApp.Commands;
 using ClubManagementApp.Models;
 using ClubManagementApp.Services;
 using System.Collections.ObjectModel;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ClubManagementApp.ViewModels
@@ -16,7 +17,7 @@ namespace ClubManagementApp.ViewModels
         private ObservableCollection<Event> _filteredEvents = new();
         private ObservableCollection<Club> _clubs = new();
         private string _searchText = string.Empty;
-        private string _selectedStatus = "All Events";
+        private ComboBoxItem? _selectedStatus;
         private DateTime? _selectedDate;
         private bool _isLoading;
         private Event? _selectedEvent;
@@ -33,9 +34,6 @@ namespace ClubManagementApp.ViewModels
             _clubService = clubService;
             _userService = userService;
             _authorizationService = authorizationService;
-
-            // Ensure default filter is set correctly
-            _selectedStatus = "All Events";
 
             InitializeCommands();
             LoadCurrentUserAsync();
@@ -73,7 +71,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public string SelectedStatus
+        public ComboBoxItem? SelectedStatus
         {
             get => _selectedStatus;
             set
@@ -357,15 +355,14 @@ namespace ClubManagementApp.ViewModels
             }
 
             // Filter by status
-            if (SelectedStatus != "All Events")
+            if (SelectedStatus?.Content != "All Events")
             {
-                var now = DateTime.Now;
-                filtered = SelectedStatus switch
+                filtered = SelectedStatus?.Content switch
                 {
-                    "Upcoming" => filtered.Where(e => e.EventDate > now && (e.Status == EventStatus.Scheduled || e.Status == EventStatus.Postponed)),
-                    "Ongoing" => filtered.Where(e => e.EventDate.Date == now.Date && e.Status == EventStatus.InProgress),
+                    "Upcoming" => filtered.Where(e => e.Status == EventStatus.Scheduled),
+                    "Ongoing" => filtered.Where(e => e.Status == EventStatus.InProgress),
                     "Cancelled" => filtered.Where(e => e.Status == EventStatus.Cancelled),
-                    "Completed" => filtered.Where(e => e.Status == EventStatus.Completed || (e.EventDate < now && e.Status != EventStatus.Cancelled)),
+                    "Completed" => filtered.Where(e => e.Status == EventStatus.Completed),
                     _ => filtered
                 };
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied status filter: '{SelectedStatus}'");
@@ -374,8 +371,10 @@ namespace ClubManagementApp.ViewModels
             // Filter by date
             if (SelectedDate.HasValue)
             {
-                var selectedDate = SelectedDate.Value.Date;
-                filtered = filtered.Where(e => e.EventDate.Date == selectedDate);
+                var date = SelectedDate.Value.Date;
+                var nextDate = date.AddDays(1);
+
+                filtered = filtered.Where(e => e.EventDate >= date && e.EventDate < nextDate);
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Applied date filter: {SelectedDate.Value:yyyy-MM-dd}");
             }
 
@@ -553,22 +552,8 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Manage Participants command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
             try
             {
-                // Create a simple participant management dialog
-                var participantInfo = new System.Text.StringBuilder();
-                participantInfo.AppendLine($"Event: {eventItem.Name}");
-                participantInfo.AppendLine($"Date: {eventItem.EventDate:yyyy-MM-dd HH:mm}");
-                participantInfo.AppendLine($"Current Participants: {eventItem.ParticipantCount}");
-                participantInfo.AppendLine($"Max Capacity: {eventItem.MaxParticipants ?? 0}");
-                participantInfo.AppendLine($"Available Spots: {(eventItem.MaxParticipants ?? 0) - eventItem.ParticipantCount}");
-                participantInfo.AppendLine("\nParticipant management features:");
-                participantInfo.AppendLine("• View participant list");
-                participantInfo.AppendLine("• Add new participants");
-                participantInfo.AppendLine("• Remove participants");
-                participantInfo.AppendLine("• Send notifications");
-                participantInfo.AppendLine("\nNote: Full participant management will be implemented in a future update.");
-
-                System.Windows.MessageBox.Show(participantInfo.ToString(), "Manage Participants",
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                var participantManagementDialog = new Views.ParticipantManagementDialog(eventItem, _eventService);
+                participantManagementDialog.ShowDialog();
                 Console.WriteLine($"[EVENT_MANAGEMENT_VM] Participant management dialog opened for: {eventItem.Name}");
             }
             catch (Exception ex)

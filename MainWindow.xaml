@@ -496,7 +496,7 @@
                                                         </Border>
                                                         
                                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                            <TextBlock Text="Thêm Câu Lạc Bộ" FontSize="14" FontWeight="Medium" 
+                                                            <TextBlock Text="Tạo Câu Lạc Bộ" FontSize="14" FontWeight="Medium" 
                                                                    Foreground="#1F2937"/>
                                                             <TextBlock Text="Tạo câu lạc bộ mới" FontSize="12" 
                                                                    Foreground="#6B7280"/>
@@ -1032,8 +1032,8 @@
                             Padding="20,12" FontWeight="Medium" 
                             Command="{Binding ClubManagementViewModel.AddClubCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="➕" FontSize="16" Margin="0,0,8,0"/>
-                                <TextBlock Text="Thêm Câu Lạc Bộ" FontSize="14"/>
+                                <TextBlock Text="🏛️" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Tạo Câu Lạc Bộ" FontSize="14"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -1218,6 +1218,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
@@ -1227,7 +1228,16 @@
                                    FontSize="16" Foreground="Black"/>
                         </StackPanel>
 
-                        <Button Grid.Column="1" Background="#F59E0B" Foreground="White" BorderThickness="0"
+                        <Button Grid.Column="1" Background="#3498DB" Foreground="White" BorderThickness="0"
+                            Padding="20,12" FontWeight="Medium" Margin="0,0,12,0"
+                            Command="{Binding EventManagementViewModel.RefreshCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔄" FontSize="16" Margin="0,0,8,0"/>
+                                <TextBlock Text="Làm Mới" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="2" Background="#F59E0B" Foreground="White" BorderThickness="0"
                             Padding="20,12" FontWeight="Medium"
                             Command="{Binding EventManagementViewModel.AddEventCommand}">
                             <StackPanel Orientation="Horizontal">
@@ -1274,10 +1284,11 @@
                             <ComboBox Background="Transparent" BorderThickness="0" FontSize="16"
                                   Foreground="Black" FontWeight="Medium"
                                   SelectedItem="{Binding EventManagementViewModel.SelectedStatus}">
-                                <ComboBoxItem Content="Tất Cả Sự Kiện"/>
-                                <ComboBoxItem Content="Sắp Tới"/>
-                                <ComboBoxItem Content="Đang Diễn Ra"/>
-                                <ComboBoxItem Content="Đã Hoàn Thành"/>
+                                <ComboBoxItem IsSelected="True" Content="All Events"/>
+                                <ComboBoxItem Content="Upcoming"/>
+                                <ComboBoxItem Content="Ongoing"/>
+                                <ComboBoxItem Content="Completed"/>
+                                <ComboBoxItem Content="Cancelled"/>
                             </ComboBox>
                         </Border>
 
@@ -1286,7 +1297,7 @@
                             <Border.Effect>
                                 <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="8"/>
                             </Border.Effect>
-                            <DatePicker Background="Transparent" BorderThickness="0" FontSize="16"
+                            <DatePicker  SelectedDate="{Binding EventManagementViewModel.SelectedDate}" Background="Transparent" BorderThickness="0" FontSize="16"
                                     Foreground="Black" FontWeight="Medium"/>
                         </Border>
                     </Grid>
@@ -1308,17 +1319,21 @@
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="120"/>
                                         <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="110"/>
                                         <ColumnDefinition Width="180"/>
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock Grid.Column="0" Text="Tên Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="Black"/>
-                                    <TextBlock Grid.Column="1" Text="Ngày Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="Black"/>
-                                    <TextBlock Grid.Column="2" Text="Địa Điểm" FontSize="14" FontWeight="Bold" Foreground="Black"/>
-                                    <TextBlock Grid.Column="3" Text="Người Tham Gia" FontSize="14" FontWeight="Bold" Foreground="Black"/>
-                                    <TextBlock Grid.Column="4" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="Câu Lạc Bộ" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="2" Text="Hạn đăng kí" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="3" Text="Ngày Sự Kiện" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="4" Text="Địa Điểm" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="5" Text="Người Tham Gia" FontSize="14" FontWeight="Bold" Foreground="Black"/>
+                                    <TextBlock Grid.Column="6" Text="Thao Tác" FontSize="14" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
                                 </Grid>
                             </Border>
 
@@ -1331,9 +1346,11 @@
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="120"/>
                                                         <ColumnDefinition Width="150"/>
-                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="150"/>
+                                                        <ColumnDefinition Width="110"/>
                                                         <ColumnDefinition Width="180"/>
                                                     </Grid.ColumnDefinitions>
 
@@ -1342,18 +1359,22 @@
                                                         <TextBlock Text="{Binding Description}" FontSize="12" Foreground="Black" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
                                                     </StackPanel>
 
-                                                    <TextBlock Grid.Column="1" Text="{Binding EventDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
-
-                                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Location}" FontSize="14" Foreground="Black" FontWeight="Medium"/>
-                                                        <TextBlock Text="{Binding Venue}" FontSize="12" Foreground="Black" Margin="0,2,0,0"/>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Club.Name}" FontSize="16" FontWeight="Medium" Foreground="Black"/>
                                                     </StackPanel>
 
-                                                    <Border Grid.Column="3" Background="#F0F9FF" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <TextBlock Grid.Column="2" Text="{Binding RegistrationDeadline, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="3" Text="{Binding EventDate, StringFormat='{}{0:MMM dd, yyyy}'}" FontSize="14" Foreground="Black" VerticalAlignment="Center"/>
+
+                                                    <StackPanel Grid.Column="4" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Location}" FontSize="14" Foreground="Black" FontWeight="Medium"/>
+                                                    </StackPanel>
+
+                                                    <Border Grid.Column="5" Background="#F0F9FF" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Participants.Count}" FontSize="14" FontWeight="Bold" Foreground="Black"/>
                                                     </Border>
 
-                                                    <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <Button Background="#3B82F6" Foreground="White" BorderThickness="0"
                                                             Padding="8" Margin="0,0,4,0" ToolTip="View"
                                                             Command="{Binding DataContext.EventManagementViewModel.ViewEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -1366,6 +1387,13 @@
                                                             Command="{Binding DataContext.EventManagementViewModel.EditEventCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding}">
                                                             <TextBlock Text="✏️" FontSize="12"/>
+                                                        </Button>
+
+                                                        <Button Background="#3498DB" Foreground="White" BorderThickness="0"
+                                                                Padding="8" Margin="2,0" ToolTip="Edit"
+                                                                Command="{Binding DataContext.EventManagementViewModel.ManageParticipantsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}">
+                                                                <TextBlock Text="✔" FontSize="12"/>
                                                         </Button>
 
                                                         <Button Background="#EF4444" Foreground="White" BorderThickness="0"

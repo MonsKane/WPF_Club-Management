@@ -56,7 +56,37 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
+        <Style x:Key="ModernTextBoxStyleSmall" TargetType="TextBox">
+            <Setter Property="Padding" Value="5,5"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#e9ecef"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Background" Value="#ffffff"/>
+            <Setter Property="Foreground" Value="#495057"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderBrush" Value="#007bff"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="#6c757d"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
         <!-- Modern ComboBox Style -->
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Padding" Value="12,10"/>
@@ -339,7 +369,7 @@
                             
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Max Participants" Style="{StaticResource ModernLabelStyle}"/>
-                                <TextBox x:Name="MaxParticipantsTextBox" Style="{StaticResource ModernTextBoxStyle}"/>
+                                <TextBox x:Name="MaxParticipantsTextBox" Style="{StaticResource ModernTextBoxStyleSmall}"/>
                             </StackPanel>
                         </Grid>
                         
