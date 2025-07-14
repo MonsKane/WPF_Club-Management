@@ -17,9 +17,9 @@ namespace ClubManagementApp.Services
         {
             return systemRole switch
             {
-                SystemRole.Admin => true,
-                SystemRole.ClubOwner => clubRole == ClubRole.Admin, // Club admins can create users
-                _ => false
+                SystemRole.Admin => true,                    // System Admin: Full access
+                SystemRole.ClubOwner => true,               // Club Owner: Club only (no club role restriction)
+                _ => false                                   // System Member: No access
             };
         }
 
@@ -27,24 +27,36 @@ namespace ClubManagementApp.Services
         {
             return systemRole switch
             {
-                SystemRole.Admin => true,
-                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
-                SystemRole.Member => isSelf, // Self only
+                SystemRole.Admin => true,                   // System Admin: Full access
+                SystemRole.ClubOwner => true,              // Club Owner: Club only (no club role restriction)
+                SystemRole.Member => isSelf,               // System Member: Self only
                 _ => false
             };
         }
 
         public bool CanDeleteUsers(SystemRole systemRole)
         {
-            return systemRole == SystemRole.Admin;
+            return systemRole == SystemRole.Admin;         // Only System Admin can delete users
         }
 
         public bool CanAssignRoles(SystemRole systemRole, ClubRole? clubRole = null)
         {
             return systemRole switch
             {
-                SystemRole.Admin => true,
-                SystemRole.ClubOwner => clubRole == ClubRole.Admin, // Club admins can assign club roles
+                SystemRole.Admin => true,                   // System Admin: Full access to system roles
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin, // Club owners with Admin role can assign club roles
+                _ => false
+            };
+        }
+
+        // Club Role Assignment Permissions (separate from system role assignment)
+        public bool CanAssignClubRoles(SystemRole systemRole, ClubRole? clubRole = null)
+        {
+            return systemRole switch
+            {
+                SystemRole.Admin => true,                   // System Admin: Full access
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman, // Admin or Chairman
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,    // Admin or Chairman
                 _ => false
             };
         }
@@ -68,6 +80,40 @@ namespace ClubManagementApp.Services
         public bool CanDeleteClubs(SystemRole systemRole)
         {
             return systemRole == SystemRole.Admin;
+        }
+
+        // Club Member Management Permissions
+        public bool CanAddClubMembers(SystemRole systemRole, ClubRole? clubRole = null)
+        {
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
+        }
+
+        public bool CanRemoveClubMembers(SystemRole systemRole, ClubRole? clubRole = null)
+        {
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
+        }
+
+        public bool CanEditClubMembers(SystemRole systemRole, ClubRole? clubRole = null)
+        {
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
         }
 
         // Event Management Permissions
@@ -211,9 +257,9 @@ namespace ClubManagementApp.Services
             return systemRole switch
             {
                 SystemRole.Admin => true,
-                SystemRole.ClubOwner => targetSystemRole != SystemRole.Admin && 
+                SystemRole.ClubOwner => targetSystemRole != SystemRole.Admin &&
                                       (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
-                SystemRole.Member => targetSystemRole == SystemRole.Member && 
+                SystemRole.Member => targetSystemRole == SystemRole.Member &&
                                    (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman) &&
                                    targetClubRole == ClubRole.Member,
                 _ => false

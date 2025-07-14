@@ -7,8 +7,9 @@
         mc:Ignorable="d"
         Title="Club Management"
         WindowStartupLocation="CenterScreen"
-        Width="1440" Height="900"
-        MinWidth="1200" MinHeight="700"
+        Width="1440" Height="500"
+        MinWidth="1200" MinHeight="500"
+        MaxHeight="500"
         WindowState="Normal">
 
     <Window.Resources>
@@ -254,7 +255,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    
+
                                     <!-- Management Actions -->
                                     <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
                                         <Button Content="Members"
@@ -272,7 +273,7 @@
                                                 Margin="2"
                                                 FontSize="12"
                                                 Padding="8,4"/>
-                                        
+
                                         <Button Content="Events"
                                                 Command="{Binding DataContext.ViewEventsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}"
@@ -281,7 +282,7 @@
                                                 FontSize="12"
                                                 Padding="8,4"/>
                                     </StackPanel>
-                                    
+
                                     <!-- Admin Actions -->
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Button Content="Details"
@@ -299,9 +300,9 @@
                                                 Margin="2"
                                                 FontSize="11"
                                                 Padding="6,3"/>
-                                        
-                                        <Button Content="Delete" 
-                                                Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+
+                                        <Button Content="Delete"
+                                                Command="{Binding DataContext.DeleteClubCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource DangerButtonStyle}"
                                                 Margin="2"
@@ -338,7 +339,7 @@
                           Foreground="{Binding IsLoading, Converter={StaticResource BooleanToColorConverter}}"/>
             </StackPanel>
 
-            <TextBlock Grid.Column="1" 
+            <TextBlock Grid.Column="1"
                       Text="Click on any club card to access management options"
                       FontStyle="Italic"
                       Foreground="Gray"

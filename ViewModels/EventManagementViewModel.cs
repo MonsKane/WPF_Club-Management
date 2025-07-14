@@ -364,7 +364,7 @@ namespace ClubManagementApp.ViewModels
             }
 
             // Filter by status
-            if (SelectedStatus?.Content != "All Events")
+            if (SelectedStatus?.Content?.ToString() != "All Events")
             {
                 filtered = SelectedStatus?.Content switch
                 {
@@ -557,9 +557,9 @@ namespace ClubManagementApp.ViewModels
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] User confirmed registration for event: {eventItem.Name}");
-                    
+
                     bool success = await _eventService.RegisterUserForEventAsync(eventItem.EventID, CurrentUser.UserID);
-                    
+
                     if (success)
                     {
                         Console.WriteLine($"[EVENT_MANAGEMENT_VM] User successfully registered for event: {eventItem.Name}");
@@ -568,7 +568,7 @@ namespace ClubManagementApp.ViewModels
                             "Registration Successful",
                             System.Windows.MessageBoxButton.OK,
                             System.Windows.MessageBoxImage.Information);
-                        
+
                         // Notify other ViewModels about event change
                         EventChanged?.Invoke();
                     }

@@ -35,7 +35,7 @@ namespace ClubManagementApp.ViewModels
             _clubService = clubService;
             _authorizationService = authorizationService;
             InitializeCommands();
-            LoadCurrentUserAsync();
+            _ = LoadCurrentUserAsync(); // Fire-and-forget call
             Console.WriteLine("[ReportsViewModel] ReportsViewModel initialization completed");
         }
 
@@ -74,7 +74,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public ComboBoxItem SelectedReportType
+        public ComboBoxItem? SelectedReportType
         {
             get => _selectedReportType;
             set
@@ -241,7 +241,7 @@ namespace ClubManagementApp.ViewModels
             }
 
             // Filter by report type
-            if (SelectedReportType?.Content != "All Types")
+            if (SelectedReportType?.Content?.ToString() != "All Types")
             {
                 var reportType = SelectedReportType?.Content switch
                 {
@@ -1445,10 +1445,14 @@ namespace ClubManagementApp.ViewModels
                         await _reportService.UpdateReportAsync(report);
 
                         // Update the report in the collection
-                        var index = Reports.IndexOf(Reports.FirstOrDefault(r => r.ReportID == report.ReportID));
-                        if (index >= 0)
+                        var existingReport = Reports.FirstOrDefault(r => r.ReportID == report.ReportID);
+                        if (existingReport != null)
                         {
-                            Reports[index] = report;
+                            var index = Reports.IndexOf(existingReport);
+                            if (index >= 0)
+                            {
+                                Reports[index] = report;
+                            }
                         }
 
                         FilterReports();

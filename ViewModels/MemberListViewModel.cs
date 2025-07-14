@@ -34,7 +34,7 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Public method to trigger the member changed event
-        public static async void NotifyMemberChanged()
+        public static void NotifyMemberChanged()
         {
             MemberChanged?.Invoke();
         }
@@ -156,6 +156,25 @@ namespace ClubManagementApp.ViewModels
                     OnPropertyChanged(nameof(CanDeleteUsers));
                     OnPropertyChanged(nameof(CanExportUsers));
                     OnPropertyChanged(nameof(CanAccessUserManagement));
+                    OnPropertyChanged(nameof(CanAddClubMembers));
+                    OnPropertyChanged(nameof(CanEditClubMembers));
+                    OnPropertyChanged(nameof(CanRemoveClubMembers));
+                }
+            }
+        }
+
+        // Current User's Club Role
+        private ClubRole? _currentUserClubRole;
+        public ClubRole? CurrentUserClubRole
+        {
+            get => _currentUserClubRole;
+            set
+            {
+                if (SetProperty(ref _currentUserClubRole, value))
+                {
+                    OnPropertyChanged(nameof(CanAddClubMembers));
+                    OnPropertyChanged(nameof(CanEditClubMembers));
+                    OnPropertyChanged(nameof(CanRemoveClubMembers));
                 }
             }
         }
@@ -166,6 +185,11 @@ namespace ClubManagementApp.ViewModels
         public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.SystemRole);
         public bool CanExportUsers => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.SystemRole); // Using CanExportReports as equivalent
         public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "MemberManagement");
+
+        // Club Member Management Permissions
+        public bool CanAddClubMembers => CurrentUser != null && _authorizationService.CanAddClubMembers(CurrentUser.SystemRole, CurrentUserClubRole);
+        public bool CanEditClubMembers => CurrentUser != null && _authorizationService.CanEditClubMembers(CurrentUser.SystemRole, CurrentUserClubRole);
+        public bool CanRemoveClubMembers => CurrentUser != null && _authorizationService.CanRemoveClubMembers(CurrentUser.SystemRole, CurrentUserClubRole);
 
         // Commands
         public ICommand AddMemberCommand { get; private set; } = null!;
@@ -185,11 +209,11 @@ namespace ClubManagementApp.ViewModels
 
         private bool CanExecuteCommand() => !IsLoading && !_disposed;
 
-        private bool CanAddMember() => CanCreateUsers && CanExecuteCommand();
+        private bool CanAddMember() => CanAddClubMembers && CanExecuteCommand();
 
-        private bool CanEditMember(User? member) => member != null && CanEditUsers && CanExecuteCommand();
+        private bool CanEditMember(User? member) => member != null && CanEditClubMembers && CanExecuteCommand();
 
-        private bool CanDeleteMember(User? member) => member != null && CanDeleteUsers && CanExecuteCommand() &&
+        private bool CanDeleteMember(User? member) => member != null && CanRemoveClubMembers && CanExecuteCommand() &&
             (CurrentUser?.SystemRole == SystemRole.Admin || member.UserID != CurrentUser?.UserID);
 
         private bool CanExportMembers() => FilteredMembers.Any() && CanExportUsers && CanExecuteCommand();
@@ -201,6 +225,12 @@ namespace ClubManagementApp.ViewModels
             {
                 CurrentUser = await _userService.GetCurrentUserAsync();
                 Console.WriteLine($"[MemberListViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.SystemRole})");
+
+                // Load club role if there's an active club filter
+                if (ClubFilter != null)
+                {
+                    await LoadCurrentUserClubRoleAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -583,9 +613,37 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
+        // Method to load current user's club role
+        private async Task LoadCurrentUserClubRoleAsync()
+        {
+            if (CurrentUser == null || ClubFilter == null)
+            {
+                CurrentUserClubRole = null;
+                return;
+            }
+
+            try
+            {
+                var clubMembers = await _clubService.GetClubMembersAsync(ClubFilter.ClubID);
+                var currentUserMembership = clubMembers.FirstOrDefault(cm => cm.UserID == CurrentUser.UserID);
+
+                CurrentUserClubRole = currentUserMembership?.ClubRole;
+
+                _logger?.LogInformation("Current user club role loaded: {Role} for club {ClubName}",
+                    CurrentUserClubRole, ClubFilter.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to load current user's club role for club {ClubId}", ClubFilter.ClubID);
+                CurrentUserClubRole = null;
+            }
+        }
+
         public async void SetClubFilter(Club club)
         {
             ClubFilter = club;
+            // Load current user's role in this club
+            await LoadCurrentUserClubRoleAsync();
             // Reload members when club filter changes
             await LoadMembersAsync();
         }
@@ -593,6 +651,7 @@ namespace ClubManagementApp.ViewModels
         public async void ClearClubFilter()
         {
             ClubFilter = null;
+            CurrentUserClubRole = null;
             // Reload all members when club filter is cleared
             await LoadMembersAsync();
         }

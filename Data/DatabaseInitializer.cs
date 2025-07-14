@@ -74,7 +74,7 @@ namespace ClubManagementApp.Data
 
         private static async Task SeedDataAsync(ClubManagementDbContext context)
         {
-            // Create single admin user
+            // Create admin users first
             await CreateAdminUsersIfNeededAsync(context);
             var adminUser = await context.Users.FirstOrDefaultAsync(u => u.SystemRole == SystemRole.Admin);
 
@@ -89,21 +89,28 @@ namespace ClubManagementApp.Data
 
             if (!existingClubs.Any())
             {
-                Console.WriteLine("[DB_SEED] Creating 2 default clubs...");
+                Console.WriteLine("[DB_SEED] Creating 3 default clubs...");
                 clubs = new[]
                 {
                     new Club
                     {
                         ClubName = "Computer Science Club",
-                        Description = "A club for computer science enthusiasts and programming",
+                        Description = "Technology and programming club",
                         EstablishedDate = DateTime.Now.AddMonths(-6).Date,
                         CreatedUserId = adminUser.UserID
                     },
                     new Club
                     {
                         ClubName = "Photography Club",
-                        Description = "Capturing moments and learning photography techniques",
+                        Description = "Photography and visual arts club",
                         EstablishedDate = DateTime.Now.AddMonths(-4).Date,
+                        CreatedUserId = adminUser.UserID
+                    },
+                    new Club
+                    {
+                        ClubName = "Music Club",
+                        Description = "Music appreciation and performance club",
+                        EstablishedDate = DateTime.Now.AddMonths(-3).Date,
                         CreatedUserId = adminUser.UserID
                     }
                 };
@@ -115,17 +122,18 @@ namespace ClubManagementApp.Data
             else
             {
                 Console.WriteLine($"[DB_SEED] Found {existingClubs.Count} existing clubs, skipping club creation.");
-                clubs = existingClubs.Take(2).ToArray();
+                clubs = existingClubs.ToArray();
             }
 
-            // Create 5 members only if they don't exist
+            // Create test users as specified in documentation
             var existingUsers = await context.Users.ToListAsync();
             var existingEmails = existingUsers.Select(u => u.Email).ToHashSet();
             var usersToCreate = new List<User>();
 
-            // Define 5 members to create
+            // Define test users from documentation
             var potentialUsers = new[]
             {
+                // Main test accounts from documentation table
                 new User
                 {
                     FullName = "John Doe",
@@ -165,6 +173,47 @@ namespace ClubManagementApp.Data
                     Password = HashPassword("password123"),
                     SystemRole = SystemRole.Member,
                     CreatedAt = DateTime.Now.AddMonths(-1)
+                },
+                // Additional test accounts from step-by-step guide
+                new User
+                {
+                    FullName = "Admin Manager",
+                    Email = "admin.manager@university.edu",
+                    Password = HashPassword("admin123"),
+                    SystemRole = SystemRole.Admin,
+                    CreatedAt = DateTime.Now.AddMonths(-6)
+                },
+                new User
+                {
+                    FullName = "Alice Johnson",
+                    Email = "alice.johnson@student.edu",
+                    Password = HashPassword("admin123"),
+                    SystemRole = SystemRole.ClubOwner,
+                    CreatedAt = DateTime.Now.AddMonths(-5)
+                },
+                new User
+                {
+                    FullName = "Michael Chen",
+                    Email = "michael.chen@student.edu",
+                    Password = HashPassword("admin123"),
+                    SystemRole = SystemRole.ClubOwner,
+                    CreatedAt = DateTime.Now.AddMonths(-4)
+                },
+                new User
+                {
+                    FullName = "Kate Williams",
+                    Email = "kate.williams@student.edu",
+                    Password = HashPassword("admin123"),
+                    SystemRole = SystemRole.Member,
+                    CreatedAt = DateTime.Now.AddMonths(-3)
+                },
+                new User
+                {
+                    FullName = "Lisa Thompson",
+                    Email = "lisa.thompson@student.edu",
+                    Password = HashPassword("admin123"),
+                    SystemRole = SystemRole.Member,
+                    CreatedAt = DateTime.Now.AddMonths(-2)
                 }
             };
 
@@ -174,7 +223,7 @@ namespace ClubManagementApp.Data
                 if (!existingEmails.Contains(user.Email))
                 {
                     usersToCreate.Add(user);
-                    Console.WriteLine($"[DB_SEED] Will create user: {user.Email} - {user.FullName}");
+                    Console.WriteLine($"[DB_SEED] Will create user: {user.Email} - {user.FullName} ({user.SystemRole})");
                 }
                 else
                 {
@@ -193,7 +242,7 @@ namespace ClubManagementApp.Data
                 Console.WriteLine("[DB_SEED] All users already exist, skipping user creation.");
             }
 
-            // Get all users for event participant creation
+            // Get all users for club membership creation
             var allUsers = await context.Users.ToListAsync();
 
             // Create club memberships for the users
@@ -346,6 +395,7 @@ namespace ClubManagementApp.Data
                 Console.WriteLine("[DB_CLEANUP] Checking for invalid data...");
                 // No specific cleanup needed for new schema
                 Console.WriteLine("[DB_CLEANUP] No cleanup required for current schema.");
+                await Task.CompletedTask; // Suppress async warning
             }
             catch (Exception ex)
             {
@@ -380,69 +430,131 @@ namespace ClubManagementApp.Data
             var mikeJohnson = await context.Users.FirstOrDefaultAsync(u => u.Email == "mike.johnson@university.edu");
             var sarahWilson = await context.Users.FirstOrDefaultAsync(u => u.Email == "sarah.wilson@university.edu");
             var davidBrown = await context.Users.FirstOrDefaultAsync(u => u.Email == "david.brown@university.edu");
+            var aliceJohnson = await context.Users.FirstOrDefaultAsync(u => u.Email == "alice.johnson@student.edu");
+            var michaelChen = await context.Users.FirstOrDefaultAsync(u => u.Email == "michael.chen@student.edu");
+            var kateWilliams = await context.Users.FirstOrDefaultAsync(u => u.Email == "kate.williams@student.edu");
+            var lisaThompson = await context.Users.FirstOrDefaultAsync(u => u.Email == "lisa.thompson@student.edu");
+
+            // Find clubs by name for reliable assignment
+            var computerScienceClub = clubs.FirstOrDefault(c => c.ClubName == "Computer Science Club");
+            var photographyClub = clubs.FirstOrDefault(c => c.ClubName == "Photography Club");
+            var musicClub = clubs.FirstOrDefault(c => c.ClubName == "Music Club");
 
             var memberships = new List<ClubMember>();
 
-            // Computer Science Club memberships (3 members)
-            if (johnDoe != null && clubs.Length > 0)
+            // Computer Science Club memberships
+            // Chairman: John Doe, Members: Jane Smith, Mike Johnson
+            if (johnDoe != null && computerScienceClub != null)
             {
                 memberships.Add(new ClubMember
                 {
                     UserID = johnDoe.UserID,
-                    ClubID = clubs[0].ClubID, // Computer Science Club
+                    ClubID = computerScienceClub.ClubID,
                     ClubRole = ClubRole.Chairman,
                     JoinDate = DateTime.Now.AddMonths(-5)
                 });
-                Console.WriteLine($"[DB_SEED] Added John Doe as Chairman of {clubs[0].ClubName}");
+                Console.WriteLine($"[DB_SEED] Added John Doe as Chairman of {computerScienceClub.ClubName}");
             }
 
-            if (janeSmith != null && clubs.Length > 0)
+            if (janeSmith != null && computerScienceClub != null)
             {
                 memberships.Add(new ClubMember
                 {
                     UserID = janeSmith.UserID,
-                    ClubID = clubs[0].ClubID, // Computer Science Club
+                    ClubID = computerScienceClub.ClubID,
                     ClubRole = ClubRole.Member,
                     JoinDate = DateTime.Now.AddMonths(-3)
                 });
-                Console.WriteLine($"[DB_SEED] Added Jane Smith as Member of {clubs[0].ClubName}");
+                Console.WriteLine($"[DB_SEED] Added Jane Smith as Member of {computerScienceClub.ClubName}");
             }
 
-            if (mikeJohnson != null && clubs.Length > 0)
+            if (mikeJohnson != null && computerScienceClub != null)
             {
                 memberships.Add(new ClubMember
                 {
                     UserID = mikeJohnson.UserID,
-                    ClubID = clubs[0].ClubID, // Computer Science Club
+                    ClubID = computerScienceClub.ClubID,
                     ClubRole = ClubRole.Member,
                     JoinDate = DateTime.Now.AddMonths(-4)
                 });
-                Console.WriteLine($"[DB_SEED] Added Mike Johnson as Member of {clubs[0].ClubName}");
+                Console.WriteLine($"[DB_SEED] Added Mike Johnson as Member of {computerScienceClub.ClubName}");
             }
 
-            // Photography Club memberships (2 members)
-            if (sarahWilson != null && clubs.Length > 1)
+            // Add Alice Johnson to Computer Science Club as secondary owner
+            if (aliceJohnson != null && computerScienceClub != null)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = aliceJohnson.UserID,
+                    ClubID = computerScienceClub.ClubID,
+                    ClubRole = ClubRole.Admin,
+                    JoinDate = DateTime.Now.AddMonths(-5)
+                });
+                Console.WriteLine($"[DB_SEED] Added Alice Johnson as Admin of {computerScienceClub.ClubName}");
+            }
+
+            // Photography Club memberships
+            // Admin: Sarah Wilson, Members: David Brown
+            if (sarahWilson != null && photographyClub != null)
             {
                 memberships.Add(new ClubMember
                 {
                     UserID = sarahWilson.UserID,
-                    ClubID = clubs[1].ClubID, // Photography Club
+                    ClubID = photographyClub.ClubID,
                     ClubRole = ClubRole.Admin,
                     JoinDate = DateTime.Now.AddMonths(-2)
                 });
-                Console.WriteLine($"[DB_SEED] Added Sarah Wilson as Admin of {clubs[1].ClubName}");
+                Console.WriteLine($"[DB_SEED] Added Sarah Wilson as Admin of {photographyClub.ClubName}");
             }
 
-            if (davidBrown != null && clubs.Length > 1)
+            if (davidBrown != null && photographyClub != null)
             {
                 memberships.Add(new ClubMember
                 {
                     UserID = davidBrown.UserID,
-                    ClubID = clubs[1].ClubID, // Photography Club
+                    ClubID = photographyClub.ClubID,
                     ClubRole = ClubRole.Member,
                     JoinDate = DateTime.Now.AddMonths(-1)
                 });
-                Console.WriteLine($"[DB_SEED] Added David Brown as Member of {clubs[1].ClubName}");
+                Console.WriteLine($"[DB_SEED] Added David Brown as Member of {photographyClub.ClubName}");
+            }
+
+            // Music Club memberships
+            // Chairman: Michael Chen, Members: Kate Williams, Lisa Thompson
+            if (michaelChen != null && musicClub != null)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = michaelChen.UserID,
+                    ClubID = musicClub.ClubID,
+                    ClubRole = ClubRole.Chairman,
+                    JoinDate = DateTime.Now.AddMonths(-4)
+                });
+                Console.WriteLine($"[DB_SEED] Added Michael Chen as Chairman of {musicClub.ClubName}");
+            }
+
+            if (kateWilliams != null && musicClub != null)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = kateWilliams.UserID,
+                    ClubID = musicClub.ClubID,
+                    ClubRole = ClubRole.Member,
+                    JoinDate = DateTime.Now.AddMonths(-3)
+                });
+                Console.WriteLine($"[DB_SEED] Added Kate Williams as Member of {musicClub.ClubName}");
+            }
+
+            if (lisaThompson != null && musicClub != null)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = lisaThompson.UserID,
+                    ClubID = musicClub.ClubID,
+                    ClubRole = ClubRole.Member,
+                    JoinDate = DateTime.Now.AddMonths(-2)
+                });
+                Console.WriteLine($"[DB_SEED] Added Lisa Thompson as Member of {musicClub.ClubName}");
             }
 
             if (memberships.Any())
@@ -450,7 +562,12 @@ namespace ClubManagementApp.Data
                 context.ClubMembers.AddRange(memberships);
                 await context.SaveChangesAsync();
                 Console.WriteLine($"[DB_SEED] Created {memberships.Count} club memberships successfully.");
-                Console.WriteLine($"[DB_SEED] Computer Science Club: 3 members, Photography Club: 2 members");
+
+                var csCount = memberships.Count(m => m.ClubID == computerScienceClub?.ClubID);
+                var photoCount = memberships.Count(m => m.ClubID == photographyClub?.ClubID);
+                var musicCount = memberships.Count(m => m.ClubID == musicClub?.ClubID);
+
+                Console.WriteLine($"[DB_SEED] Computer Science Club: {csCount} members, Photography Club: {photoCount} members, Music Club: {musicCount} members");
             }
         }
 

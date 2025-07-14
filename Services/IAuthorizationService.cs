@@ -9,11 +9,17 @@ namespace ClubManagementApp.Services
         bool CanEditUsers(SystemRole systemRole, ClubRole? clubRole = null, bool isSelf = false);
         bool CanDeleteUsers(SystemRole systemRole);
         bool CanAssignRoles(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanAssignClubRoles(SystemRole systemRole, ClubRole? clubRole = null);
 
         // Club Management Permissions
         bool CanCreateClubs(SystemRole systemRole);
         bool CanEditClubs(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnClub = false);
         bool CanDeleteClubs(SystemRole systemRole);
+
+        // Club Member Management Permissions
+        bool CanAddClubMembers(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanRemoveClubMembers(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanEditClubMembers(SystemRole systemRole, ClubRole? clubRole = null);
 
         // Event Management Permissions
         bool CanCreateEvents(SystemRole systemRole, ClubRole? clubRole = null);

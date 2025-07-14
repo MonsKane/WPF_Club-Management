@@ -36,7 +36,7 @@ namespace ClubManagementApp.ViewModels
             _navigationService = navigationService;
             _authorizationService = authorizationService;
             InitializeCommands();
-            LoadCurrentUserAsync();
+            _ = LoadCurrentUserAsync(); // Fire-and-forget call
             Console.WriteLine("[DashboardViewModel] DashboardViewModel initialization completed");
         }
 

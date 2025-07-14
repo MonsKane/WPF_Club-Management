@@ -296,7 +296,6 @@ namespace ClubManagementApp.Views
                 var clubMembers = await _clubService.GetClubMembersAsync(_club.ClubID);
                 var members = clubMembers.Select(cm => cm.User);
                 var currentChairman = members.FirstOrDefault(m => m.SystemRole == SystemRole.ClubOwner && m.ClubID == _club.ClubID);
-                var currentViceChairman = (User?)null; // Simplified - no vice chairman role
                 var currentTeamLeaders = new List<User>(); // Simplified - no team leader role
 
                 // Reset previous leadership roles to Member (only if they're being changed)

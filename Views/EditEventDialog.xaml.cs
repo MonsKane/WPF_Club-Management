@@ -82,7 +82,7 @@ namespace ClubManagementApp.Views
                         Name = EventNameTextBox.Text.Trim(),
                         Description = string.IsNullOrWhiteSpace(DescriptionTextBox.Text) ? null : DescriptionTextBox.Text.Trim(),
                         EventDate = eventDateTime,
-                        Location = string.IsNullOrWhiteSpace(LocationTextBox.Text) ? null : LocationTextBox.Text.Trim(),
+                        Location = string.IsNullOrWhiteSpace(LocationTextBox.Text) ? "" : LocationTextBox.Text.Trim(),
                         ClubID = selectedClub.ClubID,
                         // Don't set Club navigation property to avoid EF tracking conflicts
                         Status = selectedStatus,

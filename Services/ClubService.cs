@@ -580,10 +580,10 @@ namespace ClubManagementApp.Services
         /// <param name="rolePermissions">Dictionary mapping roles to their permission lists</param>
         /// <returns>True if configuration successful, false if club not found</returns>
         [Obsolete("This method is deprecated. Use new role configuration system with ClubRole instead.")]
-        public async Task<bool> ConfigureLeadershipRolesAsync(int clubId, Dictionary<SystemRole, List<string>> rolePermissions)
+        public Task<bool> ConfigureLeadershipRolesAsync(int clubId, Dictionary<SystemRole, List<string>> rolePermissions)
         {
             // This method is deprecated - use new role configuration system with ClubRole instead
-            return false;
+            return Task.FromResult(false);
         }
 
         /// <summary>
@@ -612,10 +612,10 @@ namespace ClubManagementApp.Services
         /// <param name="clubId">Unique identifier of the club</param>
         /// <returns>Dictionary mapping roles to their permission lists</returns>
         [Obsolete("This method is deprecated. Use new role configuration system with ClubRole instead.")]
-        public async Task<Dictionary<SystemRole, List<string>>> GetLeadershipRolePermissionsAsync(int clubId)
+        public Task<Dictionary<SystemRole, List<string>>> GetLeadershipRolePermissionsAsync(int clubId)
         {
             // This method is deprecated - use new role configuration system with ClubRole instead
-            return new Dictionary<SystemRole, List<string>>();
+            return Task.FromResult(new Dictionary<SystemRole, List<string>>());
         }
 
         /// <summary>
@@ -836,8 +836,6 @@ namespace ClubManagementApp.Services
                 // This method is deprecated - club roles are now handled through ClubMembers table
                 // TODO: Implement club membership removal through ClubMembers
                 return false;
-
-                return false;
             }
             catch (Exception ex)
             {
@@ -904,8 +902,8 @@ namespace ClubManagementApp.Services
                     ["EventCount"] = eventCount,
                     ["RecentEvents"] = recentEvents,
                     ["RoleDistribution"] = roleDistribution,
-                    ["EstablishedDate"] = club.EstablishedDate,
-                    ["Description"] = club.Description ?? ""
+                    ["EstablishedDate"] = club!.EstablishedDate,
+                    ["Description"] = club!.Description ?? ""
                 };
             }
             catch (Exception ex)

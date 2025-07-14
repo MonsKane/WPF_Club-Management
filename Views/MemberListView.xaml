@@ -24,7 +24,9 @@
             <TextBlock Text="{Binding ClubFilter.Name, StringFormat=' - {0}'}"
                        FontSize="16" FontWeight="SemiBold"
                        Foreground="DarkBlue" VerticalAlignment="Center"/>
-            <Button Name="AddMemberButton" Content="Add Member" Width="100" Height="30" Margin="20,0,0,0" Click="AddMemberButton_Click"/>
+            <Button Name="AddMemberButton" Content="Add Member" Width="100" Height="30" Margin="20,0,0,0"
+                    Click="AddMemberButton_Click"
+                    IsEnabled="{Binding CanAddClubMembers}"/>
             <Button Name="RefreshButton" Content="Refresh" Width="80" Height="30" Margin="10,0,0,0" Click="RefreshButton_Click"/>
         </StackPanel>
 
@@ -138,8 +140,12 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="Edit" Width="50" Height="25" Margin="2" Click="EditMemberButton_Click"/>
-                                <Button Content="Remove" Width="60" Height="25" Margin="2" Click="RemoveMemberButton_Click"/>
+                                <Button Content="Edit" Width="50" Height="25" Margin="2"
+                                        Click="EditMemberButton_Click"
+                                        IsEnabled="{Binding DataContext.CanEditClubMembers, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                <Button Content="Remove" Width="60" Height="25" Margin="2"
+                                        Click="RemoveMemberButton_Click"
+                                        IsEnabled="{Binding DataContext.CanRemoveClubMembers, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
