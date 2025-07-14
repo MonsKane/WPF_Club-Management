@@ -105,7 +105,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -172,7 +172,7 @@
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource ClubCardStyle}" Width="320" Height="320"
+                        <Border Style="{StaticResource ClubCardStyle}" Width="320" Height="200" MaxHeight="200"
                                 MouseLeftButtonDown="ClubCard_MouseLeftButtonDown"
                                 Tag="{Binding}"
                                 Background="{Binding IsSelected, Converter={StaticResource BooleanToBackgroundConverter}, FallbackValue=White}"
@@ -183,7 +183,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>

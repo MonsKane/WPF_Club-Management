@@ -12,7 +12,7 @@ namespace ClubManagementApp.DTOs
         public string Semester { get; set; } = string.Empty;
         public int ClubID { get; set; }
         public string ClubName { get; set; } = string.Empty;
-        public int GeneratedByUserID { get; set; }
+        public int? GeneratedByUserID { get; set; } // Nullable to handle deleted users
         public string GeneratedByUserName { get; set; } = string.Empty;
     }
 
@@ -23,7 +23,7 @@ namespace ClubManagementApp.DTOs
         public string Content { get; set; } = string.Empty;
         public string Semester { get; set; } = string.Empty;
         public int ClubID { get; set; }
-        public int GeneratedByUserID { get; set; }
+        public int GeneratedByUserID { get; set; } // Keep non-nullable for creation since user must exist
     }
 
     public class ReportSummaryDto

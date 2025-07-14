@@ -462,44 +462,129 @@ namespace ClubManagementApp.Services
         }
 
         /// <summary>
-        /// Deletes a user account from the database.
+        /// Safely deletes a user from the system by handling all foreign key constraints.
         ///
         /// Data Flow:
-        /// 1. Find user by ID in database
-        /// 2. If user exists, remove from context
-        /// 3. Save changes to delete from database
-        /// 4. Return success/failure status
+        /// 1. Validate user exists and can be deleted
+        /// 2. Remove event participations (CASCADE handled by EF)
+        /// 3. Remove club memberships (CASCADE handled by EF)
+        /// 4. Handle reports by setting GeneratedByUserID to null
+        /// 5. Handle audit logs by setting UserId to null
+        /// 6. Finally delete the user entity
         ///
-        /// Considerations: This is a hard delete - consider soft delete for audit trails
-        /// Used by: Admin user management, account deactivation
+        /// Business Rules:
+        /// - Cannot delete users who created clubs (RESTRICT constraint)
+        /// - Must clean up all dependent records first
+        /// - Maintains data integrity through proper cascade deletion
+        ///
+        /// Used by: Admin user management, account deletion
         /// </summary>
-        /// <param name="userId">Unique identifier of user to delete</param>
-        /// <returns>True if user was deleted, false if user not found</returns>
+        /// <param name="userId">Unique identifier of the user to delete</param>
+        /// <returns>True if deletion successful, false if user not found</returns>
         public async Task<bool> DeleteUserAsync(int userId)
         {
+            if (userId <= 0)
+                throw new ArgumentException("Invalid user ID", nameof(userId));
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
                 _loggingService.LogInfo($"Attempting to delete user with ID: {userId}");
 
-                if (userId <= 0)
-                    throw new ArgumentException("Invalid user ID", nameof(userId));
+                var user = await _context.Users
+                    .Include(u => u.ClubMemberships)
+                    .Include(u => u.EventParticipations)
+                    .Include(u => u.GeneratedReports)
+                    .Include(u => u.CreatedClubs)
+                    .FirstOrDefaultAsync(u => u.UserID == userId);
 
-                var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
                     _loggingService.LogWarning($"User not found for deletion: {userId}");
                     return false; // User not found
                 }
 
+                // Business rule: Cannot delete users who created clubs (RESTRICT constraint)
+                if (user.CreatedClubs?.Any() == true)
+                {
+                    var clubNames = string.Join(", ", user.CreatedClubs.Select(c => c.ClubName));
+                    var errorMessage = $"Cannot delete user {user.FullName} because they created the following clubs: {clubNames}. Please transfer club ownership first.";
+                    _loggingService.LogWarning(errorMessage);
+                    throw new InvalidOperationException(errorMessage);
+                }
+
                 _loggingService.LogInfo($"Deleting user: {user.FullName} ({user.Email})");
-                // Remove user entity and persist changes
+
+                // Step 1: Remove event participations
+                if (user.EventParticipations?.Any() == true)
+                {
+                    _loggingService.LogInfo($"Removing {user.EventParticipations.Count} event participations for user {user.FullName}");
+                    _context.EventParticipants.RemoveRange(user.EventParticipations);
+                }
+
+                // Step 2: Remove club memberships
+                if (user.ClubMemberships?.Any() == true)
+                {
+                    _loggingService.LogInfo($"Removing {user.ClubMemberships.Count} club memberships for user {user.FullName}");
+                    _context.ClubMembers.RemoveRange(user.ClubMemberships);
+                }
+
+                // Step 3: Handle reports by setting GeneratedByUserID to null
+                var userReports = await _context.Reports
+                    .Where(r => r.GeneratedByUserID == userId)
+                    .ToListAsync();
+
+                if (userReports.Any())
+                {
+                    _loggingService.LogInfo($"Nullifying GeneratedByUserID for {userReports.Count} reports");
+                    foreach (var report in userReports)
+                    {
+                        report.GeneratedByUserID = null;
+                    }
+                }
+
+                // Step 4: Handle audit logs by setting UserId to null
+                var userAuditLogs = await _context.AuditLogs
+                    .Where(al => al.UserId == userId)
+                    .ToListAsync();
+
+                if (userAuditLogs.Any())
+                {
+                    _loggingService.LogInfo($"Nullifying UserId for {userAuditLogs.Count} audit log entries");
+                    foreach (var auditLog in userAuditLogs)
+                    {
+                        auditLog.UserId = null;
+                    }
+                }
+
+                // Step 5: Handle notifications by setting UserId to null
+                var userNotifications = await _context.Notifications
+                    .Where(n => n.UserId == userId)
+                    .ToListAsync();
+
+                if (userNotifications.Any())
+                {
+                    _loggingService.LogInfo($"Nullifying UserId for {userNotifications.Count} notifications");
+                    foreach (var notification in userNotifications)
+                    {
+                        notification.UserId = null;
+                    }
+                }
+
+                // Step 6: Remove the user entity
                 _context.Users.Remove(user);
+
+                // Save all changes in the transaction
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
                 _loggingService.LogInfo($"User deleted successfully: {user.FullName}");
                 return true;
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _loggingService.LogError($"Error deleting user {userId}: {ex.Message}", ex);
                 throw;
             }

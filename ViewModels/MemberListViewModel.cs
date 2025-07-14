@@ -489,7 +489,7 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine($"[MemberListViewModel] Delete Member command executed for: {member.FullName} (ID: {member.UserID})");
                 // Using MessageBox for confirmation dialog
                 var result = System.Windows.MessageBox.Show(
-                    $"Are you sure you want to delete {member.FullName}?\n\nThis action cannot be undone and will remove them from any clubs.",
+                    $"Are you sure you want to delete {member.FullName}?\n\nThis action cannot be undone and will remove them from any clubs and events.",
                     "Confirm Delete",
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Warning);
@@ -499,14 +499,7 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[MemberListViewModel] User confirmed deletion of member: {member.FullName}");
                     IsLoading = true;
 
-                    // If member belongs to a club, remove from club first
-                    if (member.ClubID.HasValue)
-                    {
-                        await _clubService.RemoveClubMembershipAsync(member.ClubID.Value, member.UserID);
-                        Console.WriteLine($"[MemberListViewModel] Removed member {member.FullName} from club {member.ClubID}");
-                    }
-
-                    // Delete the user
+                    // UserService now handles all cascade deletion including club memberships
                     await _userService.DeleteUserAsync(member.UserID);
 
                     // Reload members to ensure accurate list

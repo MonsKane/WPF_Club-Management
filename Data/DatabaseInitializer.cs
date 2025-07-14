@@ -131,91 +131,80 @@ namespace ClubManagementApp.Data
             var usersToCreate = new List<User>();
 
             // Define test users from documentation
-            var potentialUsers = new[]
+            var testUserData = new[]
             {
                 // Main test accounts from documentation table
-                new User
-                {
-                    FullName = "John Doe",
-                    Email = "john.doe@university.edu",
-                    Password = HashPassword("password123"),
-                    SystemRole = SystemRole.ClubOwner,
-                    CreatedAt = DateTime.Now.AddMonths(-5)
-                },
-                new User
-                {
-                    FullName = "Jane Smith",
-                    Email = "jane.smith@university.edu",
-                    Password = HashPassword("password123"),
-                    SystemRole = SystemRole.Member,
-                    CreatedAt = DateTime.Now.AddMonths(-3)
-                },
-                new User
-                {
-                    FullName = "Mike Johnson",
-                    Email = "mike.johnson@university.edu",
-                    Password = HashPassword("password123"),
-                    SystemRole = SystemRole.Member,
-                    CreatedAt = DateTime.Now.AddMonths(-4)
-                },
-                new User
-                {
-                    FullName = "Sarah Wilson",
-                    Email = "sarah.wilson@university.edu",
-                    Password = HashPassword("password123"),
-                    SystemRole = SystemRole.Member,
-                    CreatedAt = DateTime.Now.AddMonths(-2)
-                },
-                new User
-                {
-                    FullName = "David Brown",
-                    Email = "david.brown@university.edu",
-                    Password = HashPassword("password123"),
-                    SystemRole = SystemRole.Member,
-                    CreatedAt = DateTime.Now.AddMonths(-1)
-                },
+                new { FullName = "John Doe", Email = "john.doe@university.edu", Password = "password123", SystemRole = SystemRole.ClubOwner, Months = -5 },
+                new { FullName = "Jane Smith", Email = "jane.smith@university.edu", Password = "password123", SystemRole = SystemRole.Member, Months = -3 },
+                new { FullName = "Mike Johnson", Email = "mike.johnson@university.edu", Password = "password123", SystemRole = SystemRole.Member, Months = -4 },
+                new { FullName = "Sarah Wilson", Email = "sarah.wilson@university.edu", Password = "password123", SystemRole = SystemRole.Member, Months = -2 },
+                new { FullName = "David Brown", Email = "david.brown@university.edu", Password = "password123", SystemRole = SystemRole.Member, Months = -1 },
                 // Additional test accounts from step-by-step guide
-                new User
-                {
-                    FullName = "Admin Manager",
-                    Email = "admin.manager@university.edu",
-                    Password = HashPassword("admin123"),
-                    SystemRole = SystemRole.Admin,
-                    CreatedAt = DateTime.Now.AddMonths(-6)
-                },
-                new User
-                {
-                    FullName = "Alice Johnson",
-                    Email = "alice.johnson@student.edu",
-                    Password = HashPassword("admin123"),
-                    SystemRole = SystemRole.ClubOwner,
-                    CreatedAt = DateTime.Now.AddMonths(-5)
-                },
-                new User
-                {
-                    FullName = "Michael Chen",
-                    Email = "michael.chen@student.edu",
-                    Password = HashPassword("admin123"),
-                    SystemRole = SystemRole.ClubOwner,
-                    CreatedAt = DateTime.Now.AddMonths(-4)
-                },
-                new User
-                {
-                    FullName = "Kate Williams",
-                    Email = "kate.williams@student.edu",
-                    Password = HashPassword("admin123"),
-                    SystemRole = SystemRole.Member,
-                    CreatedAt = DateTime.Now.AddMonths(-3)
-                },
-                new User
-                {
-                    FullName = "Lisa Thompson",
-                    Email = "lisa.thompson@student.edu",
-                    Password = HashPassword("admin123"),
-                    SystemRole = SystemRole.Member,
-                    CreatedAt = DateTime.Now.AddMonths(-2)
-                }
+                new { FullName = "Alice Johnson", Email = "alice.johnson@student.edu", Password = "password123", SystemRole = SystemRole.ClubOwner, Months = -5 },
+                new { FullName = "Michael Chen", Email = "michael.chen@student.edu", Password = "password123", SystemRole = SystemRole.ClubOwner, Months = -4 },
+                new { FullName = "Kate Williams", Email = "kate.williams@student.edu", Password = "password123", SystemRole = SystemRole.Member, Months = -3 },
+                new { FullName = "Lisa Thompson", Email = "lisa.thompson@student.edu", Password = "password123", SystemRole = SystemRole.Member, Months = -2 }
             };
+
+            // Create User objects with correct password hashing
+            var potentialUsers = testUserData.Select(userData =>
+            {
+                var hashedPassword = HashPassword(userData.Password);
+                Console.WriteLine($"[DB_SEED] Creating user {userData.Email} with password '{userData.Password}' -> hash: {hashedPassword}");
+
+                return new User
+                {
+                    FullName = userData.FullName,
+                    Email = userData.Email,
+                    Password = hashedPassword,
+                    SystemRole = userData.SystemRole,
+                    CreatedAt = DateTime.Now.AddMonths(userData.Months)
+                };
+            }).ToArray();
+
+            // Check existing users and fix password hashes if needed
+            var usersNeedingPasswordFix = new List<(User existingUser, string correctPassword)>();
+            var expectedPasswords = new Dictionary<string, string>
+            {
+                { "john.doe@university.edu", "password123" },
+                { "jane.smith@university.edu", "password123" },
+                { "mike.johnson@university.edu", "password123" },
+                { "sarah.wilson@university.edu", "password123" },
+                { "david.brown@university.edu", "password123" },
+                { "alice.johnson@student.edu", "password123" },
+                { "michael.chen@student.edu", "password123" },
+                { "kate.williams@student.edu", "password123" },
+                { "lisa.thompson@student.edu", "password123" }
+            };
+
+            foreach (var existingUser in existingUsers)
+            {
+                if (expectedPasswords.TryGetValue(existingUser.Email, out var expectedPassword))
+                {
+                    var expectedHash = HashPassword(expectedPassword);
+                    if (existingUser.Password != expectedHash)
+                    {
+                        Console.WriteLine($"[DB_SEED] Password hash mismatch for {existingUser.Email}");
+                        Console.WriteLine($"[DB_SEED] Expected: {expectedHash}");
+                        Console.WriteLine($"[DB_SEED] Actual: {existingUser.Password}");
+                        usersNeedingPasswordFix.Add((existingUser, expectedPassword));
+                    }
+                }
+            }
+
+            // Fix password hashes for existing users
+            if (usersNeedingPasswordFix.Any())
+            {
+                Console.WriteLine($"[DB_SEED] Fixing password hashes for {usersNeedingPasswordFix.Count} users...");
+                foreach (var (user, correctPassword) in usersNeedingPasswordFix)
+                {
+                    user.Password = HashPassword(correctPassword);
+                    context.Users.Update(user);
+                    Console.WriteLine($"[DB_SEED] Updated password hash for {user.Email}");
+                }
+                await context.SaveChangesAsync();
+                Console.WriteLine("[DB_SEED] Password hashes updated successfully");
+            }
 
             // Only add users that don't already exist
             foreach (var user in potentialUsers)
@@ -332,6 +321,10 @@ namespace ClubManagementApp.Data
             {
                 Console.WriteLine($"[DB_SEED] Event participants already exist ({existingParticipants}) or insufficient data, skipping participant creation.");
             }
+
+            // Final verification: Test all user authentication
+            Console.WriteLine("[DB_SEED] Performing final authentication verification...");
+            await VerifyUserAuthenticationAsync(context);
         }
 
         private static async Task HandlePartialSeedingAsync(ClubManagementDbContext context)
@@ -386,6 +379,72 @@ namespace ClubManagementApp.Data
             var matches = testHash == hashedPassword;
             Console.WriteLine($"[DB_HASH] Password verification: '{password}' -> Expected: {hashedPassword}, Got: {testHash}, Matches: {matches}");
             return matches;
+        }
+
+        private static async Task VerifyUserAuthenticationAsync(ClubManagementDbContext context)
+        {
+            Console.WriteLine("[DB_VERIFY] Starting authentication verification for all users...");
+
+            var testCredentials = new Dictionary<string, string>
+            {
+                // Admin accounts
+                { "admin@university.edu", "admin123" },
+                { "admin.manager@university.edu", "admin123" },
+                // Regular users
+                { "john.doe@university.edu", "password123" },
+                { "jane.smith@university.edu", "password123" },
+                { "mike.johnson@university.edu", "password123" },
+                { "sarah.wilson@university.edu", "password123" },
+                { "david.brown@university.edu", "password123" },
+                { "alice.johnson@student.edu", "password123" },
+                { "michael.chen@student.edu", "password123" },
+                { "kate.williams@student.edu", "password123" },
+                { "lisa.thompson@student.edu", "password123" }
+            };
+
+            var verificationResults = new List<(string email, bool success, string message)>();
+
+            foreach (var (email, password) in testCredentials)
+            {
+                try
+                {
+                    var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                    if (user == null)
+                    {
+                        verificationResults.Add((email, false, "User not found in database"));
+                        continue;
+                    }
+
+                    var isValid = VerifyPasswordHash(password, user.Password);
+                    var message = isValid ? "Authentication successful" : "Password verification failed";
+                    verificationResults.Add((email, isValid, message));
+
+                    Console.WriteLine($"[DB_VERIFY] {email}: {message}");
+                }
+                catch (Exception ex)
+                {
+                    verificationResults.Add((email, false, $"Error: {ex.Message}"));
+                    Console.WriteLine($"[DB_VERIFY] {email}: Error - {ex.Message}");
+                }
+            }
+
+            // Summary
+            var successCount = verificationResults.Count(r => r.success);
+            var totalCount = verificationResults.Count;
+            Console.WriteLine($"[DB_VERIFY] Authentication verification completed: {successCount}/{totalCount} users can authenticate successfully");
+
+            if (successCount < totalCount)
+            {
+                Console.WriteLine("[DB_VERIFY] AUTHENTICATION ISSUES FOUND:");
+                foreach (var (email, success, message) in verificationResults.Where(r => !r.success))
+                {
+                    Console.WriteLine($"[DB_VERIFY] FAILED: {email} - {message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("[DB_VERIFY] ✅ All users can authenticate successfully!");
+            }
         }
 
         private static async Task CleanupInvalidDataAsync(ClubManagementDbContext context)
@@ -573,30 +632,75 @@ namespace ClubManagementApp.Data
 
         private static async Task CreateAdminUsersAsync(ClubManagementDbContext context)
         {
-            Console.WriteLine("[DB_ADMIN] Creating single admin user...");
+            Console.WriteLine("[DB_ADMIN] Creating admin users...");
 
-            var adminEmail = "admin@university.edu";
-            var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
-
-            if (existingAdmin == null)
+            var adminsToCreate = new[]
             {
-                Console.WriteLine($"[DB_ADMIN] Creating {adminEmail}...");
-                var adminUser = new User
+                new { Email = "admin@university.edu", FullName = "System Administrator", Password = "admin123" },
+                new { Email = "admin.manager@university.edu", FullName = "Admin Manager", Password = "admin123" }
+            };
+
+            foreach (var adminData in adminsToCreate)
+            {
+                var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.Email == adminData.Email);
+                if (existingAdmin == null)
                 {
-                    FullName = "System Administrator",
-                    Email = adminEmail,
-                    Password = HashPassword("admin123"),
-                    SystemRole = SystemRole.Admin,
-                    CreatedAt = DateTime.Now
-                };
+                    Console.WriteLine($"[DB_ADMIN] Creating {adminData.Email}...");
+                    var hashedPassword = HashPassword(adminData.Password);
+                    Console.WriteLine($"[DB_ADMIN] Password '{adminData.Password}' hashed to: {hashedPassword}");
 
-                await context.Users.AddAsync(adminUser);
-                await context.SaveChangesAsync();
-                Console.WriteLine($"[DB_ADMIN] Created admin user successfully: {adminEmail}");
+                    var adminUser = new User
+                    {
+                        FullName = adminData.FullName,
+                        Email = adminData.Email,
+                        Password = hashedPassword,
+                        SystemRole = SystemRole.Admin,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    await context.Users.AddAsync(adminUser);
+                    Console.WriteLine($"[DB_ADMIN] Admin user {adminData.Email} added to context");
+                }
+                else
+                {
+                    Console.WriteLine($"[DB_ADMIN] Admin user already exists: {adminData.Email}");
+
+                    // Verify existing password hash is correct
+                    var expectedHash = HashPassword(adminData.Password);
+                    if (existingAdmin.Password != expectedHash)
+                    {
+                        Console.WriteLine($"[DB_ADMIN] WARNING: Password hash mismatch for {adminData.Email}");
+                        Console.WriteLine($"[DB_ADMIN] Expected: {expectedHash}");
+                        Console.WriteLine($"[DB_ADMIN] Actual: {existingAdmin.Password}");
+                        Console.WriteLine($"[DB_ADMIN] Updating password hash for {adminData.Email}");
+
+                        existingAdmin.Password = expectedHash;
+                        context.Users.Update(existingAdmin);
+                    }
+                }
             }
-            else
+
+            try
             {
-                Console.WriteLine($"[DB_ADMIN] Admin user already exists: {adminEmail}");
+                await context.SaveChangesAsync();
+                Console.WriteLine("[DB_ADMIN] Admin users created/updated successfully");
+
+                // Verify admin users after creation
+                var adminUsers = await context.Users.Where(u => u.SystemRole == SystemRole.Admin).ToListAsync();
+                Console.WriteLine($"[DB_ADMIN] Verification: Found {adminUsers.Count} admin users:");
+                foreach (var admin in adminUsers)
+                {
+                    Console.WriteLine($"[DB_ADMIN] - {admin.Email}: {admin.FullName}");
+                    // Test password verification
+                    var testPassword = admin.Email == "admin@university.edu" ? "admin123" : "admin123";
+                    var isValid = VerifyPasswordHash(testPassword, admin.Password);
+                    Console.WriteLine($"[DB_ADMIN] - Password verification test for {admin.Email}: {isValid}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DB_ADMIN] Error saving admin users: {ex.Message}");
+                throw;
             }
         }
 

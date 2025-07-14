@@ -229,9 +229,11 @@ namespace ClubManagementApp.ViewModels
                 Clubs.Clear();
                 foreach (var club in clubs)
                 {
-                    // Load additional data for each club
-                    await LoadClubStatistics(club);
+                    // Navigation properties are already loaded by GetAllClubsAsync
+                    // Just trigger property change notifications for the computed properties
+                    club.RefreshCounts();
                     Clubs.Add(club);
+                    Console.WriteLine($"[ClubManagementViewModel] Club: {club.Name} - Members: {club.MemberCount}, Events: {club.EventCount}");
                 }
 
                 FilterClubs();
@@ -251,35 +253,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        private async Task LoadClubStatistics(Club club)
-        {
-            try
-            {
-                Console.WriteLine($"[ClubManagementViewModel] Loading statistics for club: {club.Name} (ID: {club.ClubID})");
 
-                // Get member and event counts using the proper service methods
-                var clubMembers = await _clubService.GetClubMembersAsync(club.ClubID);
-                var events = await _eventService.GetEventsByClubAsync(club.ClubID);
-
-                // Always update collections to ensure accurate counts
-                club.ClubMembers = clubMembers.ToList();
-                club.Events = events.ToList();
-
-                // Force property change notifications for member count
-                club.RefreshCounts();
-
-                Console.WriteLine($"[ClubManagementViewModel] Found {clubMembers.Count()} members and {events.Count()} events for club: {club.Name}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ClubManagementViewModel] Error loading club statistics for {club.Name}: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Error loading club statistics for {club.Name}: {ex.Message}");
-
-                // Set empty collections if loading fails
-                club.ClubMembers = new List<ClubMember>();
-                club.Events = new List<Event>();
-            }
-        }
 
         private void FilterClubs()
         {
@@ -317,8 +291,9 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[ClubManagementViewModel] Creating new club: {dialog.CreatedClub.Name}");
                     var createdClub = await _clubService.CreateClubAsync(dialog.CreatedClub);
 
-                    // Load statistics for the new club
-                    await LoadClubStatistics(createdClub);
+                    // Trigger property change notifications for computed properties
+                    createdClub.RefreshCounts();
+                    Console.WriteLine($"[ClubManagementViewModel] New club created: {createdClub.Name} - Members: {createdClub.MemberCount}, Events: {createdClub.EventCount}");
 
                     Clubs.Add(createdClub);
                     FilterClubs();
@@ -570,12 +545,24 @@ namespace ClubManagementApp.ViewModels
 
         private async void OnClubMemberCountChanged(int clubId)
         {
-            Console.WriteLine($"[ClubManagementViewModel] Club member count changed for club ID: {clubId}. Refreshing statistics.");
+            Console.WriteLine($"[ClubManagementViewModel] Club member count changed for club ID: {clubId}. Refreshing club data.");
             var club = Clubs.FirstOrDefault(c => c.ClubID == clubId);
             if (club != null)
             {
-                await LoadClubStatistics(club);
-                FilterClubs(); // Re-filter to reflect updated member count
+                // Reload the specific club data from the service
+                var updatedClub = await _clubService.GetClubByIdAsync(clubId);
+                if (updatedClub != null)
+                {
+                    // Find the club in the collection and update its properties
+                    var clubIndex = Clubs.ToList().FindIndex(c => c.ClubID == clubId);
+                    if (clubIndex >= 0)
+                    {
+                        updatedClub.RefreshCounts();
+                        Clubs[clubIndex] = updatedClub;
+                        FilterClubs(); // Re-filter to reflect updated member count
+                        Console.WriteLine($"[ClubManagementViewModel] Updated club: {updatedClub.Name} - Members: {updatedClub.MemberCount}, Events: {updatedClub.EventCount}");
+                    }
+                }
             }
         }
 

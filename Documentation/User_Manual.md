@@ -59,13 +59,13 @@
 **Regular Test Users:**
 | Email | Password | Description |
 |-------|----------|-------------|
-| `john.doe@university.edu` | `password123` | ClubOwner role - Chairman of Computer Science Club |
-| `jane.smith@university.edu` | `password123` | Member role - Member of Computer Science Club |
-| `mike.johnson@university.edu` | `password123` | Member role - Member of Computer Science Club |
-| `sarah.wilson@university.edu` | `password123` | Member role - Admin of Photography Club |
-| `david.brown@university.edu` | `password123` | Member role - Member of Photography Club |
+| `john.doe@university.edu` | `admin123` | ClubOwner role - Chairman of Computer Science Club |
+| `jane.smith@university.edu` | `admin123` | Member role - Member of Computer Science Club |
+| `mike.johnson@university.edu` | `admin123` | Member role - Member of Computer Science Club |
+| `sarah.wilson@university.edu` | `admin123` | Member role - Admin of Photography Club |
+| `david.brown@university.edu` | `admin123` | Member role - Member of Photography Club |
 
-**Club Information:**
+s**Club Information:**
 | Club Name | Chairman | Members | Description |
 |-----------|----------|---------|-------------|
 | Computer Science Club | John Doe | Jane Smith, Mike Johnson | Technology and programming club |

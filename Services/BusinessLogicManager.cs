@@ -11,21 +11,21 @@ namespace ClubManagementApp.Services
         Task<bool> TransferMembershipAsync(int userId, int newClubId, int currentUserId);
         Task<bool> PromoteMemberAsync(int userId, SystemRole newRole, int currentUserId);
         Task<bool> DeactivateMemberAsync(int userId, int currentUserId);
-        
+
         // Event Management Workflows
         Task<EventDto?> CreateEventWithNotificationAsync(CreateEventDto createEventDto, int currentUserId);
         Task<bool> CancelEventAsync(int eventId, string reason, int currentUserId);
         Task<bool> ProcessEventAttendanceAsync(int eventId, List<EventParticipantDto> attendanceData, int currentUserId);
-        
+
         // Club Management Workflows
         Task<ClubDto?> EstablishNewClubAsync(CreateClubDto createClubDto, int chairmanUserId, int currentUserId);
         Task<bool> RestructureClubLeadershipAsync(int clubId, ClubLeadershipDto newLeadership, int currentUserId);
         Task<ClubStatisticsDto> GetComprehensiveClubStatisticsAsync(int clubId, int currentUserId);
-        
+
         // Report Generation Workflows
         Task<ReportDto?> GenerateComprehensiveReportAsync(ReportType reportType, int clubId, string semester, int currentUserId);
         Task<bool> SchedulePeriodicReportsAsync(int clubId, List<ReportType> reportTypes, string semester, int currentUserId);
-        
+
         // Notification Workflows
         Task<bool> SendEventReminderNotificationsAsync(int eventId, int currentUserId);
         Task<bool> SendMembershipChangeNotificationAsync(int userId, string changeType, int currentUserId);
@@ -64,7 +64,7 @@ namespace ClubManagementApp.Services
 
             var newUser = CreateUserFromDto(createUserDto);
             var createdUser = await _userService.CreateUserAsync(newUser);
-            
+
             if (createdUser == null)
                 return null;
 
@@ -295,7 +295,7 @@ namespace ClubManagementApp.Services
             // Check authorization
             var currentUser = await _userService.GetUserByIdAsync(currentUserId);
             var eventItem = await _eventService.GetEventByIdAsync(eventId);
-            if (currentUser == null || eventItem == null || 
+            if (currentUser == null || eventItem == null ||
                 !_authorizationService.CanManageEvent(currentUser.SystemRole, null, currentUser.ClubID == eventItem.ClubID))
                 return false;
 
@@ -409,6 +409,19 @@ namespace ClubManagementApp.Services
 
             // Convert to DTO
             var club = await _clubService.GetClubByIdAsync(clubId);
+
+            // Handle case where the report generator user might have been deleted
+            var generatedByUserName = currentUser.FullName;
+            if (report.GeneratedByUserID.HasValue && report.GeneratedByUserID.Value != currentUserId)
+            {
+                var originalUser = await _userService.GetUserByIdAsync(report.GeneratedByUserID.Value);
+                generatedByUserName = originalUser?.FullName ?? "[Deleted User]";
+            }
+            else if (!report.GeneratedByUserID.HasValue)
+            {
+                generatedByUserName = "[Deleted User]";
+            }
+
             return new ReportDto
             {
                 ReportID = report.ReportID,
@@ -420,7 +433,7 @@ namespace ClubManagementApp.Services
                 ClubID = report.ClubID ?? clubId,
                 ClubName = club?.Name ?? "",
                 GeneratedByUserID = report.GeneratedByUserID,
-                GeneratedByUserName = currentUser.FullName
+                GeneratedByUserName = generatedByUserName
             };
         }
 
@@ -441,7 +454,7 @@ namespace ClubManagementApp.Services
             // Check authorization
             var currentUser = await _userService.GetUserByIdAsync(currentUserId);
             var eventItem = await _eventService.GetEventByIdAsync(eventId);
-            if (currentUser == null || eventItem == null || 
+            if (currentUser == null || eventItem == null ||
                 !_authorizationService.CanManageEvent(currentUser.SystemRole, null, currentUser.ClubID == eventItem.ClubID))
                 return false;
 
@@ -454,7 +467,7 @@ namespace ClubManagementApp.Services
             // Check authorization
             var currentUser = await _userService.GetUserByIdAsync(currentUserId);
             var targetUser = await _userService.GetUserByIdAsync(userId);
-            if (currentUser == null || targetUser == null || 
+            if (currentUser == null || targetUser == null ||
                 !_authorizationService.CanManageUser(currentUser.SystemRole, targetUser.SystemRole, null, null))
                 return false;
 

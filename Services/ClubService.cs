@@ -63,7 +63,7 @@ namespace ClubManagementApp.Services
             {
                 Console.WriteLine("[CLUB_SERVICE] Getting all clubs");
                 var clubs = await _context.Clubs
-                    .Include(c => c.ClubMembers.Where(cm => cm.IsActive))
+                    .Include(c => c.ClubMembers)
                         .ThenInclude(cm => cm.User)
                     .Include(c => c.Events)
                     .ToListAsync();
@@ -103,7 +103,7 @@ namespace ClubManagementApp.Services
 
                 Console.WriteLine($"[CLUB_SERVICE] Getting club by ID: {clubId}");
                 var club = await _context.Clubs
-                    .Include(c => c.ClubMembers.Where(cm => cm.IsActive))
+                    .Include(c => c.ClubMembers)
                         .ThenInclude(cm => cm.User)
                     .Include(c => c.Events)
                     .FirstOrDefaultAsync(c => c.ClubID == clubId);
@@ -149,7 +149,7 @@ namespace ClubManagementApp.Services
                 }
 
                 return await _context.Clubs
-                    .Include(c => c.ClubMembers.Where(cm => cm.IsActive))
+                    .Include(c => c.ClubMembers)
                         .ThenInclude(cm => cm.User)
                     .Include(c => c.Events)
                     .FirstOrDefaultAsync(c => c.Name == name);
@@ -360,7 +360,7 @@ namespace ClubManagementApp.Services
 
                 Console.WriteLine($"[CLUB_SERVICE] Getting member count for club: {clubId}");
                 var count = await _context.ClubMembers
-                    .CountAsync(cm => cm.ClubID == clubId && cm.IsActive);
+                    .CountAsync(cm => cm.ClubID == clubId);
                 Console.WriteLine($"[CLUB_SERVICE] Club {clubId} has {count} active members");
                 return count;
             }
@@ -403,7 +403,7 @@ namespace ClubManagementApp.Services
                 Console.WriteLine($"[CLUB_SERVICE] Getting members for club: {clubId}");
                 var members = await _context.ClubMembers
                     .Include(cm => cm.User)
-                    .Where(cm => cm.ClubID == clubId && cm.IsActive)
+                    .Where(cm => cm.ClubID == clubId)
                     .OrderBy(cm => cm.User.FullName)
                     .ToListAsync();
                 Console.WriteLine($"[CLUB_SERVICE] Retrieved {members.Count} members for club {clubId}");
@@ -486,7 +486,7 @@ namespace ClubManagementApp.Services
                 if (role == ClubRole.Chairman)
                 {
                     var currentChairman = await _context.ClubMembers
-                        .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Chairman && cm.IsActive);
+                        .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Chairman);
 
                     if (currentChairman != null && currentChairman.UserID != userId)
                     {
@@ -503,7 +503,7 @@ namespace ClubManagementApp.Services
                 {
                     // Update existing membership
                     existingMembership.ClubRole = role;
-                    existingMembership.IsActive = true;
+                    // IsActive property removed - not part of database schema
                     Console.WriteLine($"[CLUB_SERVICE] Updated existing membership for User {userId} in Club {clubId} to role {role}");
                 }
                 else
@@ -648,7 +648,7 @@ namespace ClubManagementApp.Services
 
                 return await _context.ClubMembers
                     .Include(cm => cm.User)
-                    .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Chairman && cm.IsActive);
+                    .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Chairman);
             }
             catch (Exception ex)
             {
@@ -688,7 +688,7 @@ namespace ClubManagementApp.Services
 
                 return await _context.ClubMembers
                     .Include(cm => cm.User)
-                    .Where(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Admin && cm.IsActive)
+                    .Where(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Admin)
                     .OrderBy(cm => cm.User.FullName)
                     .ToListAsync();
             }
@@ -730,7 +730,7 @@ namespace ClubManagementApp.Services
 
                 return await _context.ClubMembers
                     .Include(cm => cm.User)
-                    .Where(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Member && cm.IsActive)
+                    .Where(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Member)
                     .OrderBy(cm => cm.User.FullName)
                     .ToListAsync();
             }
@@ -776,7 +776,7 @@ namespace ClubManagementApp.Services
                 }
 
                 return await _context.ClubMembers
-                    .Where(cm => cm.ClubID == clubId && cm.IsActive)
+                    .Where(cm => cm.ClubID == clubId)
                     .GroupBy(cm => cm.ClubRole)
                     .ToDictionaryAsync(g => g.Key, g => g.Count());
             }
@@ -902,8 +902,8 @@ namespace ClubManagementApp.Services
                     ["EventCount"] = eventCount,
                     ["RecentEvents"] = recentEvents,
                     ["RoleDistribution"] = roleDistribution,
-                    ["EstablishedDate"] = club!.EstablishedDate,
-                    ["Description"] = club!.Description ?? ""
+                    ["EstablishedDate"] = club.EstablishedDate,
+                    ["Description"] = club.Description ?? string.Empty
                 };
             }
             catch (Exception ex)
@@ -967,7 +967,7 @@ namespace ClubManagementApp.Services
                 if (role == ClubRole.Chairman)
                 {
                     var currentChairman = await _context.ClubMembers
-                        .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Chairman && cm.IsActive);
+                        .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.ClubRole == ClubRole.Chairman);
 
                     if (currentChairman != null)
                     {
@@ -1030,11 +1030,11 @@ namespace ClubManagementApp.Services
                 }
 
                 var membership = await _context.ClubMembers
-                    .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.UserID == userId && cm.IsActive);
+                    .FirstOrDefaultAsync(cm => cm.ClubID == clubId && cm.UserID == userId);
 
                 if (membership == null)
                 {
-                    Console.WriteLine($"[CLUB_SERVICE] No active membership found for user {userId} in club {clubId}");
+                    Console.WriteLine($"[CLUB_SERVICE] No membership found for user {userId} in club {clubId}");
                     return false;
                 }
 
@@ -1042,7 +1042,7 @@ namespace ClubManagementApp.Services
                 if (membership.ClubRole == ClubRole.Chairman)
                 {
                     var successor = await _context.ClubMembers
-                        .Where(cm => cm.ClubID == clubId && cm.IsActive && cm.UserID != userId)
+                        .Where(cm => cm.ClubID == clubId && cm.UserID != userId)
                         .OrderBy(cm => cm.ClubRole == ClubRole.Admin ? 0 : cm.ClubRole == ClubRole.Member ? 1 : 2)
                         .FirstOrDefaultAsync();
 
@@ -1053,8 +1053,8 @@ namespace ClubManagementApp.Services
                     }
                 }
 
-                // Remove membership
-                membership.IsActive = false;
+                // Remove membership from database
+                _context.ClubMembers.Remove(membership);
                 await _context.SaveChangesAsync();
 
                 Console.WriteLine($"[CLUB_SERVICE] Successfully removed user {userId} from club {clubId}");

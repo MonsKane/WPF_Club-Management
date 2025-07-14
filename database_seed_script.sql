@@ -291,11 +291,16 @@ GO
 -- Insert Users first (without ClubID to avoid foreign key constraint)
 -- SystemRole: 0=Admin, 1=ClubOwner, 2=Member
 -- ActivityLevel: 0=Active, 1=Normal, 2=Inactive
+-- Insert Users with correct SHA256 password hashes
+-- IMPORTANT: These password hashes are generated using SHA256 and must match the application's hashing method
+-- Admin password: 'admin123' -> 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk='
+-- User password: 'password123' -> 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg='
+
 INSERT INTO Users (FullName, Email, Password, StudentID, PhoneNumber, SystemRole, ActivityLevel, ClubID, IsActive, TwoFactorEnabled, CreatedAt) VALUES
--- System Administrator (matches current documentation)
+-- System Administrator (Password: admin123)
 ('System Administrator', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ADM001', '+1-555-0001', 0, 0, NULL, 1, 0, '2024-01-01'),
 
--- Club Members (matches current DatabaseInitializer.cs implementation)
+-- Club Members (Password: password123)
 ('John Doe', 'john.doe@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU001', '+1-555-0101', 1, 0, NULL, 1, 0, '2024-01-15'),
 ('Jane Smith', 'jane.smith@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU002', '+1-555-0102', 2, 0, NULL, 1, 0, '2024-02-01'),
 ('Mike Johnson', 'mike.johnson@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU003', '+1-555-0103', 2, 0, NULL, 1, 0, '2024-02-15'),
