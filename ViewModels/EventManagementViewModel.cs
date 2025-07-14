@@ -41,6 +41,13 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine("[EVENT_MANAGEMENT_VM] EventManagementViewModel initialized successfully");
         }
 
+        private bool IsOwner(User user, int clubId)
+        {
+            if (_authorizationService.IsAdmin(user) || user.Role is UserRole.Member) return true;
+
+            return user.ClubID == clubId;
+        }
+
         public ObservableCollection<Event> Events
         {
             get => _events;
@@ -219,29 +226,27 @@ namespace ClubManagementApp.ViewModels
         public ICommand ExportEventsCommand { get; private set; } = null!;
         public ICommand ManageParticipantsCommand { get; private set; } = null!;
 
-        // Report Generation Commands
-        public ICommand GenerateEventStatisticsReportCommand { get; private set; } = null!;
-        public ICommand GenerateEventAttendanceReportCommand { get; private set; } = null!;
-        public ICommand GenerateEventPerformanceReportCommand { get; private set; } = null!;
-        public ICommand GenerateEventSummaryReportCommand { get; private set; } = null!;
-
         private void InitializeCommands()
         {
-            CreateEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
-            AddEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
-            EditEventCommand = new RelayCommand<Event>(EditEvent, CanExecuteEditEvent);
-            DeleteEventCommand = new RelayCommand<Event>(DeleteEvent, CanExecuteDeleteEvent);
-            JoinEventCommand = new RelayCommand<Event>(JoinEvent, CanExecuteJoinEvent);
-            ViewEventCommand = new RelayCommand<Event>(ViewEvent, CanExecuteViewEvent);
-            RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
-            ExportEventsCommand = new RelayCommand(ExportEvents, CanExecuteExportEvents);
-            ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants, CanExecuteManageParticipants);
+            //CreateEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
+            //AddEventCommand = new RelayCommand(CreateEvent, CanExecuteCreateEvent);
+            //EditEventCommand = new RelayCommand<Event>(EditEvent, CanExecuteEditEvent);
+            //DeleteEventCommand = new RelayCommand<Event>(DeleteEvent, CanExecuteDeleteEvent);
+            //JoinEventCommand = new RelayCommand<Event>(JoinEvent, CanExecuteJoinEvent);
+            //ViewEventCommand = new RelayCommand<Event>(ViewEvent, CanExecuteViewEvent);
+            //RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
+            //ExportEventsCommand = new RelayCommand(ExportEvents, CanExecuteExportEvents);
+            //ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants, CanExecuteManageParticipants);
 
-            // Initialize Report Generation Commands
-            GenerateEventStatisticsReportCommand = new RelayCommand(GenerateEventStatisticsReport, CanExecuteGenerateReports);
-            GenerateEventAttendanceReportCommand = new RelayCommand(GenerateEventAttendanceReport, CanExecuteGenerateReports);
-            GenerateEventPerformanceReportCommand = new RelayCommand(GenerateEventPerformanceReport, CanExecuteGenerateReports);
-            GenerateEventSummaryReportCommand = new RelayCommand(GenerateEventSummaryReport, CanExecuteGenerateReports);
+            CreateEventCommand = new RelayCommand(CreateEvent, (_) => CurrentUser!.Role is not UserRole.Member);
+            AddEventCommand = new RelayCommand(CreateEvent, (_) => CurrentUser!.Role is not UserRole.Member);
+            EditEventCommand = new RelayCommand<Event>(EditEvent, (_) => CurrentUser!.Role is not UserRole.Member);
+            DeleteEventCommand = new RelayCommand<Event>(DeleteEvent, (_) => CurrentUser!.Role is not UserRole.Member);
+            JoinEventCommand = new RelayCommand<Event>(JoinEvent, (_) => true);
+            ViewEventCommand = new RelayCommand<Event>(ViewEvent, (_) => true);
+            RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
+            ExportEventsCommand = new RelayCommand(ExportEvents, (_) => CurrentUser!.Role is not UserRole.Member);
+            ManageParticipantsCommand = new RelayCommand<Event>(ManageParticipants, (_) => CurrentUser!.Role is not UserRole.Member);
         }
 
         private async void LoadCurrentUserAsync()
@@ -310,6 +315,7 @@ namespace ClubManagementApp.ViewModels
                 // Load events
                 Console.WriteLine("[EVENT_MANAGEMENT_VM] Loading events...");
                 var events = await _eventService.GetAllEventsAsync();
+                events = events.Where(e => IsOwner(CurrentUser!, e.ClubID)).ToList();
                 Events.Clear();
                 foreach (var eventItem in events)
                 {
@@ -425,8 +431,8 @@ namespace ClubManagementApp.ViewModels
 
                 // Pass the ClubFilter if we're in club-specific context
                 var addEventDialog = ClubFilter != null
-                    ? new Views.AddEventDialog(Clubs, ClubFilter)
-                    : new Views.AddEventDialog(Clubs);
+                    ? new Views.AddEventDialog(Clubs, ClubFilter, CurrentUser)
+                    : new Views.AddEventDialog(Clubs, CurrentUser);
 
                 if (addEventDialog.ShowDialog() == true && addEventDialog.NewEvent != null)
                 {
@@ -461,7 +467,7 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine($"[EVENT_MANAGEMENT_VM] Edit Event command executed for: {eventItem.Name} (ID: {eventItem.EventID})");
             try
             {
-                var editEventDialog = new Views.EditEventDialog(eventItem, Clubs);
+                var editEventDialog = new Views.EditEventDialog(eventItem, Clubs, CurrentUser);
                 if (editEventDialog.ShowDialog() == true && editEventDialog.UpdatedEvent != null)
                 {
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] Updating event: {editEventDialog.UpdatedEvent.Name}");
@@ -557,9 +563,9 @@ namespace ClubManagementApp.ViewModels
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
                     Console.WriteLine($"[EVENT_MANAGEMENT_VM] User confirmed registration for event: {eventItem.Name}");
-                    
+
                     bool success = await _eventService.RegisterUserForEventAsync(eventItem.EventID, CurrentUser.UserID);
-                    
+
                     if (success)
                     {
                         Console.WriteLine($"[EVENT_MANAGEMENT_VM] User successfully registered for event: {eventItem.Name}");
@@ -568,7 +574,7 @@ namespace ClubManagementApp.ViewModels
                             "Registration Successful",
                             System.Windows.MessageBoxButton.OK,
                             System.Windows.MessageBoxImage.Information);
-                        
+
                         // Notify other ViewModels about event change
                         EventChanged?.Invoke();
                     }

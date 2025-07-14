@@ -316,8 +316,8 @@
                                             SelectedValuePath="Tag"
                                             DisplayMemberPath="Content"
                                             >
-                                    <ComboBoxItem Content="System Admin" Tag="{x:Static models:UserRole.SystemAdmin}"/>
                                     <ComboBoxItem Content="Admin" Tag="{x:Static models:UserRole.Admin}"/>
+                                    <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
                                     <!--
                                     <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
                                     <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>

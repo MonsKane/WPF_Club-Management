@@ -8,12 +8,19 @@ namespace ClubManagementApp.Views
     {
         public Event? UpdatedEvent { get; private set; }
         private readonly Event _originalEvent;
+        private readonly User _user;
 
-        public EditEventDialog(Event eventToEdit, IEnumerable<Club> clubs)
+        public EditEventDialog(Event eventToEdit, IEnumerable<Club> clubs, User user)
         {
             InitializeComponent();
             _originalEvent = eventToEdit;
             ClubComboBox.ItemsSource = clubs;
+            if (user?.Role is UserRole.Chairman)
+            {
+                ClubComboBox.ItemsSource = clubs.Where(c => c.ClubID == user.ClubID).ToList();
+            }
+            else
+                ClubComboBox.ItemsSource = clubs;
             LoadEventData();
         }
 
@@ -82,7 +89,7 @@ namespace ClubManagementApp.Views
                         Name = EventNameTextBox.Text.Trim(),
                         Description = string.IsNullOrWhiteSpace(DescriptionTextBox.Text) ? null : DescriptionTextBox.Text.Trim(),
                         EventDate = eventDateTime,
-                        Location = string.IsNullOrWhiteSpace(LocationTextBox.Text) ? null : LocationTextBox.Text.Trim(),
+                        Location = string.IsNullOrWhiteSpace(LocationTextBox.Text) ? string.Empty : LocationTextBox.Text.Trim(),
                         ClubID = selectedClub.ClubID,
                         // Don't set Club navigation property to avoid EF tracking conflicts
                         Status = selectedStatus,

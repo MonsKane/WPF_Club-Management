@@ -1,8 +1,6 @@
 using ClubManagementApp.Models;
-using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Threading;
 
 namespace ClubManagementApp.Views
 {
@@ -18,21 +16,28 @@ namespace ClubManagementApp.Views
             InitializeDefaults();
         }
 
-        public AddEventDialog(IEnumerable<Club> clubs) : this()
+        public AddEventDialog(IEnumerable<Club> clubs, User user) : this()
         {
-            ClubComboBox.ItemsSource = clubs;
+            if (user?.Role is UserRole.Chairman)
+            {
+                ClubComboBox.ItemsSource = clubs.Where(c => c.ClubID == user.ClubID).ToList();
+            }
+            else
+                ClubComboBox.ItemsSource = clubs;
         }
 
-        public AddEventDialog(IEnumerable<Club> clubs, Club? preSelectedClub) : this(clubs)
+        public AddEventDialog(IEnumerable<Club> clubs, Club? preSelectedClub, User user) : this(clubs, user)
         {
             _preSelectedClub = preSelectedClub; // Store for fallback use
-            
+
             if (preSelectedClub != null)
             {
                 // Set the selected club after the window is loaded to ensure ItemsSource is ready
-                this.Loaded += (s, e) => {
+                this.Loaded += (s, e) =>
+                {
                     // Use Dispatcher to ensure UI is fully rendered before setting selection
-                    this.Dispatcher.BeginInvoke(new Action(() => {
+                    this.Dispatcher.BeginInvoke(new Action(() =>
+                    {
                         // Try both SelectedValue and SelectedItem to ensure proper selection
                         ClubComboBox.SelectedValue = preSelectedClub.ClubID;
                         ClubComboBox.SelectedItem = preSelectedClub;
@@ -46,11 +51,11 @@ namespace ClubManagementApp.Views
         {
             // Set default date to tomorrow
             EventDatePicker.SelectedDate = DateTime.Today.AddDays(1);
-            
+
             // Set default time to 10:00
             HourComboBox.SelectedIndex = 10; // 10 AM
             MinuteComboBox.SelectedIndex = 0; // 00 minutes
-            
+
             // Set default registration deadline to event date
             RegistrationDeadlinePicker.SelectedDate = DateTime.Today.AddDays(1);
         }
@@ -63,7 +68,7 @@ namespace ClubManagementApp.Views
                 {
                     var selectedClub = ClubComboBox.SelectedItem as Club;
                     var selectedStatus = (EventStatus)((ComboBoxItem)StatusComboBox.SelectedItem).Tag;
-                    
+
                     // Combine date and time
                     var eventDate = EventDatePicker.SelectedDate!.Value.Date;
                     var hour = int.Parse(((ComboBoxItem)HourComboBox.SelectedItem).Content.ToString()!);
@@ -72,7 +77,7 @@ namespace ClubManagementApp.Views
 
                     // Use the selected club (either from ComboBox or pre-selected fallback)
                     var finalSelectedClub = selectedClub ?? _preSelectedClub;
-                    
+
                     NewEvent = new Event
                     {
                         Name = EventNameTextBox.Text.Trim(),
@@ -86,8 +91,8 @@ namespace ClubManagementApp.Views
                     };
 
                     // Set max participants if provided
-                    if (!string.IsNullOrWhiteSpace(MaxParticipantsTextBox.Text) && 
-                        int.TryParse(MaxParticipantsTextBox.Text, out int maxParticipants) && 
+                    if (!string.IsNullOrWhiteSpace(MaxParticipantsTextBox.Text) &&
+                        int.TryParse(MaxParticipantsTextBox.Text, out int maxParticipants) &&
                         maxParticipants > 0)
                     {
                         NewEvent.MaxParticipants = maxParticipants;
@@ -104,7 +109,7 @@ namespace ClubManagementApp.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error creating event: {ex.Message}", "Error", 
+                    MessageBox.Show($"Error creating event: {ex.Message}", "Error",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -121,7 +126,7 @@ namespace ClubManagementApp.Views
             // Validate event name
             if (string.IsNullOrWhiteSpace(EventNameTextBox.Text))
             {
-                MessageBox.Show("Please enter an event name.", "Validation Error", 
+                MessageBox.Show("Please enter an event name.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventNameTextBox.Focus();
                 return false;
@@ -129,7 +134,7 @@ namespace ClubManagementApp.Views
 
             if (EventNameTextBox.Text.Trim().Length < 3)
             {
-                MessageBox.Show("Event name must be at least 3 characters long.", "Validation Error", 
+                MessageBox.Show("Event name must be at least 3 characters long.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventNameTextBox.Focus();
                 return false;
@@ -138,7 +143,7 @@ namespace ClubManagementApp.Views
             // Validate event date
             if (!EventDatePicker.SelectedDate.HasValue)
             {
-                MessageBox.Show("Please select an event date.", "Validation Error", 
+                MessageBox.Show("Please select an event date.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventDatePicker.Focus();
                 return false;
@@ -147,7 +152,7 @@ namespace ClubManagementApp.Views
             // Validate event time
             if (HourComboBox.SelectedItem == null || MinuteComboBox.SelectedItem == null)
             {
-                MessageBox.Show("Please select an event time.", "Validation Error", 
+                MessageBox.Show("Please select an event time.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 HourComboBox.Focus();
                 return false;
@@ -156,7 +161,7 @@ namespace ClubManagementApp.Views
             // Validate club selection
             if (ClubComboBox.SelectedItem == null && _preSelectedClub == null)
             {
-                MessageBox.Show("Please select a club for this event.", "Validation Error", 
+                MessageBox.Show("Please select a club for this event.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 ClubComboBox.Focus();
                 return false;
@@ -167,10 +172,10 @@ namespace ClubManagementApp.Views
             var hour = int.Parse(((ComboBoxItem)HourComboBox.SelectedItem).Content.ToString()!);
             var minute = int.Parse(((ComboBoxItem)MinuteComboBox.SelectedItem).Content.ToString()!);
             var eventDateTime = selectedDate.AddHours(hour).AddMinutes(minute);
-            
+
             if (eventDateTime <= DateTime.Now)
             {
-                MessageBox.Show("Event date and time must be in the future.", "Validation Error", 
+                MessageBox.Show("Event date and time must be in the future.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 EventDatePicker.Focus();
                 return false;
@@ -181,7 +186,7 @@ namespace ClubManagementApp.Views
             {
                 if (!int.TryParse(MaxParticipantsTextBox.Text, out int maxParticipants) || maxParticipants <= 0)
                 {
-                    MessageBox.Show("Maximum participants must be a positive number.", "Validation Error", 
+                    MessageBox.Show("Maximum participants must be a positive number.", "Validation Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     MaxParticipantsTextBox.Focus();
                     return false;
@@ -193,7 +198,7 @@ namespace ClubManagementApp.Views
             {
                 if (RegistrationDeadlinePicker.SelectedDate.Value > eventDateTime)
                 {
-                    MessageBox.Show("Registration deadline cannot be after the event date.", "Validation Error", 
+                    MessageBox.Show("Registration deadline cannot be after the event date.", "Validation Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                     RegistrationDeadlinePicker.Focus();
                     return false;

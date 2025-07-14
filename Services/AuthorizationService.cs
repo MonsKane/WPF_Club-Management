@@ -12,6 +12,11 @@ namespace ClubManagementApp.Services
             _context = context;
         }
 
+        public bool IsAdmin(User? role)
+        {
+            return role?.Role is UserRole.SystemAdmin or UserRole.Admin;
+        }
+
         // User Management Permissions
         public bool CanCreateUsers(UserRole role, int? userClubId = null)
         {
@@ -77,7 +82,7 @@ namespace ClubManagementApp.Services
         // Event Management Permissions
         public bool CanCreateEvents(UserRole role)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman;
         }
 
         public bool CanJoinEvents(UserRole role)
@@ -118,17 +123,17 @@ namespace ClubManagementApp.Services
         // Reporting Permissions
         public bool CanGenerateReports(UserRole role)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return role is UserRole.SystemAdmin or UserRole.Admin;
         }
 
         public bool CanExportReports(UserRole role)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return role is UserRole.SystemAdmin or UserRole.Admin;
         }
 
         public bool CanViewStatistics(UserRole role)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return role is UserRole.SystemAdmin or UserRole.Admin;
         }
 
         // System Settings Permissions

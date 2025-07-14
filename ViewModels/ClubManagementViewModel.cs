@@ -117,7 +117,7 @@ namespace ClubManagementApp.ViewModels
         public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
         public bool CanEditClubs => CurrentUser != null && _authorizationService.CanEditClubs(CurrentUser.Role);
         public bool CanDeleteClubs => CurrentUser != null && _authorizationService.CanDeleteClubs(CurrentUser.Role);
-        
+
         public bool CanManageClubs
         {
             get => SelectedClub != null && CanAccessClubManagement;
@@ -139,16 +139,32 @@ namespace ClubManagementApp.ViewModels
         public ICommand ViewMembersCommand { get; private set; } = null!;
         public ICommand ViewEventsCommand { get; private set; } = null!;
 
+        private bool IsOwner(User user, int clubId)
+        {
+            if (_authorizationService.IsAdmin(user)) return true;
+
+            return user.ClubID == clubId;
+        }
+
         private void InitializeCommands()
         {
-            AddClubCommand = new RelayCommand(AddClub, CanExecuteAddClub);
-            EditClubCommand = new RelayCommand<Club>(EditClub, CanExecuteEditClub);
-            DeleteClubCommand = new RelayCommand<Club>(DeleteClub, CanExecuteDeleteClub);
-            ViewClubDetailsCommand = new RelayCommand<Club>(ViewClubDetails, CanExecuteViewClubDetails);
+            //AddClubCommand = new RelayCommand(AddClub, CanExecuteAddClub);
+            //EditClubCommand = new RelayCommand<Club>(EditClub, CanExecuteEditClub);
+            //DeleteClubCommand = new RelayCommand<Club>(DeleteClub, CanExecuteDeleteClub);
+            //ViewClubDetailsCommand = new RelayCommand<Club>(ViewClubDetails, CanExecuteViewClubDetails);
+            //RefreshCommand = new RelayCommand(async () => await LoadClubsAsync());
+            //ManageLeadershipCommand = new RelayCommand<Club>(ManageLeadership, CanExecuteManageLeadership);
+            //ViewMembersCommand = new RelayCommand<Club>(ViewMembers, CanExecuteViewMembers);
+            //ViewEventsCommand = new RelayCommand<Club>(ViewEvents, CanExecuteViewEvents);
+
+            AddClubCommand = new RelayCommand(AddClub, (_) => true);
+            EditClubCommand = new RelayCommand<Club>(EditClub, (_) => true);
+            DeleteClubCommand = new RelayCommand<Club>(DeleteClub, (_) => true);
+            ViewClubDetailsCommand = new RelayCommand<Club>(ViewClubDetails, (_) => true);
             RefreshCommand = new RelayCommand(async () => await LoadClubsAsync());
-            ManageLeadershipCommand = new RelayCommand<Club>(ManageLeadership, CanExecuteManageLeadership);
-            ViewMembersCommand = new RelayCommand<Club>(ViewMembers, CanExecuteViewMembers);
-            ViewEventsCommand = new RelayCommand<Club>(ViewEvents, CanExecuteViewEvents);
+            ManageLeadershipCommand = new RelayCommand<Club>(ManageLeadership, (_) => true);
+            ViewMembersCommand = new RelayCommand<Club>(ViewMembers, (_) => true);
+            ViewEventsCommand = new RelayCommand<Club>(ViewEvents, (_) => true);
         }
 
         private async void LoadCurrentUserAsync()
@@ -213,6 +229,7 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine("[ClubManagementViewModel] Starting to load clubs");
                 IsLoading = true;
                 var clubs = await _clubService.GetAllClubsAsync();
+                clubs = clubs.Where(c => IsOwner(CurrentUser!, c.ClubID)).ToList();
                 Console.WriteLine($"[ClubManagementViewModel] Retrieved {clubs.Count()} clubs from service");
 
                 Clubs.Clear();

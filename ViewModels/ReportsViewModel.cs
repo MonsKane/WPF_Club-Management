@@ -179,8 +179,7 @@ namespace ClubManagementApp.ViewModels
         private bool CanUpdateReport(Report? report) => report != null && CanGenerateReports &&
             (CurrentUser?.Role == UserRole.SystemAdmin || report.GeneratedByUserID == CurrentUser?.UserID);
         private bool CanExportReport(Report? report) => report != null && CanExportReports;
-        private bool CanDeleteReport(Report? report) => report != null && CanGenerateReports &&
-            (CurrentUser?.Role == UserRole.SystemAdmin || report.GeneratedByUserID == CurrentUser?.UserID);
+        private bool CanDeleteReport(Report? report) => report != null && (CurrentUser?.Role is UserRole.SystemAdmin or UserRole.Admin);
 
         // Load current user method
         public async Task LoadCurrentUserAsync()

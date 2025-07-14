@@ -5,6 +5,8 @@ namespace ClubManagementApp.Services
     public interface IAuthorizationService
     {
         // User Management Permissions
+
+        bool IsAdmin(User? user);
         bool CanCreateUsers(UserRole role, int? userClubId = null);
         bool CanEditUsers(UserRole role, int? userClubId = null, int? targetUserClubId = null, bool isSelf = false);
         bool CanDeleteUsers(UserRole role);

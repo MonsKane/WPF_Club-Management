@@ -1642,7 +1642,8 @@
                             <TextBlock Text="ĐIỀU HƯỚNG" FontSize="12" FontWeight="SemiBold" Foreground="Black" Margin="0,0,0,15"/>
 
                             <!-- Dashboard -->
-                            <Button Command="{Binding NavigateToDashboardCommand}" Style="{StaticResource ModernNavButtonStyle}" Click="Button_Click" Margin="0,0,0,8">
+                            <Button Command="{Binding NavigateToDashboardCommand}" Style="{StaticResource ModernNavButtonStyle}" Click="Button_Click" Margin="0,0,0,8"
+                                    Visibility="{Binding CanAccessAdminFeatures, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <StackPanel Orientation="Horizontal">
                                     <Border Background="#3B82F6" CornerRadius="8" Width="32" Height="32" Margin="0,0,12,0">
                                         <TextBlock Text="📊" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>

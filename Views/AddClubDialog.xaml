@@ -282,7 +282,7 @@
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
-                
+
                 <!-- Buttons -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" 
                             HorizontalAlignment="Right" 

@@ -26,13 +26,13 @@ GO
 -- Drop existing tables if they exist (in correct order to handle foreign key constraints)
 IF OBJECT_ID('EventParticipants', 'U') IS NOT NULL DROP TABLE EventParticipants;
 IF OBJECT_ID('Reports', 'U') IS NOT NULL DROP TABLE Reports;
-IF OBJECT_ID('Events', 'U') IS NOT NULL DROP TABLE Events;
 IF OBJECT_ID('AuditLogs', 'U') IS NOT NULL DROP TABLE AuditLogs;
 IF OBJECT_ID('Notifications', 'U') IS NOT NULL DROP TABLE Notifications;
 IF OBJECT_ID('NotificationTemplates', 'U') IS NOT NULL DROP TABLE NotificationTemplates;
 IF OBJECT_ID('ScheduledNotifications', 'U') IS NOT NULL DROP TABLE ScheduledNotifications;
 IF OBJECT_ID('Settings', 'U') IS NOT NULL DROP TABLE Settings;
 IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
+IF OBJECT_ID('Events', 'U') IS NOT NULL DROP TABLE Events;
 IF OBJECT_ID('Clubs', 'U') IS NOT NULL DROP TABLE Clubs;
 GO
 
@@ -212,9 +212,9 @@ CREATE TABLE Notifications (
     IsRead bit NOT NULL DEFAULT 0,
     IsDeleted bit NOT NULL DEFAULT 0,
     ChannelsJson nvarchar(500) NULL,
-    CONSTRAINT FK_Notifications_UserID FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION,
-    CONSTRAINT FK_Notifications_ClubID FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE NO ACTION ON UPDATE NO ACTION,
-    CONSTRAINT FK_Notifications_EventID FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE NO ACTION ON UPDATE NO ACTION
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE NO ACTION ,
+    FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE NO ACTION ,
+    FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE NO ACTION 
 );
 GO
 
@@ -235,13 +235,13 @@ CREATE TABLE Settings (
     Value nvarchar(max) NOT NULL,
     Scope nvarchar(50) NOT NULL,
     CreatedAt datetime2 NOT NULL DEFAULT GETDATE(),
-    UpdatedAt datetime2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt datetime2 NULL,
     FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE CASCADE
 );
 GO
 
--- Create indexes for Settings
+-- Create unique index for Settings
 CREATE UNIQUE INDEX IX_Settings_Key_Scope_UserID_ClubID ON Settings ([Key], Scope, UserID, ClubID);
 CREATE INDEX IX_Settings_Scope ON Settings (Scope);
 CREATE INDEX IX_Settings_CreatedAt ON Settings (CreatedAt);
@@ -256,208 +256,172 @@ GO
 
 -- Insert Clubs
 INSERT INTO Clubs (Name, Description, ContactEmail, ContactPhone, Website, MeetingSchedule, FoundedDate, IsActive, IsSelected, CreatedDate) VALUES
-('Computer Science Club', 'A club for computer science enthusiasts to learn and share knowledge about programming, algorithms, and technology.', 'cs.club@university.edu', '555-0101', 'https://csclub.university.edu', 'Fridays 3:00 PM - Room 201', '2020-09-15', 1, 0, '2024-01-15'),
-('Drama Society', 'Dedicated to theatrical performances, script writing, and dramatic arts education.', 'drama@university.edu', '555-0102', 'https://drama.university.edu', 'Wednesdays 4:00 PM - Theater', '2019-03-20', 1, 0, '2024-01-20'),
-('Environmental Club', 'Focused on environmental conservation, sustainability projects, and eco-friendly initiatives.', 'eco.club@university.edu', '555-0103', 'https://ecoclub.university.edu', 'Tuesdays 2:00 PM - Green Room', '2021-04-22', 1, 0, '2024-02-01'),
-('Photography Club', 'For photography enthusiasts to improve skills, share techniques, and organize photo walks.', 'photo@university.edu', '555-0104', 'https://photoclub.university.edu', 'Saturdays 10:00 AM - Studio', '2020-11-10', 1, 0, '2024-02-10'),
-('Debate Society', 'Enhancing public speaking, critical thinking, and argumentation skills through structured debates.', 'debate@university.edu', '555-0105', 'https://debate.university.edu', 'Thursdays 5:00 PM - Hall A', '2018-01-15', 1, 0, '2024-02-15'),
-('Music Club', 'Bringing together musicians of all levels to perform, collaborate, and appreciate various music genres.', 'music@university.edu', '555-0106', 'https://musicclub.university.edu', 'Mondays 6:00 PM - Music Room', '2017-08-30', 1, 0, '2024-03-01'),
-('Sports Club', 'Organizing various sports activities, tournaments, and promoting physical fitness among students.', 'sports@university.edu', '555-0107', 'https://sportsclub.university.edu', 'Daily 7:00 AM - Gym', '2016-05-12', 1, 0, '2024-03-05'),
-('Literature Society', 'For book lovers, creative writers, and those passionate about literature and poetry.', 'literature@university.edu', '555-0108', 'https://litclub.university.edu', 'Sundays 3:00 PM - Library', '2019-10-05', 1, 0, '2024-03-10'),
-('Science Innovation Lab', 'Encouraging scientific research, innovation projects, and STEM education initiatives.', 'scilab@university.edu', '555-0109', 'https://scilab.university.edu', 'Wednesdays 1:00 PM - Lab 301', '2021-02-28', 1, 0, '2024-03-15'),
-('Cultural Heritage Club', 'Preserving and promoting cultural traditions, organizing cultural events and festivals.', 'culture@university.edu', '555-0110', 'https://culture.university.edu', 'Fridays 4:00 PM - Cultural Center', '2020-07-18', 1, 0, '2024-03-20');
+('Computer Science Club', 'A club for computer science enthusiasts to learn and share knowledge about programming, algorithms, and technology.', 'cs.club@university.edu', '555-0101', 'https://csclub.university.edu', 'Fridays 3:00 PM - Room 201', '2020-09-15', 1, 0, '2025-01-15'),
+('Drama Society', 'Dedicated to theatrical performances, script writing, and dramatic arts education.', 'drama@university.edu', '555-0102', 'https://drama.university.edu', 'Wednesdays 4:00 PM - Theater', '2019-03-20', 1, 0, '2025-01-20'),
+('Environmental Club', 'Focused on environmental conservation, sustainability projects, and eco-friendly initiatives.', 'eco.club@university.edu', '555-0103', 'https://ecoclub.university.edu', 'Tuesdays 2:00 PM - Green Room', '2021-04-22', 1, 0, '2025-02-01'),
+('Photography Club', 'For photography enthusiasts to improve skills, share techniques, and organize photo walks.', 'photo@university.edu', '555-0104', 'https://photoclub.university.edu', 'Saturdays 10:00 AM - Studio', '2020-11-10', 1, 0, '2025-02-10'),
+('Debate Society', 'Enhancing public speaking, critical thinking, and argumentation skills through structured debates.', 'debate@university.edu', '555-0105', 'https://debate.university.edu', 'Thursdays 5:00 PM - Hall A', '2018-01-15', 1, 0, '2025-02-15'),
+('Music Club', 'Bringing together musicians of all levels to perform, collaborate, and appreciate various music genres.', 'music@university.edu', '555-0106', 'https://musicclub.university.edu', 'Mondays 6:00 PM - Music Room', '2017-08-30', 1, 0, '2025-03-01'),
+('Sports Club', 'Organizing various sports activities, tournaments, and promoting physical fitness among students.', 'sports@university.edu', '555-0107', 'https://sportsclub.university.edu', 'Daily 7:00 AM - Gym', '2016-05-12', 1, 0, '2025-03-05'),
+('Literature Society', 'For book lovers, creative writers, and those passionate about literature and poetry.', 'literature@university.edu', '555-0108', 'https://litclub.university.edu', 'Sundays 3:00 PM - Library', '2019-10-05', 1, 0, '2025-03-10'),
+('Science Innovation Lab', 'Encouraging scientific research, innovation projects, and STEM education initiatives.', 'scilab@university.edu', '555-0109', 'https://scilab.university.edu', 'Wednesdays 1:00 PM - Lab 301', '2021-02-28', 1, 0, '2025-03-15'),
+('Cultural Heritage Club', 'Preserving and promoting cultural traditions, organizing cultural events and festivals.', 'culture@university.edu', '555-0110', 'https://culture.university.edu', 'Fridays 4:00 PM - Cultural Center', '2020-07-18', 1, 0, '2025-03-20');
 GO
 
--- Insert Users (including various roles and club memberships)
+-- Insert Users (1 Admin, 2 Chairman, 5 Member)
 INSERT INTO Users (FullName, Email, Password, StudentID, Role, ActivityLevel, JoinDate, IsActive, TwoFactorEnabled, ClubID) VALUES
--- System Administrator
-('System Admin', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'SystemAdmin', 'Active', '2024-01-01', 1, 1, NULL),
+-- Admin (1 account)
+('System Administrator', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'Admin', 'Active', '2025-01-01', 1, 1, NULL),
 
--- Regular Admin
-('Admin Manager', 'admin.manager@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'Admin', 'Active', '2024-01-01', 1, 1, NULL),
+-- Chairman (2 accounts)
+('Alice Johnson', 'alice.johnson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CS2025001', 'Chairman', 'Active', '2025-01-15', 1, 1, 1),
+('Bob Smith', 'bob.smith@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DR2025002', 'Chairman', 'Active', '2025-01-20', 1, 0, 2),
 
--- Club Presidents
-('Alice Johnson', 'alice.johnson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CS2024001', 'ClubPresident', 'Active', '2024-01-15', 1, 1, 1),
-('Bob Smith', 'bob.smith@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DR2024002', 'ClubPresident', 'Active', '2024-01-20', 1, 0, 2),
-('Carol Davis', 'carol.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'EN2024003', 'ClubPresident', 'Active', '2024-02-01', 1, 1, 3),
-('David Wilson', 'david.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'PH2024004', 'ClubPresident', 'Active', '2024-02-10', 1, 0, 4),
-('Emma Brown', 'emma.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DB2024005', 'ClubPresident', 'Active', '2024-02-15', 1, 1, 5),
-
--- Club Chairmen
-('Michael Chen', 'michael.chen@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2024006', 'Chairman', 'Active', '2024-03-01', 1, 0, 6),
-('Sarah Williams', 'sarah.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2024007', 'Chairman', 'Active', '2024-03-05', 1, 1, 7),
-('James Rodriguez', 'james.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'LT2024008', 'Chairman', 'Active', '2024-03-10', 1, 0, 8),
-
--- Vice Chairmen
-('Lisa Thompson', 'lisa.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SC2024009', 'ViceChairman', 'Active', '2024-03-15', 1, 1, 9),
-('Robert Garcia', 'robert.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CH2024010', 'ViceChairman', 'Active', '2024-03-20', 1, 0, 10),
-('Jennifer Lee', 'jennifer.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'VC2024011', 'ViceChairman', 'Active', '2024-03-25', 1, 1, 1),
-
--- Team Leaders
-('Kevin Martinez', 'kevin.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024012', 'TeamLeader', 'Active', '2024-04-01', 1, 0, 2),
-('Amanda Davis', 'amanda.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024013', 'TeamLeader', 'Active', '2024-04-05', 1, 1, 3),
-('Daniel Brown', 'daniel.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024014', 'TeamLeader', 'Active', '2024-04-10', 1, 0, 4),
-
--- Club Officers
-('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024015', 'ClubOfficer', 'Active', '2024-04-15', 1, 0, 5),
-('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024016', 'ClubOfficer', 'Active', '2024-04-20', 1, 1, 6),
-('Henry Taylor', 'henry.taylor@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024017', 'ClubOfficer', 'Active', '2024-04-25', 1, 0, 7),
-
--- Regular Members
-('Kate Williams', 'kate.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024018', 'Member', 'Normal', '2024-05-01', 1, 0, 1),
-('Liam Garcia', 'liam.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024019', 'Member', 'Normal', '2024-05-05', 1, 0, 2),
-('Mia Rodriguez', 'mia.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024020', 'Member', 'Active', '2024-05-10', 1, 1, 3),
-('Noah Martinez', 'noah.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024021', 'Member', 'Normal', '2024-05-15', 1, 0, 4),
-('Olivia Lopez', 'olivia.lopez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024022', 'Member', 'Inactive', '2024-05-20', 1, 0, 5),
-('Paul Gonzalez', 'paul.gonzalez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024023', 'Member', 'Normal', '2024-05-25', 1, 0, 6),
-('Quinn Wilson', 'quinn.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024024', 'Member', 'Active', '2024-06-01', 1, 1, 7),
-('Rachel Kim', 'rachel.kim@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024025', 'Member', 'Normal', '2024-06-05', 1, 0, 8),
-('Sam Thompson', 'sam.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024026', 'Member', 'Normal', '2024-06-10', 1, 0, 9),
-('Tina White', 'tina.white@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024027', 'Member', 'Inactive', '2024-06-15', 1, 0, 10),
-
--- Multi-club member (not assigned to specific club in Users table)
-('Uma Patel', 'uma.patel@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024028', 'Member', 'Active', '2024-06-20', 1, 1, NULL),
-('Victor Chang', 'victor.chang@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024029', 'Member', 'Normal', '2024-06-25', 1, 0, NULL),
-('Wendy Foster', 'wendy.foster@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024030', 'Member', 'Normal', '2024-07-01', 1, 0, NULL);
+-- Member (5 accounts)
+('Carol Davis', 'carol.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'EN2025003', 'Member', 'Active', '2025-02-01', 1, 1, 3),
+('David Wilson', 'david.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'PH2025004', 'Member', 'Normal', '2025-02-10', 1, 0, 4),
+('Emma Brown', 'emma.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DB2025005', 'Member', 'Active', '2025-02-15', 1, 1, 5),
+('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2025006', 'Member', 'Normal', '2025-03-01', 1, 0, 6),
+('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2025007', 'Member', 'Active', '2025-03-05', 1, 1, 7);
 GO
 
 -- Insert Events
 INSERT INTO Events (Name, Description, EventDate, Location, CreatedDate, IsActive, RegistrationDeadline, MaxParticipants, ClubID) VALUES
 -- Computer Science Club Events
-('Python Workshop', 'Learn Python programming from basics to advanced concepts', '2024-12-15 14:00:00', 'Computer Lab A', '2024-11-01', 1, '2024-12-10', 30, 1),
-('Hackathon 2024', '24-hour coding competition with exciting prizes', '2024-12-20 09:00:00', 'Main Auditorium', '2024-11-05', 1, '2024-12-15', 100, 1),
-('AI and Machine Learning Seminar', 'Industry experts discuss the future of AI', '2025-01-10 16:00:00', 'Conference Room B', '2024-11-10', 1, '2025-01-05', 50, 1),
+('Python Workshop', 'Learn Python programming from basics to advanced concepts', '2025-12-15 14:00:00', 'Computer Lab A', '2025-11-01', 1, '2025-12-10', 30, 1),
+('Hackathon 2025', '24-hour coding competition with exciting prizes', '2025-12-20 09:00:00', 'Main Auditorium', '2025-11-05', 1, '2025-12-15', 100, 1),
+('AI and Machine Learning Seminar', 'Industry experts discuss the future of AI', '2026-01-10 16:00:00', 'Conference Room B', '2025-11-10', 1, '2026-01-05', 50, 1),
 
 -- Photography Club Events
-('Nature Photography Walk', 'Capture the beauty of campus nature', '2024-12-12 08:00:00', 'University Gardens', '2024-11-02', 1, '2024-12-08', 20, 2),
-('Portrait Photography Workshop', 'Learn professional portrait techniques', '2024-12-18 13:00:00', 'Studio Room 1', '2024-11-06', 1, '2024-12-15', 15, 2),
-('Photo Exhibition Setup', 'Prepare for the annual photo exhibition', '2025-01-15 10:00:00', 'Gallery Hall', '2024-11-12', 1, '2025-01-10', 25, 2),
+('Nature Photography Walk', 'Capture the beauty of campus nature', '2025-12-12 08:00:00', 'University Gardens', '2025-11-02', 1, '2025-12-08', 20, 4),
+('Portrait Photography Workshop', 'Learn professional portrait techniques', '2025-12-18 13:00:00', 'Studio Room 1', '2025-11-06', 1, '2025-12-15', 15, 4),
+('Photo Exhibition Setup', 'Prepare for the annual photo exhibition', '2026-01-15 10:00:00', 'Gallery Hall', '2025-11-12', 1, '2026-01-10', 25, 4),
 
 -- Drama Society Events
-('Romeo and Juliet Auditions', 'Auditions for the spring play', '2024-12-14 15:00:00', 'Theater Room', '2024-11-03', 1, '2024-12-12', 40, 3),
-('Acting Workshop', 'Improve your acting skills with professional coaches', '2024-12-21 11:00:00', 'Drama Studio', '2024-11-07', 1, '2024-12-18', 25, 3),
+('Romeo and Juliet Auditions', 'Auditions for the spring play', '2025-12-14 15:00:00', 'Theater Room', '2025-11-03', 1, '2025-12-12', 40, 2),
+('Acting Workshop', 'Improve your acting skills with professional coaches', '2025-12-21 11:00:00', 'Drama Studio', '2025-11-07', 1, '2025-12-18', 25, 2),
 
 -- Environmental Club Events
-('Campus Cleanup Drive', 'Help keep our campus clean and green', '2024-12-13 07:00:00', 'Campus Grounds', '2024-11-04', 1, '2024-12-11', 50, 4),
-('Sustainability Fair', 'Learn about sustainable living practices', '2024-12-19 12:00:00', 'Student Center', '2024-11-08', 1, '2024-12-16', 100, 4),
+('Campus Cleanup Drive', 'Help keep our campus clean and green', '2025-12-13 07:00:00', 'Campus Grounds', '2025-11-04', 1, '2025-12-11', 50, 3),
+('Sustainability Fair', 'Learn about sustainable living practices', '2025-12-19 12:00:00', 'Student Center', '2025-11-08', 1, '2025-12-16', 100, 3),
 
 -- Music Club Events
-('Winter Concert', 'Showcase of student musical talents', '2024-12-22 19:00:00', 'Music Hall', '2024-11-09', 1, '2024-12-20', 200, 5),
-('Songwriting Workshop', 'Learn to write your own songs', '2025-01-08 14:00:00', 'Music Room 2', '2024-11-11', 1, '2025-01-05', 20, 5);
+('Winter Concert', 'Showcase of student musical talents', '2025-12-22 19:00:00', 'Music Hall', '2025-11-09', 1, '2025-12-20', 200, 6),
+('Songwriting Workshop', 'Learn to write your own songs', '2026-01-08 14:00:00', 'Music Room 2', '2025-11-11', 1, '2026-01-05', 20, 6);
 GO
 
 -- Insert Event Participants
 INSERT INTO EventParticipants (UserID, EventID, Status, RegistrationDate, AttendanceDate) VALUES
 -- Python Workshop (EventID: 1)
-(2, 1, 'Attended', '2024-11-15', '2024-12-15'), -- Alice (Attended)
-(3, 1, 'Attended', '2024-11-16', '2024-12-15'), -- Bob (Attended)
-(4, 1, 'Registered', '2024-11-17', NULL), -- Charlie (Registered)
-(5, 1, 'Absent', '2024-11-18', NULL), -- Diana (Absent)
+(2, 1, 'Attended', '2025-11-15', '2025-12-15'), -- Alice (Chairman) - Attended
+(3, 1, 'Registered', '2025-11-16', NULL), -- Bob (Chairman) - Registered
+(4, 1, 'Registered', '2025-11-17', NULL), -- Carol (Member) - Registered
+(5, 1, 'Absent', '2025-11-18', NULL), -- David (Member) - Absent
 
--- Hackathon 2024 (EventID: 2)
-(2, 2, 'Registered', '2024-11-20', NULL), -- Alice (Registered)
-(3, 2, 'Registered', '2024-11-21', NULL), -- Bob (Registered)
-(4, 2, 'Registered', '2024-11-22', NULL), -- Charlie (Registered)
-(5, 2, 'Registered', '2024-11-23', NULL), -- Diana (Registered)
-(6, 2, 'Registered', '2024-11-24', NULL), -- Eve (Registered)
+-- Hackathon 2025 (EventID: 2)
+(2, 2, 'Registered', '2025-11-20', NULL), -- Alice (Chairman) - Registered
+(3, 2, 'Registered', '2025-11-21', NULL), -- Bob (Chairman) - Registered
+(4, 2, 'Registered', '2025-11-22', NULL), -- Carol (Member) - Registered
+(5, 2, 'Registered', '2025-11-23', NULL), -- David (Member) - Registered
+(6, 2, 'Registered', '2025-11-24', NULL), -- Emma (Member) - Registered
 
 -- Nature Photography Walk (EventID: 4)
-(7, 4, 'Attended', '2024-11-25', '2024-12-12'), -- Frank (Attended)
-(8, 4, 'Attended', '2024-11-26', '2024-12-12'), -- Grace (Attended)
-(9, 4, 'Attended', '2024-11-27', '2024-12-12'), -- Henry (Attended)
-(10, 4, 'Absent', '2024-11-28', NULL), -- Ivy (Absent)
+(5, 4, 'Attended', '2025-11-25', '2025-12-12'), -- David (Member) - Attended
+(6, 4, 'Attended', '2025-11-26', '2025-12-12'), -- Emma (Member) - Attended
+(7, 4, 'Attended', '2025-11-27', '2025-12-12'), -- Frank (Member) - Attended
+(8, 4, 'Absent', '2025-11-28', NULL), -- Grace (Member) - Absent
 
 -- Campus Cleanup Drive (EventID: 9)
-(14, 9, 'Attended', '2024-11-29', '2024-12-13'), -- Maya (Attended)
-(15, 9, 'Attended', '2024-11-30', '2024-12-13'), -- Noah (Attended)
-(16, 9, 'Attended', '2024-12-01', '2024-12-13'), -- Olivia (Attended)
-(2, 9, 'Attended', '2024-12-02', '2024-12-13'), -- Alice (Cross-club participation)
-(7, 9, 'Attended', '2024-12-03', '2024-12-13'); -- Frank (Cross-club participation)
+(4, 9, 'Attended', '2025-11-29', '2025-12-13'), -- Carol (Member) - Attended
+(5, 9, 'Attended', '2025-11-30', '2025-12-13'), -- David (Member) - Attended
+(6, 9, 'Attended', '2025-12-01', '2025-12-13'), -- Emma (Member) - Attended
+(2, 9, 'Attended', '2025-12-02', '2025-12-13'), -- Alice (Chairman) - Cross-club participation
+(7, 9, 'Attended', '2025-12-03', '2025-12-13'); -- Frank (Member) - Cross-club participation
 GO
 
 -- Insert Reports
 INSERT INTO Reports (Title, Type, Content, GeneratedDate, Semester, ClubID, GeneratedByUserID) VALUES
-('Computer Science Club - Fall 2024 Member Statistics', 'MemberStatistics', '{"totalMembers": 5, "activeMembers": 5, "newMembers": 5, "membersByRole": {"Chairman": 1, "ViceChairman": 1, "TeamLeader": 1, "Member": 2}}', '2024-11-15', 'Fall 2024', 1, 2),
-('Photography Club - Event Outcomes Report', 'EventOutcomes', '{"eventsHeld": 2, "totalParticipants": 7, "averageAttendance": 85, "topEvent": "Nature Photography Walk"}', '2024-11-20', 'Fall 2024', 2, 7),
-('Environmental Club - Activity Tracking', 'ActivityTracking', '{"activitiesCompleted": 1, "volunteersParticipated": 5, "impactMetrics": {"wasteCollected": "50kg", "areasCleaned": 3}}', '2024-11-25', 'Fall 2024', 4, 14),
-('University-wide Semester Summary', 'SemesterSummary', '{"totalClubs": 10, "totalMembers": 22, "totalEvents": 12, "overallEngagement": "High", "topPerformingClubs": ["Computer Science Club", "Photography Club", "Environmental Club"]}', '2024-11-30', 'Fall 2024', NULL, 1),
-('Drama Society - Member Statistics', 'MemberStatistics', '{"totalMembers": 3, "activeMembers": 3, "upcomingProductions": 1, "auditionParticipants": 15}', '2024-12-01', 'Fall 2024', 3, 11),
-('Music Club - Event Outcomes', 'EventOutcomes', '{"concertsPlanned": 1, "workshopsHeld": 0, "expectedAttendance": 200, "repertoireSize": 12}', '2024-12-05', 'Fall 2024', 5, 17);
+('Computer Science Club - Fall 2025 Member Statistics', 'MemberStatistics', '{"totalMembers": 1, "activeMembers": 1, "newMembers": 1, "membersByRole": {"Chairman": 1, "Member": 0}}', '2025-11-15', 'Fall 2025', 1, 2),
+('Photography Club - Event Outcomes Report', 'EventOutcomes', '{"eventsHeld": 2, "totalParticipants": 7, "averageAttendance": 85, "topEvent": "Nature Photography Walk"}', '2025-11-20', 'Fall 2025', 4, 5),
+('Environmental Club - Activity Tracking', 'ActivityTracking', '{"activitiesCompleted": 1, "volunteersParticipated": 5, "impactMetrics": {"wasteCollected": "50kg", "areasCleaned": 3}}', '2025-11-25', 'Fall 2025', 3, 4),
+('University-wide Semester Summary', 'SemesterSummary', '{"totalClubs": 10, "totalMembers": 8, "totalEvents": 12, "overallEngagement": "High", "topPerformingClubs": ["Computer Science Club", "Photography Club", "Environmental Club"]}', '2025-11-30', 'Fall 2025', NULL, 1),
+('Drama Society - Member Statistics', 'MemberStatistics', '{"totalMembers": 1, "activeMembers": 1, "upcomingProductions": 1, "auditionParticipants": 15}', '2025-12-01', 'Fall 2025', 2, 3),
+('Music Club - Event Outcomes', 'EventOutcomes', '{"concertsPlanned": 1, "workshopsHeld": 0, "expectedAttendance": 200, "repertoireSize": 12}', '2025-12-05', 'Fall 2025', 6, 7);
 GO
 
 -- Insert Audit Logs
 INSERT INTO AuditLogs (UserId, Action, Details, LogType, IpAddress, Timestamp, AdditionalData) VALUES
-(1, 'User Login', 'Administrator logged into the system', 'UserActivity', '192.168.1.100', '2024-11-01 08:00:00', '{"userAgent": "Mozilla/5.0", "sessionId": "sess_001"}'),
-(2, 'Club Created', 'Computer Science Club was created', 'DataChange', '192.168.1.101', '2024-01-15 10:30:00', '{"clubId": 1, "clubName": "Computer Science Club"}'),
-(2, 'Event Created', 'Python Workshop event was created', 'UserActivity', '192.168.1.101', '2024-11-01 14:20:00', '{"eventId": 1, "eventName": "Python Workshop"}'),
-(3, 'Event Registration', 'User registered for Python Workshop', 'UserActivity', '192.168.1.102', '2024-11-16 09:15:00', '{"eventId": 1, "userId": 3}'),
-(7, 'Event Created', 'Nature Photography Walk event was created', 'UserActivity', '192.168.1.103', '2024-11-02 11:45:00', '{"eventId": 4, "eventName": "Nature Photography Walk"}'),
-(1, 'Report Generated', 'University-wide semester summary report generated', 'DataChange', '192.168.1.100', '2024-11-30 16:00:00', '{"reportId": 4, "reportType": "SemesterSummary"}'),
-(14, 'Event Attendance', 'User marked as attended for Campus Cleanup Drive', 'UserActivity', '192.168.1.104', '2024-12-13 07:30:00', '{"eventId": 9, "userId": 14, "status": "Attended"}'),
-(1, 'System Maintenance', 'Database backup completed successfully', 'DataChange', '192.168.1.100', '2024-12-01 02:00:00', '{"backupSize": "2.5GB", "duration": "15 minutes"}'),
-(11, 'User Profile Update', 'User updated their profile information', 'UserActivity', '192.168.1.105', '2024-11-28 13:22:00', '{"userId": 11, "fieldsUpdated": ["email", "phone"]}'),
-(1, 'Security Event', 'Failed login attempt detected', 'SecurityEvent', '192.168.1.200', '2024-12-02 23:45:00', '{"attemptedEmail": "unknown@test.com", "attempts": 3}');
+(1, 'User Login', 'Administrator logged into the system', 'UserActivity', '192.168.1.100', '2025-11-01 08:00:00', '{"userAgent": "Mozilla/5.0", "sessionId": "sess_001"}'),
+(2, 'Club Created', 'Computer Science Club was created', 'DataChange', '192.168.1.101', '2025-01-15 10:30:00', '{"clubId": 1, "clubName": "Computer Science Club"}'),
+(2, 'Event Created', 'Python Workshop event was created', 'UserActivity', '192.168.1.101', '2025-11-01 14:20:00', '{"eventId": 1, "eventName": "Python Workshop"}'),
+(3, 'Event Registration', 'User registered for Python Workshop', 'UserActivity', '192.168.1.102', '2025-11-16 09:15:00', '{"eventId": 1, "userId": 3}'),
+(5, 'Event Created', 'Nature Photography Walk event was created', 'UserActivity', '192.168.1.103', '2025-11-02 11:45:00', '{"eventId": 4, "eventName": "Nature Photography Walk"}'),
+(1, 'Report Generated', 'University-wide semester summary report generated', 'DataChange', '192.168.1.100', '2025-11-30 16:00:00', '{"reportId": 4, "reportType": "SemesterSummary"}'),
+(4, 'Event Attendance', 'User marked as attended for Campus Cleanup Drive', 'UserActivity', '192.168.1.104', '2025-12-13 07:30:00', '{"eventId": 9, "userId": 4, "status": "Attended"}'),
+(1, 'System Maintenance', 'Database backup completed successfully', 'DataChange', '192.168.1.100', '2025-12-01 02:00:00', '{"backupSize": "2.5GB", "duration": "15 minutes"}'),
+(3, 'User Profile Update', 'User updated their profile information', 'UserActivity', '192.168.1.105', '2025-11-28 13:22:00', '{"userId": 3, "fieldsUpdated": ["email", "phone"]}'),
+(1, 'Security Event', 'Failed login attempt detected', 'SecurityEvent', '192.168.1.200', '2025-12-02 23:45:00', '{"attemptedEmail": "unknown@test.com", "attempts": 3}');
 GO
 
 -- Insert Notification Templates
 INSERT INTO NotificationTemplates (Id, Name, Description, TitleTemplate, MessageTemplate, Type, Priority, Category, ChannelsJson, ParametersJson, IsActive, CreatedAt, UpdatedAt) VALUES
-('welcome-template', 'Welcome New Member', 'Template for welcoming new club members', 'Welcome to {clubName}!', 'Hi {memberName}, welcome to {clubName}! We''re excited to have you join our community. Your journey with us starts now!', 'Welcome', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["memberName", "clubName"]', 1, '2024-01-01', NULL),
-('event-reminder', 'Event Reminder', 'Template for event reminders', 'Reminder: {eventName} Tomorrow', 'Don''t forget about {eventName} happening tomorrow at {eventTime} in {eventLocation}. We look forward to seeing you there!', 'EventReminder', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["eventName", "eventTime", "eventLocation"]', 1, '2024-01-01', NULL),
-('event-registration', 'Event Registration Confirmation', 'Template for event registration confirmations', 'Registration Confirmed: {eventName}', 'Your registration for {eventName} has been confirmed. Event details: Date: {eventDate}, Time: {eventTime}, Location: {eventLocation}', 'EventRegistration', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["eventName", "eventDate", "eventTime", "eventLocation"]', 1, '2024-01-01', NULL),
-('club-update', 'Club Update', 'Template for club announcements', 'Update from {clubName}', 'Hello {memberName}, here''s an important update from {clubName}: {updateMessage}', 'ClubUpdate', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["clubName", "memberName", "updateMessage"]', 1, '2024-01-01', NULL),
-('report-generated', 'Report Generated', 'Template for report generation notifications', 'New Report Available: {reportTitle}', 'A new report "{reportTitle}" has been generated and is now available for review. Generated on: {generatedDate}', 'ReportGenerated', 'Normal', 'Administrative', '["InApp"]', '["reportTitle", "generatedDate"]', 1, '2024-01-01', NULL);
+('welcome-template', 'Welcome New Member', 'Template for welcoming new club members', 'Welcome to {clubName}!', 'Hi {memberName}, welcome to {clubName}! We''re excited to have you join our community. Your journey with us starts now!', 'Welcome', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["memberName", "clubName"]', 1, '2025-01-01', NULL),
+('event-reminder', 'Event Reminder', 'Template for event reminders', 'Reminder: {eventName} Tomorrow', 'Don''t forget about {eventName} happening tomorrow at {eventTime} in {eventLocation}. We look forward to seeing you there!', 'EventReminder', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["eventName", "eventTime", "eventLocation"]', 1, '2025-01-01', NULL),
+('event-registration', 'Event Registration Confirmation', 'Template for event registration confirmations', 'Registration Confirmed: {eventName}', 'Your registration for {eventName} has been confirmed. Event details: Date: {eventDate}, Time: {eventTime}, Location: {eventLocation}', 'EventRegistration', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["eventName", "eventDate", "eventTime", "eventLocation"]', 1, '2025-01-01', NULL),
+('club-update', 'Club Update', 'Template for club announcements', 'Update from {clubName}', 'Hello {memberName}, here''s an important update from {clubName}: {updateMessage}', 'ClubUpdate', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["clubName", "memberName", "updateMessage"]', 1, '2025-01-01', NULL),
+('report-generated', 'Report Generated', 'Template for report generation notifications', 'New Report Available: {reportTitle}', 'A new report "{reportTitle}" has been generated and is now available for review. Generated on: {generatedDate}', 'ReportGenerated', 'Normal', 'Administrative', '["InApp"]', '["reportTitle", "generatedDate"]', 1, '2025-01-01', NULL);
 GO
 
 -- Insert Scheduled Notifications
 INSERT INTO ScheduledNotifications (Id, Name, NotificationRequest, ScheduledTime, RecurrencePattern, IsActive, CreatedAt, LastProcessedAt, CancelledAt, ProcessCount) VALUES
-('weekly-reminder', 'Weekly Event Reminders', '{"title": "Weekly Events Summary", "message": "Here are the upcoming events for this week", "type": 10, "priority": 1, "category": 1, "channels": [0, 1]}', '2024-12-09 09:00:00', 'WEEKLY', 1, '2024-11-01', NULL, NULL, 0),
-('monthly-report', 'Monthly Club Reports', '{"title": "Monthly Club Activity Report", "message": "Your monthly club activity report is ready", "type": 9, "priority": 1, "category": 5, "channels": [0]}', '2024-12-31 23:59:00', 'MONTHLY', 1, '2024-11-01', NULL, NULL, 0),
-('event-day-reminder', 'Event Day Reminders', '{"title": "Event Today!", "message": "Don''t forget about your event today", "type": 2, "priority": 2, "category": 1, "channels": [0, 1]}', '2024-12-15 08:00:00', 'DAILY', 1, '2024-11-01', NULL, NULL, 0);
+('weekly-reminder', 'Weekly Event Reminders', '{"title": "Weekly Events Summary", "message": "Here are the upcoming events for this week", "type": 10, "priority": 1, "category": 1, "channels": [0, 1]}', '2025-12-09 09:00:00', 'WEEKLY', 1, '2025-11-01', NULL, NULL, 0),
+('monthly-report', 'Monthly Club Reports', '{"title": "Monthly Club Activity Report", "message": "Your monthly club activity report is ready", "type": 9, "priority": 1, "category": 5, "channels": [0]}', '2025-12-31 23:59:00', 'MONTHLY', 1, '2025-11-01', NULL, NULL, 0),
+('event-day-reminder', 'Event Day Reminders', '{"title": "Event Today!", "message": "Don''t forget about your event today", "type": 2, "priority": 2, "category": 1, "channels": [0, 1]}', '2025-12-15 08:00:00', 'DAILY', 1, '2025-11-01', NULL, NULL, 0);
 GO
 
 -- Insert Notifications
 INSERT INTO Notifications (Id, Title, Message, Type, Priority, Category, UserID, ClubID, EventID, Data, CreatedAt, ExpiresAt, ReadAt, DeletedAt, IsRead, IsDeleted, ChannelsJson) VALUES
-('notif-001', 'Welcome to Computer Science Club!', 'Hi Alice, welcome to Computer Science Club! We''re excited to have you join our community.', 'Welcome', 'Normal', 'ClubActivity', 2, 1, NULL, '{"welcomePackage": true}', '2024-01-16', NULL, '2024-01-16', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-002', 'Event Registration Confirmed', 'Your registration for Python Workshop has been confirmed.', 'EventRegistration', 'Normal', 'ClubActivity', 3, 1, 1, '{"registrationId": "reg-001"}', '2024-11-16', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),
-('notif-003', 'Reminder: Nature Photography Walk Tomorrow', 'Don''t forget about Nature Photography Walk happening tomorrow at 08:00 in University Gardens.', 'EventReminder', 'Normal', 'ClubActivity', 7, 2, 4, '{"weatherForecast": "sunny"}', '2024-12-11', '2024-12-13', '2024-12-11', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-004', 'New Report Available', 'A new report "Computer Science Club - Fall 2024 Member Statistics" has been generated.', 'ReportGenerated', 'Normal', 'Administrative', 2, 1, NULL, '{"reportId": 1}', '2024-11-15', NULL, NULL, NULL, 0, 0, '["InApp"]'),
-('notif-005', 'Club Update from Environmental Club', 'Great job everyone on the Campus Cleanup Drive! We collected 50kg of waste.', 'ClubUpdate', 'Normal', 'ClubActivity', 14, 4, NULL, '{"achievement": "cleanup_success"}', '2024-12-13', NULL, '2024-12-13', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-006', 'Event Cancelled', 'Unfortunately, the outdoor event has been cancelled due to weather conditions.', 'EventCancellation', 'High', 'ClubActivity', 8, 2, NULL, '{"reason": "weather"}', '2024-12-10', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),
-('notif-007', 'Security Alert', 'Multiple failed login attempts detected on your account.', 'SecurityAlert', 'Critical', 'Security', 1, NULL, NULL, '{"attempts": 3, "lastAttempt": "2024-12-02T23:45:00"}', '2024-12-02', NULL, '2024-12-03', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-008', 'System Maintenance', 'Scheduled system maintenance will occur tonight from 2:00 AM to 4:00 AM.', 'SystemMaintenance', 'Normal', 'System', NULL, NULL, NULL, '{"duration": "2 hours"}', '2024-12-05', '2024-12-06', NULL, NULL, 0, 0, '["InApp"]');
+('notif-001', 'Welcome to Computer Science Club!', 'Hi Alice, welcome to Computer Science Club! We''re excited to have you join our community.', 'Welcome', 'Normal', 'ClubActivity', 2, 1, NULL, '{"welcomePackage": true}', '2025-01-16', NULL, '2025-01-16', NULL, 1, 0, '["InApp", "Email"]'),
+('notif-002', 'Event Registration Confirmed', 'Your registration for Python Workshop has been confirmed.', 'EventRegistration', 'Normal', 'ClubActivity', 3, 1, 1, '{"registrationId": "reg-001"}', '2025-11-16', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),
+('notif-003', 'Reminder: Nature Photography Walk Tomorrow', 'Don''t forget about Nature Photography Walk happening tomorrow at 08:00 in University Gardens.', 'EventReminder', 'Normal', 'ClubActivity', 5, 4, 4, '{"weatherForecast": "sunny"}', '2025-12-11', '2025-12-13', '2025-12-11', NULL, 1, 0, '["InApp", "Email"]'),
+('notif-004', 'New Report Available', 'A new report "Computer Science Club - Fall 2025 Member Statistics" has been generated.', 'ReportGenerated', 'Normal', 'Administrative', 2, 1, NULL, '{"reportId": 1}', '2025-11-15', NULL, NULL, NULL, 0, 0, '["InApp"]'),
+('notif-005', 'Club Update from Environmental Club', 'Great job everyone on the Campus Cleanup Drive! We collected 50kg of waste.', 'ClubUpdate', 'Normal', 'ClubActivity', 4, 3, NULL, '{"achievement": "cleanup_success"}', '2025-12-13', NULL, '2025-12-13', NULL, 1, 0, '["InApp", "Email"]'),
+('notif-006', 'Event Cancelled', 'Unfortunately, the outdoor event has been cancelled due to weather conditions.', 'EventCancellation', 'High', 'ClubActivity', 6, 4, NULL, '{"reason": "weather"}', '2025-12-10', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),
+('notif-007', 'Security Alert', 'Multiple failed login attempts detected on your account.', 'SecurityAlert', 'Critical', 'Security', 1, NULL, NULL, '{"attempts": 3, "lastAttempt": "2025-12-02T23:45:00"}', '2025-12-02', NULL, '2025-12-03', NULL, 1, 0, '["InApp", "Email"]'),
+('notif-008', 'System Maintenance', 'Scheduled system maintenance will occur tonight from 2:00 AM to 4:00 AM.', 'SystemMaintenance', 'Normal', 'System', NULL, NULL, NULL, '{"duration": "2 hours"}', '2025-12-05', '2025-12-06', NULL, NULL, 0, 0, '["InApp"]');
 GO
 
 -- Insert Settings
 INSERT INTO Settings (UserID, ClubID, [Key], Value, Scope, CreatedAt, UpdatedAt) VALUES
 -- Global Settings
-(NULL, NULL, 'system.maintenance_mode', 'false', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'system.max_file_upload_size', '10485760', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'notifications.email_enabled', 'true', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'security.session_timeout', '3600', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'backup.auto_backup_enabled', 'true', 'Global', '2024-01-01', '2024-01-01'),
+(NULL, NULL, 'system.maintenance_mode', 'false', 'Global', '2025-01-01', '2025-01-01'),
+(NULL, NULL, 'system.max_file_upload_size', '10485760', 'Global', '2025-01-01', '2025-01-01'),
+(NULL, NULL, 'notifications.email_enabled', 'true', 'Global', '2025-01-01', '2025-01-01'),
+(NULL, NULL, 'security.session_timeout', '3600', 'Global', '2025-01-01', '2025-01-01'),
+(NULL, NULL, 'backup.auto_backup_enabled', 'true', 'Global', '2025-01-01', '2025-01-01'),
 
 -- User Settings
-(2, NULL, 'notifications.email_frequency', 'daily', 'User', '2024-01-16', '2024-01-16'),
-(2, NULL, 'ui.theme', 'light', 'User', '2024-01-16', '2024-01-16'),
-(2, NULL, 'privacy.profile_visibility', 'club_members', 'User', '2024-01-16', '2024-01-16'),
-(7, NULL, 'notifications.email_frequency', 'weekly', 'User', '2024-01-21', '2024-01-21'),
-(7, NULL, 'ui.theme', 'dark', 'User', '2024-01-21', '2024-01-21'),
-(14, NULL, 'notifications.push_enabled', 'true', 'User', '2024-02-11', '2024-02-11'),
+(2, NULL, 'notifications.email_frequency', 'daily', 'User', '2025-01-16', '2025-01-16'),
+(2, NULL, 'ui.theme', 'light', 'User', '2025-01-16', '2025-01-16'),
+(2, NULL, 'privacy.profile_visibility', 'club_members', 'User', '2025-01-16', '2025-01-16'),
+(5, NULL, 'notifications.email_frequency', 'weekly', 'User', '2025-01-21', '2025-01-21'),
+(5, NULL, 'ui.theme', 'dark', 'User', '2025-01-21', '2025-01-21'),
+(4, NULL, 'notifications.push_enabled', 'true', 'User', '2025-02-11', '2025-02-11'),
 
 -- Club Settings
-(NULL, 1, 'events.auto_approval', 'false', 'Club', '2024-01-15', '2024-01-15'),
-(NULL, 1, 'members.max_count', '100', 'Club', '2024-01-15', '2024-01-15'),
-(NULL, 1, 'notifications.event_reminders', 'true', 'Club', '2024-01-15', '2024-01-15'),
-(NULL, 2, 'events.auto_approval', 'true', 'Club', '2024-01-20', '2024-01-20'),
-(NULL, 2, 'members.max_count', '50', 'Club', '2024-01-20', '2024-01-20'),
-(NULL, 4, 'events.require_approval', 'false', 'Club', '2024-02-10', '2024-02-10'),
-(NULL, 4, 'members.auto_accept', 'true', 'Club', '2024-02-10', '2024-02-10');
+(NULL, 1, 'events.auto_approval', 'false', 'Club', '2025-01-15', '2025-01-15'),
+(NULL, 1, 'members.max_count', '100', 'Club', '2025-01-15', '2025-01-15'),
+(NULL, 1, 'notifications.event_reminders', 'true', 'Club', '2025-01-15', '2025-01-15'),
+(NULL, 2, 'events.auto_approval', 'true', 'Club', '2025-01-20', '2025-01-20'),
+(NULL, 2, 'members.max_count', '50', 'Club', '2025-01-20', '2025-01-20'),
+(NULL, 3, 'events.require_approval', 'false', 'Club', '2025-02-10', '2025-02-10'),
+(NULL, 3, 'members.auto_accept', 'true', 'Club', '2025-02-10', '2025-02-10');
 GO
 
 PRINT 'Database seeded successfully!';
 PRINT 'Summary:';
 PRINT '- 10 Clubs created';
-PRINT '- 30 Users created across all roles';
+PRINT '- 8 Users created (1 Admin, 2 Chairman, 5 Member)';
 PRINT '- 12 Events created across different clubs';
 PRINT '- 15 Event Participants registered';
 PRINT '- 6 Reports generated';
@@ -468,14 +432,14 @@ PRINT '- 8 Notifications created';
 PRINT '- 17 Settings configured';
 PRINT '';
 PRINT 'Default Test Accounts (Password: admin123 for all):';
-PRINT 'SystemAdmin: admin@university.edu';
-PRINT 'Admin: admin.manager@university.edu';
-PRINT 'ClubPresident: alice.johnson@student.edu (Computer Science Club)';
-PRINT 'Chairman: michael.chen@student.edu (Music Club)';
-PRINT 'ViceChairman: lisa.thompson@student.edu (Science Innovation Lab)';
-PRINT 'TeamLeader: kevin.martinez@student.edu (Drama Society)';
-PRINT 'ClubOfficer: frank.miller@student.edu (Debate Society)';
-PRINT 'Member: kate.williams@student.edu (Computer Science Club)';
+PRINT 'Admin: admin@university.edu';
+PRINT 'Chairman: alice.johnson@student.edu (Computer Science Club)';
+PRINT 'Chairman: bob.smith@student.edu (Drama Society)';
+PRINT 'Member: carol.davis@student.edu (Environmental Club)';
+PRINT 'Member: david.wilson@student.edu (Photography Club)';
+PRINT 'Member: emma.brown@student.edu (Debate Society)';
+PRINT 'Member: frank.miller@student.edu (Music Club)';
+PRINT 'Member: grace.lee@student.edu (Sports Club)';
 PRINT '';
 PRINT 'All passwords are hashed versions of "admin123"';
 PRINT 'Please change default passwords after first login for security.';

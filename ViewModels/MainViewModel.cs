@@ -333,6 +333,7 @@ namespace ClubManagementApp.ViewModels
 
         // User Management Permissions
         public bool CanAccessUserManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
+        public bool CanViewStatistics => CurrentUser?.Role != null && _authorizationService.CanViewStatistics(CurrentUser.Role);
         public bool CanCreateUsers => CurrentUser?.Role != null && _authorizationService.CanCreateUsers(CurrentUser.Role, CurrentUser.ClubID);
         public bool CanEditUsers => CurrentUser?.Role != null && _authorizationService.CanEditUsers(CurrentUser.Role, CurrentUser.ClubID);
         public bool CanDeleteUsers => CurrentUser?.Role != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
@@ -362,7 +363,7 @@ namespace ClubManagementApp.ViewModels
         public bool CanExportReports => CurrentUser?.Role != null && _authorizationService.CanExportReports(CurrentUser.Role);
 
         // Legacy properties for backward compatibility
-        public bool CanAccessAdminFeatures => CanAccessUserManagement || CanAccessGlobalSettings;
+        public bool CanAccessAdminFeatures => _authorizationService.IsAdmin(CurrentUser);
         public bool CanAccessMemberManagement => CanAccessUserManagement;
 
         public void ShowNotification(string message)
