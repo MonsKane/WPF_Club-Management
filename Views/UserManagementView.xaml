@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ClubManagementApp.Views.UserManagementView"
+<UserControl x:Class="ClubManagementApp.Views.UserManagementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -103,14 +103,9 @@
                               VerticalContentAlignment="Center">
                         <ComboBox.Items>
                             <ComboBoxItem IsSelected="True" Content="All Roles" Tag="{x:Null}"/>
-                            <ComboBoxItem Content="System Admin" Tag="{x:Static models:UserRole.SystemAdmin}"/>
-                            <ComboBoxItem Content="Admin" Tag="{x:Static models:UserRole.Admin}"/>
-                            <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
-                            <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
-                            <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
-                            <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
-                            <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
-                            <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}"/>
+                            <ComboBoxItem Content="Admin" Tag="{x:Static models:SystemRole.Admin}"/>
+                            <ComboBoxItem Content="Club Owner" Tag="{x:Static models:SystemRole.ClubOwner}"/>
+                            <ComboBoxItem Content="Member" Tag="{x:Static models:SystemRole.Member}"/>
                         </ComboBox.Items>
                     </ComboBox>
                 </StackPanel>
@@ -180,7 +175,7 @@
                                     HeaderStyle="{StaticResource DataGridHeaderStyle}"/>
                                     
                 <DataGridTextColumn Header="Role" 
-                                    Binding="{Binding Role}" 
+                                    Binding="{Binding SystemRole}" 
                                     Width="*"
                                     HeaderStyle="{StaticResource DataGridHeaderStyle}"/>
 

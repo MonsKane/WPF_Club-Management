@@ -70,11 +70,12 @@ namespace ClubManagementApp.Services
             {
                 var userService = _serviceProvider.GetRequiredService<IUserService>();
                 var eventService = _serviceProvider.GetRequiredService<IEventService>();
+                var clubService = _serviceProvider.GetRequiredService<IClubService>();
 
-                if (userService == null || eventService == null)
+                if (userService == null || eventService == null || clubService == null)
                     throw new InvalidOperationException("Unable to resolve required services from DI container.");
 
-                var dialog = new ClubDetailsDialog(club, this, userService, eventService);
+                var dialog = new ClubDetailsDialog(club, this, userService, eventService, clubService);
                 dialog.Owner = Application.Current.MainWindow;
                 dialog.ShowDialog();
             }

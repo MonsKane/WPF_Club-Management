@@ -88,11 +88,11 @@ namespace ClubManagementApp.Services
                     u.FullName,
                     u.Email,
                     u.StudentID,
-                    Role = u.Role.ToString(),
-                    ActivityLevel = u.ActivityLevel.ToString(),
-                    u.JoinDate,
+                    SystemRole = u.SystemRole.ToString(),
+                    ActivityLevel = "Active",
+                    JoinDate = u.CreatedAt,
                     u.IsActive,
-                    u.TwoFactorEnabled,
+                    TwoFactorEnabled = false,
                     ClubName = u.Club?.Name,
                     EventParticipations = u.EventParticipations.Count
                 }).ToList();
@@ -114,7 +114,7 @@ namespace ClubManagementApp.Services
             try
             {
                 var clubs = await _context.Clubs
-                    .Include(c => c.Members)
+                    .Include(c => c.ClubMembers)
                     .Include(c => c.Events)
                     .ToListAsync();
 
@@ -123,9 +123,9 @@ namespace ClubManagementApp.Services
                     c.ClubID,
                     c.Name,
                     c.Description,
-                    c.CreatedDate,
+                    CreatedDate = c.EstablishedDate,
                     c.IsActive,
-                    MemberCount = c.Members.Count,
+                    MemberCount = c.ClubMembers.Count,
                     EventCount = c.Events.Count
                 }).ToList();
 
@@ -324,9 +324,8 @@ namespace ClubManagementApp.Services
 
                         var club = new Club
                         {
-                            Name = clubModel.Name,
                             Description = clubModel.Description ?? "",
-                            CreatedDate = clubModel.EstablishedDate ?? DateTime.Now
+                            EstablishedDate = clubModel.EstablishedDate ?? DateTime.Now
                         };
 
                         if (existingClub == null)
@@ -498,7 +497,7 @@ namespace ClubManagementApp.Services
                             FullName = "John Doe",
                             Email = "john.doe@example.com",
                             StudentID = "STU001",
-                            Role = "Member",
+                            SystemRole = "Member",
                             ActivityLevel = "Active",
                             JoinDate = DateTime.Now,
                             IsActive = true,
@@ -1038,7 +1037,7 @@ namespace ClubManagementApp.Services
 
         private async Task<object> GetClubsForExportAsync()
         {
-            return await _context.Clubs.Include(c => c.Members).ToListAsync();
+            return await _context.Clubs.Include(c => c.ClubMembers).ToListAsync();
         }
 
         private async Task<object> GetEventsForExportAsync()
@@ -1156,9 +1155,9 @@ namespace ClubManagementApp.Services
             var query = _context.Users.Include(u => u.Club).AsQueryable();
 
             if (filter.DateFrom.HasValue)
-                query = query.Where(u => u.JoinDate >= filter.DateFrom.Value);
+                query = query.Where(u => u.CreatedAt >= filter.DateFrom.Value);
             if (filter.DateTo.HasValue)
-                query = query.Where(u => u.JoinDate <= filter.DateTo.Value);
+                query = query.Where(u => u.CreatedAt <= filter.DateTo.Value);
             if (!string.IsNullOrEmpty(filter.SearchTerm))
                 query = query.Where(u => u.FullName.Contains(filter.SearchTerm) || u.Email.Contains(filter.SearchTerm));
 
@@ -1167,14 +1166,14 @@ namespace ClubManagementApp.Services
 
         private async Task<object> GetFilteredClubsAsync(DataFilter filter)
         {
-            var query = _context.Clubs.Include(c => c.Members).AsQueryable();
+            var query = _context.Clubs.Include(c => c.ClubMembers).AsQueryable();
 
             if (filter.DateFrom.HasValue)
-                query = query.Where(c => c.CreatedDate >= filter.DateFrom.Value);
+                query = query.Where(c => c.EstablishedDate >= filter.DateFrom.Value);
             if (filter.DateTo.HasValue)
-                query = query.Where(c => c.CreatedDate <= filter.DateTo.Value);
+                query = query.Where(c => c.EstablishedDate <= filter.DateTo.Value);
             if (!string.IsNullOrEmpty(filter.SearchTerm))
-                query = query.Where(c => c.Name.Contains(filter.SearchTerm) || (c.Description != null && c.Description.Contains(filter.SearchTerm)));
+                query = query.Where(c => c.ClubName.Contains(filter.SearchTerm) || (c.Description != null && c.Description.Contains(filter.SearchTerm)));
 
             return await query.ToListAsync();
         }
@@ -1320,11 +1319,9 @@ namespace ClubManagementApp.Services
                 Email = userModel.Email,
                 StudentID = userModel.StudentID,
                 Password = await _securityService.HashPasswordAsync(userModel.Password ?? ServiceConfiguration.Security.DefaultPassword),
-                Role = Enum.Parse<UserRole>(userModel.Role ?? "Member"),
-                ActivityLevel = Enum.Parse<ActivityLevel>(userModel.ActivityLevel ?? "Normal"),
-                JoinDate = userModel.JoinDate ?? DateTime.Now,
-                IsActive = userModel.IsActive ?? true,
-                TwoFactorEnabled = userModel.TwoFactorEnabled ?? false
+                SystemRole = Enum.Parse<SystemRole>(userModel.SystemRole ?? "Member"),
+                CreatedAt = userModel.JoinDate ?? DateTime.Now,
+                IsActive = userModel.IsActive ?? true
             };
         }
 
@@ -1332,10 +1329,8 @@ namespace ClubManagementApp.Services
         {
             existingUser.FullName = newUser.FullName;
             existingUser.StudentID = newUser.StudentID;
-            existingUser.Role = newUser.Role;
-            existingUser.ActivityLevel = newUser.ActivityLevel;
+            existingUser.SystemRole = newUser.SystemRole;
             existingUser.IsActive = newUser.IsActive;
-            existingUser.TwoFactorEnabled = newUser.TwoFactorEnabled;
 
             await Task.CompletedTask;
         }
@@ -1442,7 +1437,7 @@ namespace ClubManagementApp.Services
         public string Email { get; set; } = string.Empty;
         public string? StudentID { get; set; }
         public string? Password { get; set; }
-        public string? Role { get; set; }
+        public string? SystemRole { get; set; }
         public string? ActivityLevel { get; set; }
         public DateTime? JoinDate { get; set; }
         public bool? IsActive { get; set; }

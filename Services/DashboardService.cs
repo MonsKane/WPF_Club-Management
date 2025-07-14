@@ -14,7 +14,7 @@ namespace ClubManagementApp.Services
         Task<IEnumerable<ClubStatisticsDto>> GetTopActiveClubsAsync(int count = 5);
         Task<IEnumerable<MemberActivityDto>> GetTopActiveMembersAsync(int count = 10);
         Task<Dictionary<string, int>> GetEventParticipationTrendsAsync(int months = 6);
-        Task<Dictionary<UserRole, int>> GetMembershipDistributionAsync();
+        Task<Dictionary<SystemRole, int>> GetMembershipDistributionAsync();
         Task<Dictionary<string, decimal>> GetClubGrowthRatesAsync();
     }
 
@@ -91,15 +91,15 @@ namespace ClubManagementApp.Services
 
                 // Recent user registrations
                 var recentUsers = await _context.Users
-                    .Where(u => u.JoinDate > DateTime.UtcNow.AddDays(-7))
-                    .OrderByDescending(u => u.JoinDate)
+                    .Where(u => u.CreatedAt > DateTime.UtcNow.AddDays(-7))
+                    .OrderByDescending(u => u.CreatedAt)
                     .Take(count / 2)
                     .Select(u => new RecentActivityDto
                     {
                         Id = u.UserID,
                         Type = "User Registration",
                         Description = $"{u.FullName} joined the system",
-                        Timestamp = u.JoinDate,
+                        Timestamp = u.CreatedAt,
                         UserId = u.UserID,
                         UserName = u.FullName
                     })
@@ -176,7 +176,7 @@ namespace ClubManagementApp.Services
             try
             {
                 var clubStats = await _context.Clubs
-                    .Include(c => c.Members)
+                    .Include(c => c.ClubMembers)
                     .Include(c => c.Events)
                         .ThenInclude(e => e.Participants)
                     .Where(c => c.IsActive)
@@ -184,9 +184,9 @@ namespace ClubManagementApp.Services
                     {
                         ClubID = c.ClubID,
                         ClubName = c.Name,
-                        EstablishedDate = c.CreatedDate,
-                        ActiveMembers = c.Members.Count(m => m.IsActive),
-                        TotalMembers = c.Members.Count(),
+                        EstablishedDate = c.EstablishedDate ?? DateTime.Now,
+                        ActiveMembers = c.ClubMembers.Count(m => m.IsActive),
+                         TotalMembers = c.ClubMembers.Count(),
                         TotalEvents = c.Events.Count(),
                         CompletedEvents = c.Events.Count(e => e.EventDate < DateTime.UtcNow),
                         UpcomingEvents = c.Events.Count(e => e.EventDate > DateTime.UtcNow),
@@ -271,13 +271,13 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task<Dictionary<UserRole, int>> GetMembershipDistributionAsync()
+        public async Task<Dictionary<SystemRole, int>> GetMembershipDistributionAsync()
         {
             try
             {
                 var distribution = await _context.Users
                     .Where(u => u.IsActive)
-                    .GroupBy(u => u.Role)
+                    .GroupBy(u => u.SystemRole)
                     .ToDictionaryAsync(g => g.Key, g => g.Count());
 
                 return distribution;
@@ -295,7 +295,7 @@ namespace ClubManagementApp.Services
             {
                 var growthRates = new Dictionary<string, decimal>();
                 var clubs = await _context.Clubs
-                    .Include(c => c.Members)
+                    .Include(c => c.ClubMembers)
                     .Where(c => c.IsActive)
                     .ToListAsync();
 
@@ -306,14 +306,14 @@ namespace ClubManagementApp.Services
                     var previousMonth = currentMonth == 1 ? 12 : currentMonth - 1;
                     var previousYear = currentMonth == 1 ? currentYear - 1 : currentYear;
 
-                    var currentMemberCount = club.Members
-                        .Count(m => m.IsActive && 
-                               m.JoinDate.Month <= currentMonth && 
-                               m.JoinDate.Year <= currentYear);
+                    var currentMemberCount = club.ClubMembers
+                         .Count(m => m.IsActive && 
+                                m.JoinDate.Month <= currentMonth && 
+                                m.JoinDate.Year <= currentYear);
 
-                    var previousMemberCount = club.Members
-                        .Count(m => m.IsActive && 
-                               m.JoinDate.Month <= previousMonth && 
+                     var previousMemberCount = club.ClubMembers
+                         .Count(m => m.IsActive && 
+                                m.JoinDate.Month <= previousMonth && 
                                m.JoinDate.Year <= previousYear);
 
                     var growthRate = previousMemberCount > 0 ? 

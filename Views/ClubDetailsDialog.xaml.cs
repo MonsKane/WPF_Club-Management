@@ -11,14 +11,16 @@ namespace ClubManagementApp.Views
         private readonly NavigationService _navigationService;
         private readonly IUserService _userService;
         private readonly IEventService _eventService;
+        private readonly IClubService _clubService;
 
-        public ClubDetailsDialog(Club club, NavigationService navigationService, IUserService userService, IEventService eventService)
+        public ClubDetailsDialog(Club club, NavigationService navigationService, IUserService userService, IEventService eventService, IClubService clubService)
         {
             InitializeComponent();
             _club = club ?? throw new ArgumentNullException(nameof(club));
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
+            _clubService = clubService ?? throw new ArgumentNullException(nameof(clubService));
 
             LoadClubDetails();
         }
@@ -74,10 +76,9 @@ namespace ClubManagementApp.Views
         {
             try
             {
-                // Get member count
-                var members = await _userService.GetAllUsersAsync();
-                var clubMembers = members.Where(m => m.ClubID == _club.ClubID).ToList();
-                MemberCountTextBlock.Text = clubMembers.Count.ToString();
+                // Get member count using proper service method
+                var memberCount = await _clubService.GetMemberCountAsync(_club.ClubID);
+                MemberCountTextBlock.Text = memberCount.ToString();
 
                 // Get event statistics
                 var events = await _eventService.GetAllEventsAsync();

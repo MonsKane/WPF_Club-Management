@@ -8,13 +8,13 @@ E:\Pet Projects\Freelancers\WPF_Club-Management\obj\Debug\net8.0-windows\
 ClubManagementApp
 none
 false
-TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 E:\Pet Projects\Freelancers\WPF_Club-Management\App.xaml
-171089993668
+19699232792
 
-83-2031068702
-268-659774258
-MainWindow.xaml;Views\AddClubDialog.xaml;Views\AddEventDialog.xaml;Views\AddMemberDialog.xaml;Views\AddUserDialog.xaml;Views\ClubDetailsDialog.xaml;Views\ClubManagementView.xaml;Views\EditClubDialog.xaml;Views\EditEventDialog.xaml;Views\EditUserDialog.xaml;Views\EventDetailsDialog.xaml;Views\EventManagementView.xaml;Views\LoginWindow.xaml;Views\ManageLeadershipDialog.xaml;Views\MemberListView.xaml;Views\ParticipantManagementDialog.xaml;Views\ReportsView.xaml;
+881178177313
+2681510476370
+MainWindow.xaml;Views\AddClubDialog.xaml;Views\AddEventDialog.xaml;Views\AddMemberDialog.xaml;Views\AddUserDialog.xaml;Views\ClubDetailsDialog.xaml;Views\ClubManagementView.xaml;Views\CustomReportDialog.xaml;Views\EditClubDialog.xaml;Views\EditEventDialog.xaml;Views\EditUserDialog.xaml;Views\EventDetailsDialog.xaml;Views\EventManagementView.xaml;Views\LoginWindow.xaml;Views\ManageLeadershipDialog.xaml;Views\MemberListView.xaml;Views\ParticipantManagementDialog.xaml;Views\ReportsView.xaml;Views\UserManagementView.xaml;
 
 False
 

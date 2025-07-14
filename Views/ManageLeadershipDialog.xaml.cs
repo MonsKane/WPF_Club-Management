@@ -86,29 +86,28 @@ namespace ClubManagementApp.Views
 
                 ClubNameText.Text = $"Club: {_club.Name}";
 
-                // Load club members
-                var members = await _userService.GetUsersByClubAsync(_club.ClubID);
+                // Load club members using the standardized ClubMembers table approach
+                var clubMembers = await _clubService.GetClubMembersAsync(_club.ClubID);
+                var members = clubMembers.Select(cm => cm.User);
 
                 // Load users without club membership (removed members who can be reassigned)
                 var unassignedUsers = await _userService.GetUsersWithoutClubAsync();
 
-                // Separate current club members by roles
-                _chairman = members.FirstOrDefault(m => m.Role == UserRole.Chairman && m.ClubID == _club.ClubID);
-                _viceChairman = members.FirstOrDefault(m => m.Role == UserRole.ViceChairman && m.ClubID == _club.ClubID);
+                // For now, simplified leadership - only ClubOwner acts as chairman
+                _chairman = members.FirstOrDefault(m => m.SystemRole == SystemRole.ClubOwner && m.ClubID == _club.ClubID);
+                _viceChairman = null; // Simplified - no vice chairman role in current SystemRole
 
-                var teamLeaders = members.Where(m => m.Role == UserRole.TeamLeader && m.ClubID == _club.ClubID);
+                var teamLeaders = new List<User>(); // Simplified - no team leader role in current SystemRole
                 _teamLeaders.Clear();
                 foreach (var leader in teamLeaders)
                 {
                     _teamLeaders.Add(leader);
                 }
 
-                // Available members: current club members + unassigned users (removed members)
+                // Available members: current club members + unassigned users
                 var availableMembers = members.Where(m =>
-                    m.Role == UserRole.Member ||
-                    (m.Role == UserRole.TeamLeader && m.ClubID == _club.ClubID) ||
-                    (m.Role == UserRole.ViceChairman && m.ClubID == _club.ClubID) ||
-                    (m.Role == UserRole.Chairman && m.ClubID == _club.ClubID))
+                    m.SystemRole == SystemRole.Member ||
+                    (m.SystemRole == SystemRole.ClubOwner && m.ClubID == _club.ClubID))
                     .Concat(unassignedUsers); // Include removed members for reassignment
 
                 _allAvailableMembers.Clear();
@@ -294,30 +293,19 @@ namespace ClubManagementApp.Views
                 IsLoading = true;
 
                 // Get current leadership to compare changes
-                var allMembers = await _userService.GetUsersByClubAsync(_club.ClubID);
-                var currentChairman = allMembers.FirstOrDefault(m => m.Role == UserRole.Chairman && m.ClubID == _club.ClubID);
-                var currentViceChairman = allMembers.FirstOrDefault(m => m.Role == UserRole.ViceChairman && m.ClubID == _club.ClubID);
-                var currentTeamLeaders = allMembers.Where(m => m.Role == UserRole.TeamLeader && m.ClubID == _club.ClubID).ToList();
+                var clubMembers = await _clubService.GetClubMembersAsync(_club.ClubID);
+                var members = clubMembers.Select(cm => cm.User);
+                var currentChairman = members.FirstOrDefault(m => m.SystemRole == SystemRole.ClubOwner && m.ClubID == _club.ClubID);
+                var currentViceChairman = (User?)null; // Simplified - no vice chairman role
+                var currentTeamLeaders = new List<User>(); // Simplified - no team leader role
 
                 // Reset previous leadership roles to Member (only if they're being changed)
                 if (currentChairman != null && currentChairman != _chairman)
                 {
-                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentChairman.UserID, UserRole.Member);
+                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentChairman.UserID, SystemRole.Member);
                 }
 
-                if (currentViceChairman != null && currentViceChairman != _viceChairman)
-                {
-                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentViceChairman.UserID, UserRole.Member);
-                }
-
-                // Reset team leaders who are no longer in the list
-                foreach (var currentTL in currentTeamLeaders)
-                {
-                    if (!_teamLeaders.Contains(currentTL))
-                    {
-                        await _clubService.AssignClubLeadershipAsync(_club.ClubID, currentTL.UserID, UserRole.Member);
-                    }
-                }
+                // Simplified - no vice chairman or team leader roles to reset
 
                 // Assign new leadership roles
                 if (_chairman != null)
@@ -327,28 +315,10 @@ namespace ClubManagementApp.Views
                     {
                         await _userService.AssignUserToClubAsync(_chairman.UserID, _club.ClubID);
                     }
-                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, _chairman.UserID, UserRole.Chairman);
+                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, _chairman.UserID, SystemRole.ClubOwner);
                 }
 
-                if (_viceChairman != null)
-                {
-                    // If user is not in club (ClubID is null), assign them to club first
-                    if (_viceChairman.ClubID == null)
-                    {
-                        await _userService.AssignUserToClubAsync(_viceChairman.UserID, _club.ClubID);
-                    }
-                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, _viceChairman.UserID, UserRole.ViceChairman);
-                }
-
-                foreach (var teamLeader in _teamLeaders)
-                {
-                    // If user is not in club (ClubID is null), assign them to club first
-                    if (teamLeader.ClubID == null)
-                    {
-                        await _userService.AssignUserToClubAsync(teamLeader.UserID, _club.ClubID);
-                    }
-                    await _clubService.AssignClubLeadershipAsync(_club.ClubID, teamLeader.UserID, UserRole.TeamLeader);
-                }
+                // Simplified - no vice chairman or team leader assignments
 
                 _navigationService.ShowNotification("Leadership roles updated successfully!");
 

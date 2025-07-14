@@ -17,7 +17,7 @@ namespace ClubManagementApp
     /// Main application class that handles application startup, dependency injection configuration,
     /// and the overall application lifecycle. This class follows the WPF Application pattern
     /// and implements dependency injection using Microsoft.Extensions.DependencyInjection.
-    /// 
+    ///
     /// Data Flow:
     /// 1. Application starts -> OnStartup() is called
     /// 2. Dependency injection container is configured
@@ -46,7 +46,7 @@ namespace ClubManagementApp
         /// - Configuration loading from appsettings.json
         /// - Database initialization and migration
         /// - Initial UI setup (login window)
-        /// 
+        ///
         /// Data Flow:
         /// 1. Configure all services in DI container
         /// 2. Load application configuration (database connections, email settings, etc.)
@@ -138,12 +138,12 @@ namespace ClubManagementApp
         /// <summary>
         /// Configures the dependency injection container with all required services.
         /// This method sets up the service lifetimes and dependencies for the entire application.
-        /// 
+        ///
         /// Service Lifetime Patterns:
         /// - Singleton: Services that maintain state across the application (Configuration, Email, Security)
         /// - Transient: Services that are stateless and can be created fresh each time (Business logic services, ViewModels)
         /// - Scoped: Not used in this WPF app (typically used in web applications)
-        /// 
+        ///
         /// Data Flow Architecture:
         /// ViewModels -> Business Services -> Data Services -> DbContext -> Database
         /// </summary>
@@ -171,16 +171,16 @@ namespace ClubManagementApp
 
             // DATABASE CONTEXT
             // DbContext manages Entity Framework operations and database connections
-            // Using AddDbContext with SQL Server for proper connection management and scoped lifetime
+            // Using AddDbContext with SQL Server for proper connection management and transient lifetime
+            // Transient lifetime ensures each operation gets its own DbContext instance, preventing threading issues in WPF
             services.AddDbContext<ClubManagementDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Transient);
 
-            // CORE BUSINESS SERVICES (Scoped)
+            // CORE BUSINESS SERVICES (Transient)
             // These services handle business logic and data operations
-            // Scoped lifetime ensures they share the same DbContext instance within an operation scope
+            // Transient lifetime ensures each service gets a fresh DbContext instance, preventing threading issues
 
             // User management: Authentication, user CRUD, activity tracking
-            // Changed to Singleton to maintain current user session state across the application
             services.AddTransient<IUserService, UserService>();
 
             // Member management: Club membership operations, role assignments
@@ -196,13 +196,13 @@ namespace ClubManagementApp
             services.AddTransient<IReportService, ReportService>();
 
             // Authorization: Role-based access control, permission checking
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddTransient<IAuthorizationService, AuthorizationService>();
 
             // Notification system: Multi-channel notifications (email, in-app, SMS)
-            services.AddScoped<INotificationService, NotificationService>();
+            services.AddTransient<INotificationService, NotificationService>();
 
             // Business logic coordinator: Orchestrates complex operations across services
-            services.AddScoped<IBusinessLogicManager, BusinessLogicManager>();
+            services.AddTransient<IBusinessLogicManager, BusinessLogicManager>();
 
             // Dashboard data aggregation: Statistics, charts, summary information
             services.AddTransient<IDashboardService, DashboardService>();
@@ -226,10 +226,12 @@ namespace ClubManagementApp
             services.AddSingleton<IEmailService, EmailService>();
 
             // Security service: Encryption, password hashing, token management
-            services.AddSingleton<ISecurityService, SecurityService>();
+            // Changed to Transient because it uses DbContext
+            services.AddTransient<ISecurityService, SecurityService>();
 
             // Data import/export: CSV/Excel processing, file operations
-            services.AddSingleton<IDataImportExportService, DataImportExportService>();
+            // Changed to Transient because it uses DbContext
+            services.AddTransient<IDataImportExportService, DataImportExportService>();
 
             // VIEW MODELS (Transient)
             // ViewModels coordinate between Views and Services, implementing MVVM pattern
@@ -268,13 +270,13 @@ namespace ClubManagementApp
         /// <summary>
         /// Handles the transition from login window to main application window after successful authentication.
         /// This method is called when the LoginViewModel fires the LoginSuccessful event.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Retrieve the authenticated user from UserService
         /// 2. Initialize MainViewModel with user context
         /// 3. Create and display the main application window
         /// 4. Close the login window to complete the transition
-        /// 
+        ///
         /// This method ensures a smooth user experience by managing window lifecycle
         /// and establishing the user session context for the main application.
         /// </summary>
@@ -331,11 +333,11 @@ namespace ClubManagementApp
         /// <summary>
         /// Handles application shutdown and cleanup when the user exits the application.
         /// This method is called automatically by WPF when the application is closing.
-        /// 
+        ///
         /// Data Flow:
         /// 1. Dispose of the dependency injection service provider to clean up all services
         /// 2. Call base implementation to complete the WPF shutdown process
-        /// 
+        ///
         /// This ensures proper resource disposal and clean application termination.
         /// </summary>
         /// <param name="e">Exit event arguments containing exit code and cancellation options</param>

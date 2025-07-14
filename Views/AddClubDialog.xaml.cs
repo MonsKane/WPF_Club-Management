@@ -35,11 +35,10 @@ namespace ClubManagementApp.Views
             // Create club object
             CreatedClub = new Club
             {
-                Name = ClubNameTextBox.Text.Trim(),
+                ClubName = ClubNameTextBox.Text.Trim(),
                 Description = DescriptionTextBox.Text.Trim(),
                 IsActive = GetSelectedStatus() == "Active",
-                FoundedDate = FoundedDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now),
-                CreatedDate = DateTime.Now
+                EstablishedDate = FoundedDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now)
             };
 
             this.DialogResult = true;

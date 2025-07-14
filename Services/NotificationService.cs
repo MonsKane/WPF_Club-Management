@@ -692,9 +692,9 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task SendRoleBasedNotificationAsync(UserRole role, string subject, string message, int? clubId = null, NotificationType type = NotificationType.Both)
+        public async Task SendRoleBasedNotificationAsync(SystemRole role, string subject, string message, int? clubId = null, NotificationType type = NotificationType.Both)
         {
-            var query = _context.Users.Where(u => u.Role == role && u.IsActive);
+            var query = _context.Users.Where(u => u.SystemRole == role && u.IsActive);
             
             if (clubId.HasValue)
             {

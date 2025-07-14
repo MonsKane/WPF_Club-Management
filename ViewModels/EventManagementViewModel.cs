@@ -159,44 +159,44 @@ namespace ClubManagementApp.ViewModels
         // Event Management Permissions
         public bool CanAccessEventManagement
         {
-            get => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
+            get => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "EventManagement");
         }
 
         public bool CanCreateEvents
         {
             get
             {
-                var canCreate = CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
-                Console.WriteLine($"[EVENT_MANAGEMENT_VM] CanCreateEvents check: CurrentUser={CurrentUser?.FullName ?? "NULL"}, Role={CurrentUser?.Role}, CanCreate={canCreate}");
+                var canCreate = CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.SystemRole);
+            Console.WriteLine($"[EVENT_MANAGEMENT_VM] CanCreateEvents check: CurrentUser={CurrentUser?.FullName ?? "NULL"}, Role={CurrentUser?.SystemRole}, CanCreate={canCreate}");
                 return canCreate;
             }
         }
 
         public bool CanEditEvents
         {
-            get => CurrentUser != null && _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID);
+            get => CurrentUser != null && _authorizationService.CanEditEvents(CurrentUser.SystemRole, null);
         }
 
         public bool CanDeleteEvents
         {
-            get => CurrentUser != null && _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID);
+            get => CurrentUser != null && _authorizationService.CanDeleteEvents(CurrentUser.SystemRole, null);
         }
 
         public bool CanRegisterForEvents
         {
-            get => CurrentUser != null && _authorizationService.CanRegisterForEvents(CurrentUser.Role);
+            get => CurrentUser != null && _authorizationService.CanRegisterForEvents(CurrentUser.SystemRole);
         }
 
         public bool CanEditSelectedEvent
         {
             get => SelectedEvent != null && CurrentUser != null &&
-                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, SelectedEvent.ClubID, IsOwnEvent(SelectedEvent));
+                   _authorizationService.CanEditEvents(CurrentUser.SystemRole, null);
         }
 
         public bool CanDeleteSelectedEvent
         {
             get => SelectedEvent != null && CurrentUser != null &&
-                   _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, SelectedEvent.ClubID, IsOwnEvent(SelectedEvent));
+                   _authorizationService.CanDeleteEvents(CurrentUser.SystemRole, null);
         }
 
         private bool IsOwnEvent(Event eventItem)
@@ -204,7 +204,7 @@ namespace ClubManagementApp.ViewModels
             // Check if the current user is the creator/owner of the event
             // This would need to be implemented based on your Event model
             // For now, assuming events belong to the user's club or created by team leaders
-            return CurrentUser?.Role == UserRole.TeamLeader && eventItem.ClubID == CurrentUser.ClubID;
+            return CurrentUser?.SystemRole == SystemRole.ClubOwner && eventItem.ClubID == CurrentUser.ClubID;
         }
 
         // Commands
@@ -249,7 +249,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 CurrentUser = await _userService.GetCurrentUserAsync();
-                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                Console.WriteLine($"[EVENT_MANAGEMENT_VM] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.SystemRole})");
                 OnPropertyChanged(nameof(CanAccessEventManagement));
                 OnPropertyChanged(nameof(CanCreateEvents));
                 OnPropertyChanged(nameof(CanEditEvents));
@@ -270,18 +270,18 @@ namespace ClubManagementApp.ViewModels
         private bool CanExecuteEditEvent(Event? eventItem)
         {
             return eventItem != null && CurrentUser != null &&
-                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+                   _authorizationService.CanEditEvents(CurrentUser.SystemRole, null);
         }
 
         private bool CanExecuteDeleteEvent(Event? eventItem)
         {
             return eventItem != null && CurrentUser != null &&
-                   _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+                   _authorizationService.CanDeleteEvents(CurrentUser.SystemRole, null);
         }
 
         private bool CanExecuteJoinEvent(Event? eventItem)
         {
-            return eventItem != null && CurrentUser != null && _authorizationService.CanJoinEvents(CurrentUser.Role);
+            return eventItem != null && CurrentUser != null && _authorizationService.CanJoinEvents(CurrentUser.SystemRole);
         }
 
         private bool CanExecuteViewEvent(Event? eventItem)
@@ -291,13 +291,13 @@ namespace ClubManagementApp.ViewModels
 
         private bool CanExecuteExportEvents(object? parameter)
         {
-            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.SystemRole);
         }
 
         private bool CanExecuteManageParticipants(Event? eventItem)
         {
             return eventItem != null && CurrentUser != null &&
-                   _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID, eventItem.ClubID, IsOwnEvent(eventItem));
+                   _authorizationService.CanEditEvents(CurrentUser.SystemRole, null);
         }
 
         private async Task LoadDataAsync()
@@ -763,7 +763,7 @@ namespace ClubManagementApp.ViewModels
 
         private bool CanExecuteGenerateReports(object? parameter)
         {
-            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+            return CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.SystemRole);
         }
 
         private async void GenerateEventStatisticsReport(object? parameter)

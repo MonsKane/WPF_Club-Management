@@ -17,8 +17,9 @@ namespace ClubManagementApp.Views
             InitializeComponent();
             _userService = userService;
 
-            // Set default role to Member
-            RoleComboBox.SelectedValue = UserRole.Member;
+            // Populate the SystemRole ComboBox
+            SystemRoleComboBox.ItemsSource = Enum.GetValues(typeof(SystemRole));
+            SystemRoleComboBox.SelectedValue = SystemRole.Member;
         }
 
         private async void CreateButton_Click(object sender, RoutedEventArgs e)
@@ -30,13 +31,11 @@ namespace ClubManagementApp.Views
             {
                 var user = new User
                 {
-                    FullName = FullNameTextBox.Text.Trim(),
+                    FullName = UsernameTextBox.Text.Trim(),
                     Email = EmailTextBox.Text.Trim(),
-                    Password = PasswordBox.Password,
-                    PhoneNumber = string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim(),
-                    Role = (UserRole)(RoleComboBox.SelectedValue ?? UserRole.Member),
-                    IsActive = IsActiveCheckBox.IsChecked ?? true,
-                    JoinDate = DateTime.Now
+                    Password = "defaultpassword", // Default password since no password field in XAML
+                    SystemRole = (SystemRole)(SystemRoleComboBox.SelectedValue ?? SystemRole.Member),
+                    IsActive = true
                 };
 
                 // Create the user (no club assignment in user creation)
@@ -53,6 +52,11 @@ namespace ClubManagementApp.Views
             }
         }
 
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            CreateButton_Click(sender, e);
+        }
+
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
@@ -61,20 +65,20 @@ namespace ClubManagementApp.Views
 
         private bool ValidateInput()
         {
-            // Validate Full Name
-            if (string.IsNullOrWhiteSpace(FullNameTextBox.Text))
+            // Validate Username
+            if (string.IsNullOrWhiteSpace(UsernameTextBox.Text))
             {
-                MessageBox.Show("Please enter the user's full name.", "Validation Error",
+                MessageBox.Show("Please enter a username.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
-                FullNameTextBox.Focus();
+                UsernameTextBox.Focus();
                 return false;
             }
 
-            if (FullNameTextBox.Text.Trim().Length < 2)
+            if (UsernameTextBox.Text.Trim().Length < 2)
             {
-                MessageBox.Show("Full name must be at least 2 characters long.", "Validation Error",
+                MessageBox.Show("Username must be at least 2 characters long.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
-                FullNameTextBox.Focus();
+                UsernameTextBox.Focus();
                 return false;
             }
 
@@ -95,38 +99,14 @@ namespace ClubManagementApp.Views
                 return false;
             }
 
-            // Validate Password
-            if (string.IsNullOrWhiteSpace(PasswordBox.Password))
-            {
-                MessageBox.Show("Please enter a password.", "Validation Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                PasswordBox.Focus();
-                return false;
-            }
-
-            if (PasswordBox.Password.Length < 6)
-            {
-                MessageBox.Show("Password must be at least 6 characters long.", "Validation Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                PasswordBox.Focus();
-                return false;
-            }
-
-            // Validate Confirm Password
-            if (PasswordBox.Password != ConfirmPasswordBox.Password)
-            {
-                MessageBox.Show("Passwords do not match.", "Validation Error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                ConfirmPasswordBox.Focus();
-                return false;
-            }
+            // Password validation skipped since no password fields in XAML
 
             // Validate Role
-            if (RoleComboBox.SelectedItem == null)
+            if (SystemRoleComboBox.SelectedItem == null)
             {
                 MessageBox.Show("Please select a role for the user.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
-                RoleComboBox.Focus();
+                SystemRoleComboBox.Focus();
                 return false;
             }
 

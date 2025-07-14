@@ -31,7 +31,7 @@ namespace ClubManagementApp.Views
                 IsActiveCheckBox.IsChecked = _originalUser.IsActive;
 
                 // Set the selected role in ComboBox using SelectedValue
-                RoleComboBox.SelectedValue = _originalUser.Role;
+                RoleComboBox.SelectedValue = _originalUser.SystemRole;
 
                 PhoneTextBox.Text = _originalUser.PhoneNumber ?? string.Empty;
             }
@@ -45,48 +45,99 @@ namespace ClubManagementApp.Views
         {
             try
             {
-                if (ValidateInput())
+                // Disable save button to prevent multiple submissions
+                SaveButton.IsEnabled = false;
+
+                if (!ValidateInput())
                 {
+                    SaveButton.IsEnabled = true;
+                    return;
+                }
 
-                    UpdatedUser = new User
-                    {
-                        UserID = _originalUser.UserID,
-                        FullName = FullNameTextBox.Text.Trim(),
-                        Email = EmailTextBox.Text.Trim(),
-                        Role = (UserRole)(RoleComboBox.SelectedValue ?? UserRole.Member),
-                        PhoneNumber = string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim(),
-                        IsActive = IsActiveCheckBox.IsChecked ?? true,
-                        JoinDate = _originalUser.JoinDate,
-                        ClubID = _originalUser.ClubID,
-                        // Don't set Club navigation property to avoid EF tracking conflicts
-                        ActivityLevel = _originalUser.ActivityLevel,
-                        StudentID = _originalUser.StudentID,
-                        TwoFactorEnabled = _originalUser.TwoFactorEnabled
-                    };
+                // Check if any changes were actually made
+                bool hasChanges = HasUserDataChanged();
+                if (!hasChanges)
+                {
+                    MessageBox.Show("No changes detected.", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                    SaveButton.IsEnabled = true;
+                    return;
+                }
 
-                    // Update password if provided
-                    if (!string.IsNullOrWhiteSpace(NewPasswordBox.Password))
-                    {
-                        UpdatedUser.Password = NewPasswordBox.Password;
-                    }
-                    else
-                    {
-                        UpdatedUser.Password = _originalUser.Password;
-                    }
+                // Create updated user object with proper data mapping
+                UpdatedUser = CreateUpdatedUserObject();
 
-                    // Create the user (no club assignment in user creation)
-                    var updatedUser = await _userService.UpdateUserAsync(UpdatedUser);
+                // Perform the update operation
+                var updatedUser = await _userService.UpdateUserAsync(UpdatedUser);
 
+                if (updatedUser != null)
+                {
                     MessageBox.Show("User account updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
                     base.DialogResult = true;
                     Close();
                 }
+                else
+                {
+                    MessageBox.Show("Failed to update user account. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    SaveButton.IsEnabled = true;
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Handle business logic errors (like duplicate email)
+                MessageBox.Show($"Update failed: {ex.Message}", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                SaveButton.IsEnabled = true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving changes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Handle unexpected errors
+                MessageBox.Show($"An unexpected error occurred while saving changes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                SaveButton.IsEnabled = true;
             }
+        }
+
+        private bool HasUserDataChanged()
+        {
+            // Check if any user data has actually changed
+            return FullNameTextBox.Text.Trim() != _originalUser.FullName ||
+                   EmailTextBox.Text.Trim() != _originalUser.Email ||
+                   ((SystemRole)(RoleComboBox.SelectedValue ?? SystemRole.Member)) != _originalUser.SystemRole ||
+                   (string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim()) != _originalUser.PhoneNumber ||
+                   (IsActiveCheckBox.IsChecked ?? true) != _originalUser.IsActive ||
+                   !string.IsNullOrWhiteSpace(NewPasswordBox.Password); // Password change
+        }
+
+        private User CreateUpdatedUserObject()
+        {
+            var updatedUser = new User
+            {
+                UserID = _originalUser.UserID,
+                FullName = FullNameTextBox.Text.Trim(),
+                Email = EmailTextBox.Text.Trim(),
+                SystemRole = (SystemRole)(RoleComboBox.SelectedValue ?? SystemRole.Member),
+                PhoneNumber = string.IsNullOrWhiteSpace(PhoneTextBox.Text) ? null : PhoneTextBox.Text.Trim(),
+                IsActive = IsActiveCheckBox.IsChecked ?? true,
+
+                // Preserve original values that shouldn't change in this dialog
+                ClubID = _originalUser.ClubID,
+                ActivityLevel = _originalUser.ActivityLevel,
+                StudentID = _originalUser.StudentID,
+                TwoFactorEnabled = _originalUser.TwoFactorEnabled,
+                CreatedAt = _originalUser.CreatedAt // Preserve creation date
+            };
+
+            // Handle password updates
+            if (!string.IsNullOrWhiteSpace(NewPasswordBox.Password))
+            {
+                // New password provided - will be hashed by UserService
+                updatedUser.Password = NewPasswordBox.Password;
+            }
+            else
+            {
+                // No password change - keep existing hashed password
+                updatedUser.Password = _originalUser.Password;
+            }
+
+            return updatedUser;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

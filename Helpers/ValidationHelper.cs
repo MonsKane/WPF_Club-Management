@@ -56,17 +56,13 @@ namespace ClubManagementApp.Helpers
                        Regex.IsMatch(fullName, @"^[a-zA-Z\s\-']+$");
             }
 
-            public static bool CanAssignRole(UserRole currentUserRole, UserRole targetRole)
+            public static bool CanAssignRole(SystemRole currentUserRole, SystemRole targetRole)
             {
                 return currentUserRole switch
                 {
-                    UserRole.SystemAdmin => true,
-                    UserRole.Admin => targetRole != UserRole.SystemAdmin,
-                    UserRole.ClubPresident => targetRole != UserRole.SystemAdmin && targetRole != UserRole.Admin,
-                    UserRole.Chairman => targetRole != UserRole.SystemAdmin && targetRole != UserRole.Admin && targetRole != UserRole.ClubPresident,
-                    UserRole.ViceChairman => targetRole == UserRole.Member || targetRole == UserRole.TeamLeader || targetRole == UserRole.ClubOfficer,
-                    UserRole.ClubOfficer => targetRole == UserRole.Member || targetRole == UserRole.TeamLeader,
-                    UserRole.TeamLeader => targetRole == UserRole.Member,
+                    SystemRole.Admin => true, // Admin can assign any role
+                    SystemRole.ClubOwner => targetRole != SystemRole.Admin, // ClubOwner cannot assign Admin role
+                    SystemRole.Member => false, // Members cannot assign roles
                     _ => false
                 };
             }
@@ -177,22 +173,15 @@ namespace ClubManagementApp.Helpers
                 if (user.UserID == currentUser.UserID)
                     return false;
 
-                // SystemAdmin can delete anyone except other SystemAdmins
-                if (currentUser.Role == UserRole.SystemAdmin)
-                    return user.Role != UserRole.SystemAdmin;
+                // Admin can delete anyone except other Admins
+                if (currentUser.SystemRole == SystemRole.Admin)
+                    return user.SystemRole != SystemRole.Admin;
 
-                // Admin can delete anyone except SystemAdmin and other Admins
-                if (currentUser.Role == UserRole.Admin)
-                    return user.Role != UserRole.SystemAdmin && user.Role != UserRole.Admin;
+                // ClubOwner can delete members only
+                if (currentUser.SystemRole == SystemRole.ClubOwner)
+                    return user.SystemRole == SystemRole.Member;
 
-                // ClubPresident can delete members, team leaders, vice chairmen, and club officers
-                if (currentUser.Role == UserRole.ClubPresident)
-                    return user.Role != UserRole.SystemAdmin && user.Role != UserRole.Admin && user.Role != UserRole.ClubPresident;
-
-                // Chairman can delete members, team leaders, vice chairmen, and club officers
-                if (currentUser.Role == UserRole.Chairman)
-                    return user.Role != UserRole.SystemAdmin && user.Role != UserRole.Admin && user.Role != UserRole.ClubPresident && user.Role != UserRole.Chairman;
-
+                // Members cannot delete anyone
                 return false;
             }
 
@@ -202,33 +191,26 @@ namespace ClubManagementApp.Helpers
                 if (eventItem.EventDate <= DateTime.Now)
                     return false;
 
-                // SystemAdmin and Admin can delete any event
-                if (currentUser.Role == UserRole.SystemAdmin || currentUser.Role == UserRole.Admin)
+                // Admin can delete any event
+                if (currentUser.SystemRole == SystemRole.Admin)
                     return true;
 
-                // ClubPresident and Chairman can delete any event
-                if (currentUser.Role == UserRole.ClubPresident || currentUser.Role == UserRole.Chairman)
-                    return true;
-
-                // Vice Chairman, Club Officer, and Team Leader can delete events from their club
-                if ((currentUser.Role == UserRole.ViceChairman || currentUser.Role == UserRole.ClubOfficer || currentUser.Role == UserRole.TeamLeader) &&
+                // ClubOwner can delete events from their club
+                if (currentUser.SystemRole == SystemRole.ClubOwner && 
                     currentUser.ClubID == eventItem.ClubID)
                     return true;
 
+                // Members cannot delete events
                 return false;
             }
 
             public static bool CanGenerateReport(ReportType reportType, User currentUser)
             {
-                return currentUser.Role switch
+                return currentUser.SystemRole switch
                 {
-                    UserRole.SystemAdmin => true,
-                    UserRole.Admin => true,
-                    UserRole.ClubPresident => true,
-                    UserRole.Chairman => true,
-                    UserRole.ViceChairman => reportType != ReportType.SemesterSummary,
-                    UserRole.ClubOfficer => reportType == ReportType.EventOutcomes || reportType == ReportType.ActivityTracking,
-                    UserRole.TeamLeader => reportType == ReportType.EventOutcomes || reportType == ReportType.ActivityTracking,
+                    SystemRole.Admin => true, // Admin can generate all reports
+                    SystemRole.ClubOwner => true, // ClubOwner can generate all reports
+                    SystemRole.Member => false, // Members cannot generate reports
                     _ => false
                 };
             }

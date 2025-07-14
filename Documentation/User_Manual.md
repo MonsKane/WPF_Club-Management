@@ -52,16 +52,24 @@
 
 **Default Test Accounts:**
 
-| Role | Email | Password | Club Assignment |
-|------|-------|----------|----------------|
-| SystemAdmin | `admin@university.edu` | `admin123` | None (Full System Access) |
-| Admin | `admin.manager@university.edu` | `admin123` | None (System Management) |
-| ClubPresident | `alice.johnson@student.edu` | `admin123` | Computer Science Club |
-| Chairman | `michael.chen@student.edu` | `admin123` | Music Club |
-| ViceChairman | `lisa.thompson@student.edu` | `admin123` | Science Innovation Lab |
-| TeamLeader | `kevin.martinez@student.edu` | `admin123` | Drama Society |
-| ClubOfficer | `frank.miller@student.edu` | `admin123` | Debate Society |
-| Member | `kate.williams@student.edu` | `admin123` | Computer Science Club |
+| System Role | Email | Password | Description |
+|-------------|-------|----------|-------------|
+| Admin | `admin@university.edu` | `admin123` | Full system administrator access |
+
+**Regular Test Users:**
+| Email | Password | Description |
+|-------|----------|-------------|
+| `john.doe@university.edu` | `password123` | ClubOwner role - Chairman of Computer Science Club |
+| `jane.smith@university.edu` | `password123` | Member role - Member of Computer Science Club |
+| `mike.johnson@university.edu` | `password123` | Member role - Member of Computer Science Club |
+| `sarah.wilson@university.edu` | `password123` | Member role - Admin of Photography Club |
+| `david.brown@university.edu` | `password123` | Member role - Member of Photography Club |
+
+**Club Information:**
+| Club Name | Chairman | Members | Description |
+|-----------|----------|---------|-------------|
+| Computer Science Club | John Doe | Jane Smith, Mike Johnson | Technology and programming club |
+| Photography Club | Sarah Wilson (Admin) | David Brown | Photography and visual arts club |
 
 **⚠️ Important:** Change all default passwords immediately after first login for security.
 
@@ -139,19 +147,42 @@ The application follows a modern, intuitive design with the following components
 ## User Roles and Permissions
 
 ### Role Hierarchy
+#### 1. System Roles
 
-#### 1. System Administrator
-**Highest Level Access**
+**Admin (System Administrator)**
+- Full access to all system features
+- User, club, event, and report management across all clubs
+- System configuration and maintenance
+- Database administration
 
-**Capabilities:**
-- Full system management
-- Create and manage all clubs
-- Manage all users across the system
-- Access all reports and analytics
-- Configure system settings
-- Perform database maintenance
+**Club Owner**
+- Access to Club and Event Management screens
+- Filtered by CreatedUserId (can only manage clubs they created)
+- Cannot access system-wide administration
 
-**Typical Users:** IT administrators, system managers
+**Member (System Level)**
+- Access to Events screen with only event-joining capabilities
+- Limited to participating in events across clubs
+- Cannot create or manage clubs/events
+
+#### 2. Club-Specific Roles
+*These roles apply within individual clubs and are managed through the ClubMembers table*
+
+**Admin (Club Level)**
+- Manages members, events, and reports within their assigned club
+- Full club administration capabilities
+- Can assign roles to other club members
+
+**Chairman**
+- Approves member requests and applications
+- Assigns tasks and responsibilities to members
+- Oversees club events and activities
+- Reports to club admin
+
+**Member (Club Level)**
+- Participates in club events and activities
+- Views personal activity history within the club
+- Can register for club events
 
 #### 2. Club Chairman/President
 **Club-Level Management**
@@ -200,28 +231,44 @@ The application follows a modern, intuitive design with the following components
 
 ### Permission Matrix
 
-| Feature | Admin | Chairman | Vice Chair | Team Leader | Member |
-|---------|-------|----------|------------|-------------|--------|
+#### System-Level Permissions
+
+| Feature | System Admin | Club Owner | System Member |
+|---------|--------------|------------|---------------|
 | **User Management** |
-| Create Users | ✅ | ✅ (Club only) | ❌ | ❌ | ❌ |
-| Edit Users | ✅ | ✅ (Club only) | ❌ | ❌ | ✅ (Self only) |
-| Delete Users | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Assign Roles | ✅ | ✅ (Limited) | ❌ | ❌ | ❌ |
+| Create Users | ✅ | ✅ (Club only) | ❌ |
+| Edit Users | ✅ | ✅ (Club only) | ✅ (Self only) |
+| Delete Users | ✅ | ❌ | ❌ |
+| Assign System Roles | ✅ | ❌ | ❌ |
 | **Club Management** |
-| Create Clubs | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Edit Clubs | ✅ | ✅ (Own club) | ❌ | ❌ | ❌ |
-| Delete Clubs | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Create Clubs | ✅ | ❌ | ❌ |
+| Edit Clubs | ✅ | ✅ (Own clubs) | ❌ |
+| Delete Clubs | ✅ | ❌ | ❌ |
+| **Global System Settings** |
+| Global Settings | ✅ | ❌ | ❌ |
+| System Reports | ✅ | ❌ | ❌ |
+
+#### Club-Level Permissions
+
+| Feature | Club Admin | Club Chairman | Club Member |
+|---------|------------|---------------|-------------|
+| **Club User Management** |
+| Add Club Members | ✅ | ✅ | ❌ |
+| Remove Club Members | ✅ | ✅ | ❌ |
+| Assign Club Roles | ✅ | ✅ (Limited) | ❌ |
 | **Event Management** |
-| Create Events | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Edit Events | ✅ | ✅ | ✅ | ✅ (Own events) | ❌ |
-| Delete Events | ✅ | ✅ | ❌ | ✅ (Own events) | ❌ |
-| Register for Events | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Reporting** |
-| Generate Reports | ✅ | ✅ | ✅ (Limited) | ✅ (Limited) | ❌ |
-| Export Reports | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **System Settings** |
-| Global Settings | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Club Settings | ✅ | ✅ (Own club) | ❌ | ❌ | ❌ |
+| Create Events | ✅ | ✅ | ❌ |
+| Edit Events | ✅ | ✅ | ❌ |
+| Delete Events | ✅ | ✅ | ❌ |
+| Register for Events | ✅ | ✅ | ✅ |
+| Manage Event Participants | ✅ | ✅ | ❌ |
+| **Club Settings & Reports** |
+| Edit Club Information | ✅ | ✅ | ❌ |
+| Generate Club Reports | ✅ | ✅ | ❌ |
+| Export Club Reports | ✅ | ✅ | ❌ |
+| Club Settings | ✅ | ✅ | ❌ |
+
+**Note:** Users can have both System-level roles (Admin, ClubOwner, Member) and Club-level roles (Admin, Chairman, Member) within specific clubs. The highest applicable permission level applies for any given action.
 
 ---
 
@@ -303,16 +350,16 @@ The dashboard provides a comprehensive overview of your club's activities and sy
 **Step 1: Initial Login**
 1. Launch the Club Management Application
 2. Choose appropriate test account based on your role:
-   - **System Administrator**: `admin@university.edu`
-   - **Regular Admin**: `admin.manager@university.edu`
-   - **Club President**: `alice.johnson@student.edu`
-   - **Chairman**: `michael.chen@student.edu`
-   - **Vice Chairman**: `lisa.thompson@student.edu`
-   - **Team Leader**: `kevin.martinez@student.edu`
-   - **Club Officer**: `frank.miller@student.edu`
-   - **Member**: `kate.williams@student.edu`
+   - **System Admin**: `admin@university.edu`
+   - **Secondary Admin**: `admin.manager@university.edu`
+   - **Club Owner (CS Club)**: `alice.johnson@student.edu`
+   - **Club Owner (Music Club)**: `michael.chen@student.edu`
+   - **System Member**: `kate.williams@student.edu`
+   - **System Member**: `lisa.thompson@student.edu`
 3. Enter password: `admin123` (same for all accounts)
 4. Click "Login"
+
+**Note:** Club-specific roles (Admin, Chairman, Member) are assigned within individual clubs through the club management interface.
 
 **Step 2: Change Default Password**
 1. Click on your name in the top-right corner

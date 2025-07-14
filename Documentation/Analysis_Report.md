@@ -1126,7 +1126,7 @@ public class ViewModelBase : INotifyPropertyChanged
 
 **Authorization Model:**
 ```csharp
-public enum UserRole
+public enum SystemRole
 {
     Admin = 1,
     Chairman = 2,
@@ -1137,14 +1137,14 @@ public enum UserRole
 
 public class AuthorizationService : IAuthorizationService
 {
-    public bool CanPerformAction(UserRole userRole, string action, object resource)
+    public bool CanPerformAction(SystemRole userRole, string action, object resource)
     {
         return action switch
         {
-            "CreateUser" => userRole <= UserRole.Chairman,
-            "DeleteUser" => userRole == UserRole.Admin,
-            "CreateEvent" => userRole <= UserRole.TeamLeader,
-            "GenerateReport" => userRole <= UserRole.ViceChairman,
+            "CreateUser" => userRole <= SystemRole.Chairman,
+            "DeleteUser" => userRole == SystemRole.Admin,
+            "CreateEvent" => userRole <= SystemRole.TeamLeader,
+            "GenerateReport" => userRole <= SystemRole.ViceChairman,
             _ => false
         };
     }

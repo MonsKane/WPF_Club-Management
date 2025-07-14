@@ -5,41 +5,41 @@ namespace ClubManagementApp.Services
     public interface IAuthorizationService
     {
         // User Management Permissions
-        bool CanCreateUsers(UserRole role, int? userClubId = null);
-        bool CanEditUsers(UserRole role, int? userClubId = null, int? targetUserClubId = null, bool isSelf = false);
-        bool CanDeleteUsers(UserRole role);
-        bool CanAssignRoles(UserRole role, int? userClubId = null);
+        bool CanCreateUsers(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanEditUsers(SystemRole systemRole, ClubRole? clubRole = null, bool isSelf = false);
+        bool CanDeleteUsers(SystemRole systemRole);
+        bool CanAssignRoles(SystemRole systemRole, ClubRole? clubRole = null);
 
         // Club Management Permissions
-        bool CanCreateClubs(UserRole role);
-        bool CanEditClubs(UserRole role, int? userClubId = null, int? targetClubId = null);
-        bool CanDeleteClubs(UserRole role);
+        bool CanCreateClubs(SystemRole systemRole);
+        bool CanEditClubs(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnClub = false);
+        bool CanDeleteClubs(SystemRole systemRole);
 
         // Event Management Permissions
-        bool CanCreateEvents(UserRole role);
-        bool CanJoinEvents(UserRole role);
-        bool CanEditEvents(UserRole role, int? userClubId = null, int? eventClubId = null, bool isOwnEvent = false);
-        bool CanDeleteEvents(UserRole role, int? userClubId = null, int? eventClubId = null, bool isOwnEvent = false);
-        bool CanRegisterForEvents(UserRole role);
+        bool CanCreateEvents(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanJoinEvents(SystemRole systemRole);
+        bool CanEditEvents(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnEvent = false);
+        bool CanDeleteEvents(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnEvent = false);
+        bool CanRegisterForEvents(SystemRole systemRole);
 
         // Reporting Permissions
-        bool CanGenerateReports(UserRole role);
-        bool CanExportReports(UserRole role);
-        bool CanViewStatistics(UserRole role);
+        bool CanGenerateReports(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanExportReports(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanViewStatistics(SystemRole systemRole, ClubRole? clubRole = null);
 
         // System Settings Permissions
-        bool CanAccessGlobalSettings(UserRole role);
-        bool CanAccessClubSettings(UserRole role, int? userClubId = null, int? targetClubId = null);
+        bool CanAccessGlobalSettings(SystemRole systemRole);
+        bool CanAccessClubSettings(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnClub = false);
 
         // Legacy methods for backward compatibility
-        bool CanAccessFeature(UserRole role, string feature);
-        bool CanManageClub(UserRole role, int? userClubId, int targetClubId);
-        bool CanManageUser(UserRole role, UserRole targetUserRole, int? userClubId, int? targetUserClubId);
-        bool CanManageEvent(UserRole role, int? userClubId, int eventClubId);
-        bool CanViewReports(UserRole role, int? userClubId, int? reportClubId);
-        bool CanViewEvent(UserRole role);
-        bool CanViewClub(UserRole role);
-        bool CanViewUser(UserRole role);
+        bool CanAccessFeature(SystemRole systemRole, string feature, ClubRole? clubRole = null);
+        bool CanManageClub(SystemRole systemRole, ClubRole? clubRole, bool isOwnClub);
+        bool CanManageUser(SystemRole systemRole, SystemRole targetSystemRole, ClubRole? clubRole, ClubRole? targetClubRole);
+        bool CanManageEvent(SystemRole systemRole, ClubRole? clubRole, bool isOwnClub);
+        bool CanViewReports(SystemRole systemRole, ClubRole? clubRole, bool isOwnClub = true);
+        bool CanViewEvent(SystemRole systemRole);
+        bool CanViewClub(SystemRole systemRole, ClubRole? clubRole = null);
+        bool CanViewUser(SystemRole systemRole, ClubRole? clubRole = null);
         Task<bool> IsAuthorizedAsync(int userId, string action, object? resource = null);
     }
 }

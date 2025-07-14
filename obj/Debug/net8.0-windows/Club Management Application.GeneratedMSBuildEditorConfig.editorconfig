@@ -19,6 +19,3 @@ build_property.RootNamespace = ClubManagementApp
 build_property.ProjectDir = E:\Pet Projects\Freelancers\WPF_Club-Management\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
-build_property.CsWinRTUseWindowsUIXamlProjections = false
-build_property.EffectiveAnalysisLevelStyle = 8.0
-build_property.EnableCodeStyleSeverity = 

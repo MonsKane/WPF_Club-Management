@@ -75,8 +75,9 @@ A comprehensive desktop solution designed to streamline the administration and c
 ### Database Schema
 
 #### Core Tables
-- **Users**: UserID (PK), FullName, Email (Unique), Password (Hashed), Role, ActivityLevel, ClubID (FK)
-- **Clubs**: ClubID (PK), Name (Unique), Description, IsActive, CreatedDate
+- **Users**: UserID (PK), FullName, Email (Unique), Password (Hashed), SystemRole (Admin/ClubOwner/Member), CreatedAt
+- **Clubs**: ClubID (PK), ClubName (Unique), Description, EstablishedDate, CreatedUserId (FK)
+- **ClubMembers**: ClubMemberID (PK), UserID (FK), ClubID (FK), ClubRole (Admin/Chairman/Member), JoinDate
 - **Events**: EventID (PK), Name, Description, EventDate, Location, Status, ClubID (FK)
 - **EventParticipants**: ParticipantID (PK), UserID (FK), EventID (FK), Status, RegistrationDate
 - **Reports**: ReportID (PK), Title, Type, Content (JSON), GeneratedByUserID (FK)

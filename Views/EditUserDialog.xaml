@@ -20,7 +20,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <!-- Modern TextBox Style -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Padding" Value="12,10"/>
@@ -32,9 +32,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
                             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                         </Border>
@@ -61,9 +61,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}" 
-                        BorderBrush="{TemplateBinding BorderBrush}" 
-                        BorderThickness="{TemplateBinding BorderThickness}" 
+                        <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="8">
                             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                         </Border>
@@ -93,9 +93,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="PasswordBox">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
                             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                         </Border>
@@ -111,7 +111,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <!-- Modern ComboBox Style -->
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Padding" Value="12,10"/>
@@ -123,31 +123,31 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
                             <Grid>
-                                <ToggleButton x:Name="ToggleButton" Background="Transparent" BorderThickness="0" 
+                                <ToggleButton x:Name="ToggleButton" Background="Transparent" BorderThickness="0"
                                               IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                               ClickMode="Press">
                                     <ToggleButton.Template>
                                         <ControlTemplate TargetType="ToggleButton">
                                             <Grid>
-                                                <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False" 
+                                                <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
                                                                   Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
                                                                   ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  Margin="12,10" 
-                                                                  VerticalAlignment="Center" 
+                                                                  Margin="12,10"
+                                                                  VerticalAlignment="Center"
                                                                   HorizontalAlignment="Left"/>
-                                                <Path x:Name="Arrow" HorizontalAlignment="Right" VerticalAlignment="Center" 
-                                                      Margin="0,0,10,0" Fill="#6c757d" 
+                                                <Path x:Name="Arrow" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                      Margin="0,0,10,0" Fill="#6c757d"
                                                       Data="M 0 0 L 4 4 L 8 0 Z"/>
                                             </Grid>
                                         </ControlTemplate>
                                     </ToggleButton.Template>
                                 </ToggleButton>
-                                <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
                                        AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
                                     <Grid MaxHeight="{TemplateBinding MaxDropDownHeight}" MinWidth="{TemplateBinding ActualWidth}">
                                         <Border Background="White" BorderBrush="#e9ecef" BorderThickness="1" CornerRadius="8">
@@ -171,7 +171,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        
+
         <!-- Modern Label Style -->
         <Style x:Key="ModernLabelStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -179,7 +179,7 @@
             <Setter Property="Foreground" Value="#495057"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
-        
+
         <!-- Primary Button Style -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#007bff"/>
@@ -193,9 +193,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="8" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 BorderBrush="{TemplateBinding BorderBrush}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -224,9 +224,9 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="8" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 BorderBrush="{TemplateBinding BorderBrush}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -255,14 +255,14 @@
 
                 <!-- Header -->
                 <StackPanel Grid.Row="0" Margin="0,0,0,30">
-                    <TextBlock Text="👤 Edit User Profile" 
-                               FontSize="28" FontWeight="Bold" 
-                               Foreground="#2c3e50" 
+                    <TextBlock Text="👤 Edit User Profile"
+                               FontSize="28" FontWeight="Bold"
+                               Foreground="#2c3e50"
                                HorizontalAlignment="Center"
                                Margin="0,0,0,8"/>
-                    <TextBlock Text="Update user information and manage account settings" 
-                               FontSize="14" 
-                               Foreground="#6c757d" 
+                    <TextBlock Text="Update user information and manage account settings"
+                               FontSize="14"
+                               Foreground="#6c757d"
                                HorizontalAlignment="Center"
                                TextWrapping="Wrap"/>
                 </StackPanel>
@@ -271,11 +271,11 @@
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="0,0,0,20">
                         <!-- Personal Information Section -->
-                        <TextBlock Text="📋 Personal Information" 
-                                   FontSize="18" FontWeight="Bold" 
-                                   Foreground="#495057" 
+                        <TextBlock Text="📋 Personal Information"
+                                   FontSize="18" FontWeight="Bold"
+                                   Foreground="#495057"
                                    Margin="0,0,0,20"/>
-                        
+
                         <!-- Two Column Layout for Name and Email -->
                         <Grid Margin="0,0,0,20">
                             <Grid.ColumnDefinitions>
@@ -283,11 +283,11 @@
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            
+
                             <!-- Full Name -->
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Full Name *" Style="{StaticResource ModernLabelStyle}"/>
-                                <TextBox x:Name="FullNameTextBox" 
+                                <TextBox x:Name="FullNameTextBox"
                                          Style="{StaticResource ModernTextBoxStyle}"
                                          ToolTip="Enter the user's full name"/>
                             </StackPanel>
@@ -295,7 +295,7 @@
                             <!-- Email -->
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Email Address *" Style="{StaticResource ModernLabelStyle}"/>
-                                <TextBox x:Name="EmailTextBox" 
+                                <TextBox x:Name="EmailTextBox"
                                          Style="{StaticResource ModernTextBoxStyle}"
                                          ToolTip="Enter a valid email address"/>
                             </StackPanel>
@@ -308,7 +308,7 @@
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            
+
                             <!-- Role -->
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Role *" Style="{StaticResource ModernLabelStyle}"/>
@@ -316,23 +316,18 @@
                                             SelectedValuePath="Tag"
                                             DisplayMemberPath="Content"
                                             >
-                                    <ComboBoxItem Content="System Admin" Tag="{x:Static models:UserRole.SystemAdmin}"/>
-                                    <ComboBoxItem Content="Admin" Tag="{x:Static models:UserRole.Admin}"/>
-                                    <!--
-                                    <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
-                                    <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
-                                    <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
-                                    <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
-                                    <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
+                                    <ComboBoxItem Content="Admin" Tag="{x:Static models:SystemRole.Admin}"/>
+                                <ComboBoxItem Content="Club Owner" Tag="{x:Static models:SystemRole.ClubOwner}"/>
+                                <ComboBoxItem Content="Member" Tag="{x:Static models:SystemRole.Member}"/>
                                     -->
-                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
+                                    <ComboBoxItem Content="Member" Tag="{x:Static models:SystemRole.Member}" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
 
                             <!-- Phone Number -->
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Phone Number" Style="{StaticResource ModernLabelStyle}"/>
-                                <TextBox x:Name="PhoneTextBox" 
+                                <TextBox x:Name="PhoneTextBox"
                                          Style="{StaticResource ModernTextBoxStyleSmall}"
                                          ToolTip="Enter phone number (optional)"/>
                             </StackPanel>
@@ -340,28 +335,28 @@
 
                         <!-- Status -->
                         <StackPanel Margin="0,0,0,30">
-                            <CheckBox x:Name="IsActiveCheckBox" 
-                                      Content="✅ Active User" 
+                            <CheckBox x:Name="IsActiveCheckBox"
+                                      Content="✅ Active User"
                                       FontWeight="SemiBold"
                                       FontSize="14"
                                       Foreground="#495057"/>
                         </StackPanel>
 
                         <!-- Security Section -->
-                        <TextBlock Text="🔒 Security Settings" 
-                                   FontSize="18" FontWeight="Bold" 
-                                   Foreground="#495057" 
+                        <TextBlock Text="🔒 Security Settings"
+                                   FontSize="18" FontWeight="Bold"
+                                   Foreground="#495057"
                                    Margin="0,0,0,20"/>
-                        
+
                         <!-- Password Change Section -->
                         <Border Background="#f8f9fa" BorderBrush="#e9ecef" BorderThickness="2" Padding="25" CornerRadius="12">
                             <StackPanel>
-                                <TextBlock Text="🔑 Change Password (Optional)" 
-                                           FontWeight="Bold" 
-                                           FontSize="16" 
-                                           Foreground="#495057" 
+                                <TextBlock Text="🔑 Change Password (Optional)"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           Foreground="#495057"
                                            Margin="0,0,0,15"/>
-                                
+
                                 <!-- Two Column Layout for Passwords -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -369,39 +364,39 @@
                                         <ColumnDefinition Width="20"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="New Password" Style="{StaticResource ModernLabelStyle}"/>
-                                        <PasswordBox x:Name="NewPasswordBox" 
+                                        <PasswordBox x:Name="NewPasswordBox"
                                                      Style="{StaticResource ModernPasswordBoxStyle}"
                                                      ToolTip="Enter new password"/>
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Text="Confirm New Password" Style="{StaticResource ModernLabelStyle}"/>
-                                        <PasswordBox x:Name="ConfirmNewPasswordBox" 
+                                        <PasswordBox x:Name="ConfirmNewPasswordBox"
                                                      Style="{StaticResource ModernPasswordBoxStyle}"
                                                      ToolTip="Confirm the new password"/>
                                     </StackPanel>
                                 </Grid>
-                                
+
                                 <Border Background="#e3f2fd" CornerRadius="8" Padding="15" Margin="0,15,0,0">
                                     <StackPanel>
-                                        <TextBlock Text="💡 Password Requirements" 
-                                                   FontWeight="SemiBold" 
-                                                   FontSize="14" 
-                                                   Foreground="#1976d2" 
+                                        <TextBlock Text="💡 Password Requirements"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="14"
+                                                   Foreground="#1976d2"
                                                    Margin="0,0,0,8"/>
-                                        <TextBlock Text="• Leave blank to keep current password" 
-                                                   FontSize="12" 
-                                                   Foreground="#424242" 
+                                        <TextBlock Text="• Leave blank to keep current password"
+                                                   FontSize="12"
+                                                   Foreground="#424242"
                                                    Margin="0,0,0,4"/>
-                                        <TextBlock Text="• Use at least 8 characters with mixed case, numbers, and symbols" 
-                                                   FontSize="12" 
-                                                   Foreground="#424242" 
+                                        <TextBlock Text="• Use at least 8 characters with mixed case, numbers, and symbols"
+                                                   FontSize="12"
+                                                   Foreground="#424242"
                                                    Margin="0,0,0,4"/>
-                                        <TextBlock Text="• Both password fields must match" 
-                                                   FontSize="12" 
+                                        <TextBlock Text="• Both password fields must match"
+                                                   FontSize="12"
                                                    Foreground="#424242"/>
                                     </StackPanel>
                                 </Border>
@@ -412,12 +407,13 @@
 
                 <!-- Buttons -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                    <Button Content="Cancel" 
+                    <Button Content="Cancel"
                             Style="{StaticResource SecondaryButtonStyle}"
                             Margin="0,0,15,0"
                             Padding="20,12"
                             Click="CancelButton_Click"/>
-                    <Button Content="Save Changes" 
+                    <Button x:Name="SaveButton"
+                            Content="Save Changes"
                             Style="{StaticResource PrimaryButtonStyle}"
                             Padding="20,12"
                             Click="SaveButton_Click"/>

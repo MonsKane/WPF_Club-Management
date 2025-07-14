@@ -13,238 +13,231 @@ namespace ClubManagementApp.Services
         }
 
         // User Management Permissions
-        public bool CanCreateUsers(UserRole role, int? userClubId = null)
+        public bool CanCreateUsers(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => true, // Club only - will be validated in business logic
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin, // Club admins can create users
                 _ => false
             };
         }
 
-        public bool CanEditUsers(UserRole role, int? userClubId = null, int? targetUserClubId = null, bool isSelf = false)
+        public bool CanEditUsers(SystemRole systemRole, ClubRole? clubRole = null, bool isSelf = false)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => userClubId == targetUserClubId, // Club only
-                UserRole.Member => isSelf, // Self only
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => isSelf, // Self only
                 _ => false
             };
         }
 
-        public bool CanDeleteUsers(UserRole role)
+        public bool CanDeleteUsers(SystemRole systemRole)
         {
-            return role == UserRole.SystemAdmin || role == UserRole.Admin;
+            return systemRole == SystemRole.Admin;
         }
 
-        public bool CanAssignRoles(UserRole role, int? userClubId = null)
+        public bool CanAssignRoles(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => true, // Limited - will be validated in business logic
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin, // Club admins can assign club roles
                 _ => false
             };
         }
 
         // Club Management Permissions
-        public bool CanCreateClubs(UserRole role)
+        public bool CanCreateClubs(SystemRole systemRole)
         {
-            return role == UserRole.SystemAdmin || role == UserRole.Admin;
+            return systemRole == SystemRole.Admin;
         }
 
-        public bool CanEditClubs(UserRole role, int? userClubId = null, int? targetClubId = null)
+        public bool CanEditClubs(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnClub = false)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => userClubId == targetClubId, // Own club only
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
                 _ => false
             };
         }
 
-        public bool CanDeleteClubs(UserRole role)
+        public bool CanDeleteClubs(SystemRole systemRole)
         {
-            return role == UserRole.SystemAdmin || role == UserRole.Admin;
+            return systemRole == SystemRole.Admin;
         }
 
         // Event Management Permissions
-        public bool CanCreateEvents(UserRole role)
+        public bool CanCreateEvents(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
         }
 
-        public bool CanJoinEvents(UserRole role)
+        public bool CanJoinEvents(SystemRole systemRole)
         {
             return true;
         }
 
-        public bool CanEditEvents(UserRole role, int? userClubId = null, int? eventClubId = null, bool isOwnEvent = false)
+        public bool CanEditEvents(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnEvent = false)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => true,
-                UserRole.ViceChairman => true,
-                UserRole.TeamLeader => isOwnEvent, // Own events only
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman) || isOwnEvent,
                 _ => false
             };
         }
 
-        public bool CanDeleteEvents(UserRole role, int? userClubId = null, int? eventClubId = null, bool isOwnEvent = false)
+        public bool CanDeleteEvents(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnEvent = false)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => true,
-                UserRole.TeamLeader => isOwnEvent, // Own events only
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman) || isOwnEvent,
                 _ => false
             };
         }
 
-        public bool CanRegisterForEvents(UserRole role)
+        public bool CanRegisterForEvents(SystemRole systemRole)
         {
             return true; // All roles can register for events
         }
 
         // Reporting Permissions
-        public bool CanGenerateReports(UserRole role)
+        public bool CanGenerateReports(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
         }
 
-        public bool CanExportReports(UserRole role)
+        public bool CanExportReports(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
         }
 
-        public bool CanViewStatistics(UserRole role)
+        public bool CanViewStatistics(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role is UserRole.SystemAdmin or UserRole.Admin or UserRole.Chairman or UserRole.ViceChairman or UserRole.TeamLeader;
+            return systemRole switch
+            {
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
+            };
         }
 
         // System Settings Permissions
-        public bool CanAccessGlobalSettings(UserRole role)
+        public bool CanAccessGlobalSettings(SystemRole systemRole)
         {
-            return role == UserRole.SystemAdmin || role == UserRole.Admin;
+            return systemRole == SystemRole.Admin;
         }
 
-        public bool CanAccessClubSettings(UserRole role, int? userClubId = null, int? targetClubId = null)
+        public bool CanAccessClubSettings(SystemRole systemRole, ClubRole? clubRole = null, bool isOwnClub = false)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.Chairman => userClubId == targetClubId, // Own club only
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
                 _ => false
             };
         }
 
         // Legacy methods for backward compatibility
 
-        public bool CanAccessFeature(UserRole role, string feature)
+        public bool CanAccessFeature(SystemRole systemRole, string feature, ClubRole? clubRole = null)
         {
             return feature switch
             {
-                "CreateUsers" => CanCreateUsers(role),
-                "EditUsers" => CanEditUsers(role),
-                "DeleteUsers" => CanDeleteUsers(role),
-                "AssignRoles" => CanAssignRoles(role),
-                "CreateClubs" => CanCreateClubs(role),
-                "EditClubs" => CanEditClubs(role),
-                "DeleteClubs" => CanDeleteClubs(role),
-                "CreateEvents" => CanCreateEvents(role),
-                "EditEvents" => CanEditEvents(role),
-                "DeleteEvents" => CanDeleteEvents(role),
-                "RegisterForEvents" => CanRegisterForEvents(role),
-                "GenerateReports" => CanGenerateReports(role),
-                "ExportReports" => CanExportReports(role),
-                "GlobalSettings" => CanAccessGlobalSettings(role),
-                "ClubSettings" => CanAccessClubSettings(role),
-                "UserManagement" => CanCreateUsers(role) || CanEditUsers(role) || CanDeleteUsers(role),
-                "MemberManagement" => CanCreateUsers(role) || CanCreateUsers(role) || CanCreateUsers(role),
-                "ClubManagement" => CanCreateClubs(role) || CanEditClubs(role) || CanDeleteClubs(role),
-                "EventManagement" => CanJoinEvents(role) || CanCreateEvents(role) || CanEditEvents(role) || CanDeleteEvents(role),
-                "ReportView" => CanGenerateReports(role),
+                "CreateUsers" => CanCreateUsers(systemRole, clubRole),
+                "EditUsers" => CanEditUsers(systemRole, clubRole),
+                "DeleteUsers" => CanDeleteUsers(systemRole),
+                "AssignRoles" => CanAssignRoles(systemRole, clubRole),
+                "CreateClubs" => CanCreateClubs(systemRole),
+                "EditClubs" => CanEditClubs(systemRole, clubRole),
+                "DeleteClubs" => CanDeleteClubs(systemRole),
+                "CreateEvents" => CanCreateEvents(systemRole, clubRole),
+                "EditEvents" => CanEditEvents(systemRole, clubRole),
+                "DeleteEvents" => CanDeleteEvents(systemRole, clubRole),
+                "RegisterForEvents" => CanRegisterForEvents(systemRole),
+                "GenerateReports" => CanGenerateReports(systemRole, clubRole),
+                "ExportReports" => CanExportReports(systemRole, clubRole),
+                "GlobalSettings" => CanAccessGlobalSettings(systemRole),
+                "ClubSettings" => CanAccessClubSettings(systemRole, clubRole),
+                "UserManagement" => CanCreateUsers(systemRole, clubRole) || CanEditUsers(systemRole, clubRole) || CanDeleteUsers(systemRole),
+                "MemberManagement" => CanCreateUsers(systemRole, clubRole),
+                "ClubManagement" => CanCreateClubs(systemRole) || CanEditClubs(systemRole, clubRole) || CanDeleteClubs(systemRole),
+                "EventManagement" => CanJoinEvents(systemRole) || CanCreateEvents(systemRole, clubRole) || CanEditEvents(systemRole, clubRole) || CanDeleteEvents(systemRole, clubRole),
+                "ReportView" => CanGenerateReports(systemRole, clubRole),
                 "Dashboard" => true, // Everyone can access dashboard
                 _ => false
             };
         }
 
-        public bool CanManageClub(UserRole role, int? userClubId, int targetClubId)
+        public bool CanManageClub(SystemRole systemRole, ClubRole? clubRole, bool isOwnClub)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.ClubPresident => userClubId == targetClubId,
-                UserRole.Chairman => userClubId == targetClubId,
-                UserRole.ViceChairman => userClubId == targetClubId,
-                UserRole.ClubOfficer => userClubId == targetClubId,
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
+                SystemRole.Member => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
                 _ => false
             };
         }
 
-        public bool CanManageUser(UserRole role, UserRole targetUserRole, int? userClubId, int? targetUserClubId)
+        public bool CanManageUser(SystemRole systemRole, SystemRole targetSystemRole, ClubRole? clubRole, ClubRole? targetClubRole)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => targetUserRole != UserRole.SystemAdmin,
-                UserRole.ClubPresident => userClubId == targetUserClubId &&
-                                        targetUserRole != UserRole.SystemAdmin &&
-                                        targetUserRole != UserRole.Admin,
-                UserRole.Chairman => userClubId == targetUserClubId &&
-                                   targetUserRole != UserRole.SystemAdmin &&
-                                   targetUserRole != UserRole.Admin &&
-                                   targetUserRole != UserRole.ClubPresident,
-                UserRole.ViceChairman => userClubId == targetUserClubId &&
-                                       targetUserRole != UserRole.SystemAdmin &&
-                                       targetUserRole != UserRole.Admin &&
-                                       targetUserRole != UserRole.ClubPresident &&
-                                       targetUserRole != UserRole.Chairman,
-                UserRole.ClubOfficer => userClubId == targetUserClubId &&
-                                      (targetUserRole == UserRole.TeamLeader || targetUserRole == UserRole.Member),
-                UserRole.TeamLeader => userClubId == targetUserClubId &&
-                                     targetUserRole == UserRole.Member,
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => targetSystemRole != SystemRole.Admin && 
+                                      (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
+                SystemRole.Member => targetSystemRole == SystemRole.Member && 
+                                   (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman) &&
+                                   targetClubRole == ClubRole.Member,
                 _ => false
             };
         }
 
-        public bool CanManageEvent(UserRole role, int? userClubId, int eventClubId)
+        public bool CanManageEvent(SystemRole systemRole, ClubRole? clubRole, bool isOwnClub)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.ClubPresident => userClubId == eventClubId,
-                UserRole.Chairman => userClubId == eventClubId,
-                UserRole.ViceChairman => userClubId == eventClubId,
-                UserRole.ClubOfficer => userClubId == eventClubId,
-                UserRole.TeamLeader => userClubId == eventClubId,
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
+                SystemRole.Member => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
                 _ => false
             };
         }
 
-        public bool CanViewReports(UserRole role, int? userClubId, int? reportClubId)
+        public bool CanViewReports(SystemRole systemRole, ClubRole? clubRole, bool isOwnClub = true)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.SystemAdmin => true,
-                UserRole.Admin => true,
-                UserRole.ClubPresident => reportClubId == null || userClubId == reportClubId,
-                UserRole.Chairman => reportClubId == null || userClubId == reportClubId,
-                UserRole.ViceChairman => reportClubId == null || userClubId == reportClubId,
-                UserRole.ClubOfficer => userClubId == reportClubId,
-                UserRole.TeamLeader => userClubId == reportClubId,
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
+                SystemRole.Member => isOwnClub && (clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman),
                 _ => false
             };
         }
@@ -254,44 +247,47 @@ namespace ClubManagementApp.Services
         public async Task<bool> IsAuthorizedAsync(int userId, string action, object? resource = null)
         {
             var user = await _context.Users.FindAsync(userId);
-            if (user == null || !user.IsActive)
+            if (user == null)
                 return false;
 
+            // For now, use basic system role authorization
+            // TODO: Implement club-specific role checking based on resource context
             return action switch
             {
-                "ViewDashboard" => CanAccessFeature(user.Role, "Dashboard"),
-                "ManageUsers" => CanAccessFeature(user.Role, "UserManagement"),
-                "ManageClubs" => CanAccessFeature(user.Role, "ClubManagement"),
-                "ManageEvents" => CanAccessFeature(user.Role, "EventManagement"),
-                "ViewReports" => CanAccessFeature(user.Role, "ReportView"),
-                "GenerateReports" => CanGenerateReports(user.Role),
+                "ViewDashboard" => CanAccessFeature(user.SystemRole, "Dashboard"),
+                "ManageUsers" => CanAccessFeature(user.SystemRole, "UserManagement"),
+                "ManageClubs" => CanAccessFeature(user.SystemRole, "ClubManagement"),
+                "ManageEvents" => CanAccessFeature(user.SystemRole, "EventManagement"),
+                "ViewReports" => CanAccessFeature(user.SystemRole, "ReportView"),
+                "GenerateReports" => CanGenerateReports(user.SystemRole),
                 _ => false
             };
         }
 
-        public bool CanViewEvent(UserRole role)
+        public bool CanViewEvent(SystemRole systemRole)
         {
-            return role switch
+            return true; // All users can view events
+        }
+
+        public bool CanViewClub(SystemRole systemRole, ClubRole? clubRole = null)
+        {
+            return systemRole switch
             {
-                _ => true
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => true,
+                SystemRole.Member => clubRole != null, // Members can view clubs they belong to
+                _ => false
             };
         }
 
-        public bool CanViewClub(UserRole role)
+        public bool CanViewUser(SystemRole systemRole, ClubRole? clubRole = null)
         {
-            return role switch
+            return systemRole switch
             {
-                UserRole.Member => false,
-                _ => true
-            };
-        }
-
-        public bool CanViewUser(UserRole role)
-        {
-            return role switch
-            {
-                UserRole.Member => false,
-                _ => true
+                SystemRole.Admin => true,
+                SystemRole.ClubOwner => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                SystemRole.Member => clubRole == ClubRole.Admin || clubRole == ClubRole.Chairman,
+                _ => false
             };
         }
     }

@@ -8,7 +8,7 @@ namespace ClubManagementApp.DTOs
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string StudentID { get; set; } = string.Empty;
-        public UserRole Role { get; set; }
+        public SystemRole SystemRole { get; set; }
         public ActivityLevel ActivityLevel { get; set; }
         public DateTime JoinDate { get; set; }
         public bool IsActive { get; set; }
@@ -23,7 +23,7 @@ namespace ClubManagementApp.DTOs
         public string Email { get; set; } = string.Empty;
         public string StudentID { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public UserRole Role { get; set; } = UserRole.Member;
+        public SystemRole SystemRole { get; set; } = SystemRole.Member;
         public int? ClubID { get; set; }
     }
 
@@ -33,7 +33,7 @@ namespace ClubManagementApp.DTOs
         public string? FullName { get; set; }
         public string? Email { get; set; }
         public string? StudentID { get; set; }
-        public UserRole? Role { get; set; }
+        public SystemRole? SystemRole { get; set; }
         public ActivityLevel? ActivityLevel { get; set; }
         public bool? IsActive { get; set; }
         public int? ClubID { get; set; }

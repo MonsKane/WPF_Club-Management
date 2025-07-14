@@ -179,7 +179,7 @@ namespace ClubManagementApp.Services
                     { "UserName", user.FullName },
                     { "Email", user.Email },
                     { "StudentId", user.StudentID ?? "" },
-                    { "JoinDate", user.JoinDate.ToString("MMMM dd, yyyy") },
+                    { "JoinDate", user.CreatedAt.ToString("MMMM dd, yyyy") },
                     { "ClubName", user.Club?.Name ?? "Club Management System" }
                 };
 

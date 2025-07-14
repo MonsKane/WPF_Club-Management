@@ -38,23 +38,27 @@ The Club Management Application is a comprehensive WPF-based desktop application
 
 #### Core Tables
 
-**Users Table**
+**Users Table** (System-wide users)
 - `UserID` (Primary Key, int)
 - `FullName` (nvarchar(100), Required)
 - `Email` (nvarchar(150), Required, Unique)
 - `Password` (nvarchar(255), Required, Hashed)
-- `StudentID` (nvarchar(20), Optional)
-- `Role` (enum: Admin, Chairman, ViceChairman, TeamLeader, Member)
-- `ActivityLevel` (enum: Active, Normal, Inactive)
-- `JoinDate` (datetime)
-- `IsActive` (bit)
-- `TwoFactorEnabled` (bit)
-- `ClubID` (Foreign Key, Optional)
+- `SystemRole` (enum: Admin, ClubOwner, Member)
+- `CreatedAt` (datetime)
 
 **Clubs Table**
 - `ClubID` (Primary Key, int)
-- `Name` (nvarchar(100), Required)
-- `Description` (nvarchar(500), Optional)
+- `ClubName` (nvarchar(100), Required)
+- `Description` (text, Optional)
+- `EstablishedDate` (date, Optional)
+- `CreatedUserId` (Foreign Key to Users.UserID, Required)
+
+**ClubMembers Table** (Maps users to clubs with club-specific roles)
+- `ClubMemberID` (Primary Key, int)
+- `UserID` (Foreign Key to Users.UserID)
+- `ClubID` (Foreign Key to Clubs.ClubID)
+- `ClubRole` (enum: Admin, Chairman, Member)
+- `JoinDate` (datetime)
 - `IsActive` (bit)
 - `CreatedDate` (datetime)
 
@@ -131,14 +135,17 @@ The Club Management Application is a comprehensive WPF-based desktop application
 
 ### Entity Relationships
 
-1. **User ↔ Club**: Many-to-One (Users belong to one Club, Clubs have many Users)
-2. **Club ↔ Event**: One-to-Many (Clubs have many Events, Events belong to one Club)
-3. **User ↔ EventParticipant**: One-to-Many (Users can participate in many Events)
-4. **Event ↔ EventParticipant**: One-to-Many (Events can have many Participants)
-5. **User ↔ Report**: One-to-Many (Users can generate many Reports)
-6. **Club ↔ Report**: One-to-Many (Reports can be club-specific)
-7. **User ↔ Notification**: One-to-Many (Users receive many Notifications)
-8. **User ↔ AuditLog**: One-to-Many (Users generate many Audit entries)
+1. **User ↔ Club**: Many-to-Many through ClubMembers (Users can belong to multiple Clubs with different roles)
+2. **User ↔ ClubMembers**: One-to-Many (Users can have multiple club memberships)
+3. **Club ↔ ClubMembers**: One-to-Many (Clubs can have many members with different roles)
+4. **User ↔ Club (Creator)**: One-to-Many (ClubOwners can create multiple Clubs via CreatedUserId)
+5. **Club ↔ Event**: One-to-Many (Clubs have many Events, Events belong to one Club)
+6. **User ↔ EventParticipant**: One-to-Many (Users can participate in many Events)
+7. **Event ↔ EventParticipant**: One-to-Many (Events can have many Participants)
+8. **User ↔ Report**: One-to-Many (Users can generate many Reports)
+9. **Club ↔ Report**: One-to-Many (Reports can be club-specific)
+10. **User ↔ Notification**: One-to-Many (Users receive many Notifications)
+11. **User ↔ AuditLog**: One-to-Many (Users generate many Audit entries)
 
 ### Architecture Overview
 
@@ -270,11 +277,19 @@ The Club Management Application is a comprehensive WPF-based desktop application
 1. **Database Initialization**
    - The application will automatically create the database on first run
    - Default admin account: `admin@university.edu` / `admin123`
+   - 5 test member accounts (password: `password123`):
+     - `john.doe@university.edu` - Chairman of Computer Science Club
+     - `jane.smith@university.edu` - Member of Computer Science Club
+     - `mike.johnson@university.edu` - Member of Computer Science Club
+     - `sarah.wilson@university.edu` - Admin of Photography Club
+     - `david.brown@university.edu` - Member of Photography Club
 
 2. **Initial Configuration**
    - Login with admin credentials
    - Configure email settings for notifications
-   - Create initial clubs and user accounts
+   - Review the 2 pre-created clubs:
+     - **Computer Science Club**: 3 members (John Doe as Chairman, Jane Smith and Mike Johnson as Members)
+     - **Photography Club**: 2 members (Sarah Wilson as Admin, David Brown as Member)
 
 ### User Roles and Permissions
 

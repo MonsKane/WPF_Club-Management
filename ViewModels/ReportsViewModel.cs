@@ -142,9 +142,9 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Authorization Properties
-        public bool CanAccessReports => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ReportView");
-        public bool CanGenerateReports => CurrentUser != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
-        public bool CanExportReports => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        public bool CanAccessReports => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "ReportView");
+        public bool CanGenerateReports => CurrentUser != null && _authorizationService.CanGenerateReports(CurrentUser.SystemRole);
+        public bool CanExportReports => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.SystemRole);
 
         // Commands
         public ICommand GenerateReportCommand { get; private set; } = null!;
@@ -177,10 +177,10 @@ namespace ClubManagementApp.ViewModels
         private bool CanGenerateReport() => CanGenerateReports;
         private bool CanViewReport(Report? report) => report != null && CanAccessReports;
         private bool CanUpdateReport(Report? report) => report != null && CanGenerateReports &&
-            (CurrentUser?.Role == UserRole.SystemAdmin || report.GeneratedByUserID == CurrentUser?.UserID);
+            (CurrentUser?.SystemRole == SystemRole.Admin || report.GeneratedByUserID == CurrentUser?.UserID);
         private bool CanExportReport(Report? report) => report != null && CanExportReports;
         private bool CanDeleteReport(Report? report) => report != null && CanGenerateReports &&
-            (CurrentUser?.Role == UserRole.SystemAdmin || report.GeneratedByUserID == CurrentUser?.UserID);
+            (CurrentUser?.SystemRole == SystemRole.Admin || report.GeneratedByUserID == CurrentUser?.UserID);
 
         // Load current user method
         public async Task LoadCurrentUserAsync()
@@ -188,7 +188,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 CurrentUser = await _userService.GetCurrentUserAsync();
-                Console.WriteLine($"[ReportsViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                Console.WriteLine($"[ReportsViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.SystemRole})");
             }
             catch (Exception ex)
             {
@@ -834,8 +834,8 @@ namespace ClubManagementApp.ViewModels
 
             // Filter data within the specified date range
             var periodEvents = events.Where(e => e.CreatedDate >= startDate && e.CreatedDate <= endDate).ToList();
-            var periodUsers = users.Where(u => u.JoinDate >= startDate && u.JoinDate <= endDate).ToList();
-            var periodClubs = clubs.Where(c => c.CreatedDate >= startDate && c.CreatedDate <= endDate).ToList();
+            var periodUsers = users.Where(u => u.CreatedAt >= startDate && u.CreatedAt <= endDate).ToList();
+            var periodClubs = clubs.Where(c => c.EstablishedDate >= startDate && c.EstablishedDate <= endDate).ToList();
 
             content += $"=== CREATION STATISTICS ===\n";
             content += $"New Accounts Created: {periodUsers.Count}\n";
@@ -846,7 +846,7 @@ namespace ClubManagementApp.ViewModels
             if (periodUsers.Any())
             {
                 content += $"NEW ACCOUNTS BY ROLE:\n";
-                var usersByRole = periodUsers.GroupBy(u => u.Role);
+                var usersByRole = periodUsers.GroupBy(u => u.SystemRole);
                 foreach (var group in usersByRole.OrderBy(g => g.Key))
                 {
                     content += $"• {group.Key}: {group.Count()} accounts\n";
@@ -856,12 +856,12 @@ namespace ClubManagementApp.ViewModels
                 content += $"NEW ACCOUNT DETAILS:\n";
                 content += $"Date\t\tName\t\t\tRole\t\tClub\n";
                 content += $"─────────────────────────────────────────────────────────────\n";
-                foreach (var user in periodUsers.OrderBy(u => u.JoinDate))
+                foreach (var user in periodUsers.OrderBy(u => u.CreatedAt))
                 {
                     var userName = user.FullName.Length > 15 ? user.FullName.Substring(0, 12) + "..." : user.FullName;
                     var clubName = clubs.FirstOrDefault(c => c.ClubID == user.ClubID)?.Name ?? "N/A";
                     if (clubName.Length > 12) clubName = clubName.Substring(0, 9) + "...";
-                    content += $"{user.JoinDate:MM-dd}\t\t{userName,-15}\t{user.Role,-10}\t{clubName}\n";
+                    content += $"{user.CreatedAt:MM-dd}\t\t{userName,-15}\t{user.SystemRole,-10}\t{clubName}\n";
                 }
                 content += $"\n";
             }
@@ -872,11 +872,11 @@ namespace ClubManagementApp.ViewModels
                 content += $"NEW CLUBS CREATED:\n";
                 content += $"Date\t\tClub Name\t\tDescription\n";
                 content += $"─────────────────────────────────────────────────────────────\n";
-                foreach (var club in periodClubs.OrderBy(c => c.CreatedDate))
+                foreach (var club in periodClubs.OrderBy(c => c.EstablishedDate))
                 {
                     var clubName = club.Name.Length > 15 ? club.Name.Substring(0, 12) + "..." : club.Name;
                     var description = (club.Description?.Length > 20 ? club.Description.Substring(0, 17) + "..." : club.Description) ?? "No description";
-                    content += $"{club.CreatedDate:MM-dd}\t\t{clubName,-15}\t{description}\n";
+                    content += $"{club.EstablishedDate:MM-dd}\t\t{clubName,-15}\t{description}\n";
                 }
                 content += $"\n";
             }
@@ -903,8 +903,8 @@ namespace ClubManagementApp.ViewModels
 
             for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
             {
-                var dayUsers = periodUsers.Count(u => u.JoinDate.Date == date);
-                var dayClubs = periodClubs.Count(c => c.CreatedDate.Date == date);
+                var dayUsers = periodUsers.Count(u => u.CreatedAt.Date == date);
+                var dayClubs = periodClubs.Count(c => c.EstablishedDate?.Date == date);
                 var dayEvents = periodEvents.Count(e => e.CreatedDate.Date == date);
 
                 if (dayUsers > 0 || dayClubs > 0 || dayEvents > 0)

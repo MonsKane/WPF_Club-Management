@@ -151,6 +151,17 @@ GO
 #### Step 3: Run Schema Script
 Execute the complete `deploy-database.sql` script to create all tables, indexes, and constraints.
 
+#### Step 4: Initialize Test Data
+The application uses `DatabaseInitializer.cs` to create test data automatically:
+- **1 Admin account**: `admin@university.edu` / `admin123`
+- **5 Member accounts** (password: `password123`):
+  - `john.doe@university.edu` - Chairman of Computer Science Club
+  - `jane.smith@university.edu` - Member of Computer Science Club
+  - `mike.johnson@university.edu` - Member of Computer Science Club
+  - `sarah.wilson@university.edu` - Admin of Photography Club
+  - `david.brown@university.edu` - Member of Photography Club
+- **2 Clubs**: Computer Science Club (3 members) and Photography Club (2 members)
+
 ### Database Configuration for Different Environments
 
 #### Development Environment
@@ -613,12 +624,12 @@ C:\Applications\ClubManagement\Logs\
 #### Database Backup
 ```sql
 -- Full database backup
-BACKUP DATABASE ClubManagementDB 
+BACKUP DATABASE ClubManagementDB
 TO DISK = 'C:\Backups\ClubManagement\ClubManagementDB_Full.bak'
 WITH FORMAT, INIT, COMPRESSION;
 
 -- Differential backup
-BACKUP DATABASE ClubManagementDB 
+BACKUP DATABASE ClubManagementDB
 TO DISK = 'C:\Backups\ClubManagement\ClubManagementDB_Diff.bak'
 WITH DIFFERENTIAL, COMPRESSION;
 ```
@@ -689,7 +700,7 @@ GO
 ALTER DATABASE ClubManagementDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 GO
 
-RESTORE DATABASE ClubManagementDB 
+RESTORE DATABASE ClubManagementDB
 FROM DISK = 'C:\Backups\ClubManagement\ClubManagementDB_Full.bak'
 WITH REPLACE;
 GO

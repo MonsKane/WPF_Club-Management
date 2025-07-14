@@ -47,7 +47,7 @@ namespace ClubManagementApp.Services
         Task SendInAppNotificationAsync(int userId, string title, string message);
         Task SendEventNotificationAsync(int eventId, string subject, string message, NotificationType type = NotificationType.Both);
         Task SendClubNotificationAsync(int clubId, string subject, string message, NotificationType type = NotificationType.Both);
-        Task SendRoleBasedNotificationAsync(UserRole role, string subject, string message, int? clubId = null, NotificationType type = NotificationType.Both);
+        Task SendRoleBasedNotificationAsync(SystemRole role, string subject, string message, int? clubId = null, NotificationType type = NotificationType.Both);
         Task NotifyEventRegistrationAsync(int eventId, int userId);
         Task NotifyEventReminderAsync(int eventId);
         Task NotifyMembershipChangeAsync(int userId, int clubId, string changeType);

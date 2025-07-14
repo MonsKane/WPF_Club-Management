@@ -49,17 +49,15 @@ BEGIN
         UserID int IDENTITY(1,1) PRIMARY KEY,
         FullName nvarchar(100) NOT NULL,
         Email nvarchar(255) NOT NULL UNIQUE,
-        PasswordHash nvarchar(255) NOT NULL,
-        StudentID nvarchar(10) UNIQUE,
-        Role nvarchar(50) NOT NULL DEFAULT 'Member',
-        ActivityLevel nvarchar(50) DEFAULT 'Low',
+        Password nvarchar(255) NOT NULL,
+        StudentID nvarchar(20) NULL,
+        PhoneNumber nvarchar(20) NULL,
+        SystemRole int NOT NULL DEFAULT 2 CHECK (SystemRole IN (0, 1, 2)),
+        ActivityLevel int NOT NULL DEFAULT 0 CHECK (ActivityLevel IN (0, 1, 2)),
         ClubID int NULL,
-        CreatedDate datetime2 NOT NULL DEFAULT GETUTCDATE(),
-        UpdatedDate datetime2 NULL,
         IsActive bit NOT NULL DEFAULT 1,
-        LastLoginDate datetime2 NULL,
-        FailedLoginAttempts int NOT NULL DEFAULT 0,
-        LockoutEndDate datetime2 NULL
+        TwoFactorEnabled bit NOT NULL DEFAULT 0,
+        CreatedAt datetime2 NOT NULL DEFAULT GETUTCDATE()
     );
     PRINT 'Users table created.';
 END
@@ -70,14 +68,37 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Clubs' AND xtype='U')
 BEGIN
     CREATE TABLE Clubs (
         ClubID int IDENTITY(1,1) PRIMARY KEY,
-        Name nvarchar(100) NOT NULL UNIQUE,
-        Description nvarchar(500),
-        EstablishedDate datetime2 NOT NULL,
+        ClubName nvarchar(100) NOT NULL UNIQUE,
+        Description nvarchar(max) NULL,
+        EstablishedDate datetime2 NULL,
+        CreatedUserId int NOT NULL,
+        CreatedAt datetime2 NOT NULL DEFAULT GETUTCDATE(),
         IsActive bit NOT NULL DEFAULT 1,
-        CreatedDate datetime2 NOT NULL DEFAULT GETUTCDATE(),
-        UpdatedDate datetime2 NULL
+        MeetingSchedule nvarchar(200) NULL,
+        ContactEmail nvarchar(150) NULL,
+        ContactPhone nvarchar(20) NULL,
+        Website nvarchar(200) NULL,
+        CONSTRAINT FK_Clubs_CreatedUserId FOREIGN KEY (CreatedUserId) REFERENCES Users(UserID)
     );
     PRINT 'Clubs table created.';
+END
+GO
+
+-- ClubMembers table
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ClubMembers' AND xtype='U')
+BEGIN
+    CREATE TABLE ClubMembers (
+        ClubMemberID int IDENTITY(1,1) PRIMARY KEY,
+        UserID int NOT NULL,
+        ClubID int NOT NULL,
+        ClubRole int NOT NULL CHECK (ClubRole IN (0, 1, 2)),
+        JoinDate datetime2 NOT NULL DEFAULT GETUTCDATE(),
+        IsActive bit NOT NULL DEFAULT 1,
+        FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+        FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE CASCADE,
+        UNIQUE(UserID, ClubID)
+    );
+    PRINT 'ClubMembers table created.';
 END
 GO
 
@@ -253,8 +274,15 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_Email')
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_ClubID')
     CREATE INDEX IX_Users_ClubID ON Users(ClubID);
 
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_Role')
-    CREATE INDEX IX_Users_Role ON Users(Role);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_SystemRole')
+    CREATE INDEX IX_Users_SystemRole ON Users(SystemRole);
+
+-- ClubMembers indexes
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ClubMembers_UserID')
+    CREATE INDEX IX_ClubMembers_UserID ON ClubMembers(UserID);
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ClubMembers_ClubID')
+    CREATE INDEX IX_ClubMembers_ClubID ON ClubMembers(ClubID);
 
 -- Events indexes
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Events_ClubID')
@@ -293,7 +321,7 @@ GO
 -- Add foreign key constraint for Users.ClubID if it doesn't exist
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Users_Clubs')
 BEGIN
-    ALTER TABLE Users ADD CONSTRAINT FK_Users_Clubs 
+    ALTER TABLE Users ADD CONSTRAINT FK_Users_Clubs
         FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE SET NULL;
     PRINT 'Foreign key constraint FK_Users_Clubs added.';
 END

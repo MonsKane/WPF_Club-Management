@@ -38,6 +38,7 @@ namespace ClubManagementApp.ViewModels
             // Subscribe to refresh notifications
             MemberListViewModel.MemberChanged += OnDataChanged;
             EventManagementViewModel.EventChanged += OnDataChanged;
+            MemberListViewModel.ClubMemberCountChanged += OnClubMemberCountChanged;
 
             Console.WriteLine("[ClubManagementViewModel] ClubManagementViewModel initialization completed");
         }
@@ -95,6 +96,10 @@ namespace ClubManagementApp.ViewModels
             get => !IsLoading && FilteredClubs.Count == 0;
         }
 
+        public int TotalMembersCount => Clubs.Sum(c => c.MemberCount);
+
+        public int ActiveClubsCount => Clubs.Count(c => c.IsActive);
+
         public User? CurrentUser
         {
             get => _currentUser;
@@ -113,11 +118,11 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Authorization Properties
-        public bool CanAccessClubManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
-        public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
-        public bool CanEditClubs => CurrentUser != null && _authorizationService.CanEditClubs(CurrentUser.Role);
-        public bool CanDeleteClubs => CurrentUser != null && _authorizationService.CanDeleteClubs(CurrentUser.Role);
-        
+        public bool CanAccessClubManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "ClubManagement");
+        public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.SystemRole);
+        public bool CanEditClubs => CurrentUser != null && _authorizationService.CanEditClubs(CurrentUser.SystemRole, null);
+        public bool CanDeleteClubs => CurrentUser != null && _authorizationService.CanDeleteClubs(CurrentUser.SystemRole);
+
         public bool CanManageClubs
         {
             get => SelectedClub != null && CanAccessClubManagement;
@@ -126,7 +131,7 @@ namespace ClubManagementApp.ViewModels
         public bool CanManageSelectedClub
         {
             get => SelectedClub != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, SelectedClub.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.SystemRole, GetUserClubRole(CurrentUser, SelectedClub.ClubID), CurrentUser.ClubID == SelectedClub.ClubID);
         }
 
         // Commands
@@ -156,7 +161,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 CurrentUser = await _userService.GetCurrentUserAsync();
-                Console.WriteLine($"[ClubManagementViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                Console.WriteLine($"[ClubManagementViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.SystemRole})");
                 OnPropertyChanged(nameof(CanManageClubs));
                 OnPropertyChanged(nameof(CanManageSelectedClub));
             }
@@ -174,13 +179,13 @@ namespace ClubManagementApp.ViewModels
         private bool CanExecuteEditClub(Club? club)
         {
             return club != null && CanEditClubs && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.SystemRole, GetUserClubRole(CurrentUser, club.ClubID), CurrentUser.ClubID == club.ClubID);
         }
 
         private bool CanExecuteDeleteClub(Club? club)
         {
             return club != null && CanDeleteClubs && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.SystemRole, GetUserClubRole(CurrentUser, club.ClubID), CurrentUser.ClubID == club.ClubID);
         }
 
         private bool CanExecuteViewClubDetails(Club? club)
@@ -191,19 +196,25 @@ namespace ClubManagementApp.ViewModels
         private bool CanExecuteManageLeadership(Club? club)
         {
             return club != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.SystemRole, GetUserClubRole(CurrentUser, club.ClubID), CurrentUser.ClubID == club.ClubID);
         }
 
         private bool CanExecuteViewMembers(Club? club)
         {
             return club != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.SystemRole, GetUserClubRole(CurrentUser, club.ClubID), CurrentUser.ClubID == club.ClubID);
         }
 
         private bool CanExecuteViewEvents(Club? club)
         {
             return club != null && CurrentUser != null &&
-                   _authorizationService.CanManageClub(CurrentUser.Role, CurrentUser.ClubID, club.ClubID);
+                   _authorizationService.CanManageClub(CurrentUser.SystemRole, GetUserClubRole(CurrentUser, club.ClubID), CurrentUser.ClubID == club.ClubID);
+        }
+
+        private ClubRole? GetUserClubRole(User user, int clubId)
+        {
+            var membership = user.ClubMemberships?.FirstOrDefault(cm => cm.ClubID == clubId && cm.IsActive);
+            return membership?.ClubRole;
         }
 
         private async Task LoadClubsAsync()
@@ -235,6 +246,8 @@ namespace ClubManagementApp.ViewModels
             {
                 IsLoading = false;
                 OnPropertyChanged(nameof(HasNoClubs));
+                OnPropertyChanged(nameof(TotalMembersCount));
+                OnPropertyChanged(nameof(ActiveClubsCount));
             }
         }
 
@@ -244,27 +257,27 @@ namespace ClubManagementApp.ViewModels
             {
                 Console.WriteLine($"[ClubManagementViewModel] Loading statistics for club: {club.Name} (ID: {club.ClubID})");
 
-                // Get member and event counts without modifying the tracked entity
-                var members = await _userService.GetUsersByClubAsync(club.ClubID);
+                // Get member and event counts using the proper service methods
+                var clubMembers = await _clubService.GetClubMembersAsync(club.ClubID);
                 var events = await _eventService.GetEventsByClubAsync(club.ClubID);
 
-                // Only update collections if they are empty to avoid tracking conflicts
-                if (club.Members?.Count == 0)
-                {
-                    club.Members = members.ToList();
-                }
+                // Always update collections to ensure accurate counts
+                club.ClubMembers = clubMembers.ToList();
+                club.Events = events.ToList();
 
-                if (club.Events?.Count == 0)
-                {
-                    club.Events = events.ToList();
-                }
+                // Force property change notifications for member count
+                club.RefreshCounts();
 
-                Console.WriteLine($"[ClubManagementViewModel] Found {members.Count()} members and {events.Count()} events for club: {club.Name}");
+                Console.WriteLine($"[ClubManagementViewModel] Found {clubMembers.Count()} members and {events.Count()} events for club: {club.Name}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ClubManagementViewModel] Error loading club statistics for {club.Name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error loading club statistics for {club.Name}: {ex.Message}");
+
+                // Set empty collections if loading fails
+                club.ClubMembers = new List<ClubMember>();
+                club.Events = new List<Event>();
             }
         }
 
@@ -351,7 +364,7 @@ namespace ClubManagementApp.ViewModels
                     if (existingClub != null)
                     {
                         // Update properties of the existing club object
-                        existingClub.Name = updatedClub.Name;
+                        existingClub.ClubName = updatedClub.ClubName;
                         existingClub.Description = updatedClub.Description;
                         existingClub.IsActive = updatedClub.IsActive;
 
@@ -386,13 +399,13 @@ namespace ClubManagementApp.ViewModels
             Console.WriteLine($"[ClubManagementViewModel] Delete Club command executed for: {club.Name} (ID: {club.ClubID})");
             try
             {
-                // Check if club has members or events by querying the services directly
-                var members = await _userService.GetUsersByClubAsync(club.ClubID);
+                // Check if club has members or events by querying the services directly using standardized approach
+                var clubMembers = await _clubService.GetClubMembersAsync(club.ClubID);
                 var events = await _eventService.GetEventsByClubAsync(club.ClubID);
 
-                if (members.Any() || events.Any())
+                if (clubMembers.Any() || events.Any())
                 {
-                    Console.WriteLine($"[ClubManagementViewModel] Cannot delete club {club.Name} - has {members.Count()} members and {events.Count()} events");
+                    Console.WriteLine($"[ClubManagementViewModel] Cannot delete club {club.Name} - has {clubMembers.Count()} members and {events.Count()} events");
                     System.Windows.MessageBox.Show(
                         "Cannot delete club that has members or events. Please remove all members and events first.",
                         "Cannot Delete Club",
@@ -401,30 +414,31 @@ namespace ClubManagementApp.ViewModels
                     return;
                 }
 
+                // Confirm deletion
                 var result = System.Windows.MessageBox.Show(
-                    $"Are you sure you want to delete the club '{club.Name}'?",
+                    $"Are you sure you want to delete the club '{club.Name}'? This action cannot be undone.",
                     "Confirm Delete",
                     System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Warning);
+                    System.Windows.MessageBoxImage.Question);
 
                 if (result == System.Windows.MessageBoxResult.Yes)
                 {
                     Console.WriteLine($"[ClubManagementViewModel] User confirmed deletion of club: {club.Name}");
                     await _clubService.DeleteClubAsync(club.ClubID);
-                    Clubs.Remove(club);
-                    FilterClubs();
-                    Console.WriteLine($"[ClubManagementViewModel] Club deleted successfully: {club.Name}");
-                }
-                else
-                {
-                    Console.WriteLine($"[ClubManagementViewModel] User cancelled deletion of club: {club.Name}");
+                    await LoadClubsAsync();
+                    Console.WriteLine($"[ClubManagementViewModel] Club {club.Name} deleted successfully");
+                    System.Windows.MessageBox.Show(
+                        $"Club '{club.Name}' has been successfully deleted.",
+                        "Club Deleted",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ClubManagementViewModel] Error deleting club {club.Name}: {ex.Message}");
                 System.Windows.MessageBox.Show(
-                    $"Error deleting club: {ex.Message}",
+                    $"An error occurred while deleting the club: {ex.Message}",
                     "Error",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Error);
@@ -524,7 +538,7 @@ namespace ClubManagementApp.ViewModels
 
         public string GetClubStatusText(Club club)
         {
-            var memberCount = club.Members?.Count ?? 0;
+            var memberCount = club.ClubMembers?.Count ?? 0;
             var eventCount = club.Events?.Count ?? 0;
 
             if (memberCount == 0)
@@ -537,7 +551,7 @@ namespace ClubManagementApp.ViewModels
 
         public string GetClubStatusColor(Club club)
         {
-            var memberCount = club.Members?.Count ?? 0;
+            var memberCount = club.ClubMembers?.Count ?? 0;
             var eventCount = club.Events?.Count ?? 0;
 
             if (memberCount == 0)
@@ -552,6 +566,17 @@ namespace ClubManagementApp.ViewModels
         {
             Console.WriteLine("[ClubManagementViewModel] Data change notification received, refreshing clubs");
             await LoadClubsAsync();
+        }
+
+        private async void OnClubMemberCountChanged(int clubId)
+        {
+            Console.WriteLine($"[ClubManagementViewModel] Club member count changed for club ID: {clubId}. Refreshing statistics.");
+            var club = Clubs.FirstOrDefault(c => c.ClubID == clubId);
+            if (club != null)
+            {
+                await LoadClubStatistics(club);
+                FilterClubs(); // Re-filter to reflect updated member count
+            }
         }
 
         public void ClearSelection()

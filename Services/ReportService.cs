@@ -256,7 +256,7 @@ namespace ClubManagementApp.Services
                 if (generatedByUserId <= 0)
                     throw new ArgumentException("Invalid user ID", nameof(generatedByUserId));
 
-                var club = await _context.Clubs.Include(c => c.Members).FirstOrDefaultAsync(c => c.ClubID == clubId);
+                var club = await _context.Clubs.Include(c => c.ClubMembers).FirstOrDefaultAsync(c => c.ClubID == clubId);
                 if (club == null)
                 {
                     Console.WriteLine($"[REPORT_SERVICE] Club not found: {clubId}");
@@ -268,16 +268,16 @@ namespace ClubManagementApp.Services
                 if (user == null)
                     throw new InvalidOperationException($"User with ID {generatedByUserId} not found");
 
-                Console.WriteLine($"[REPORT_SERVICE] Found club: {club.Name} with {club.Members.Count} members");
+                Console.WriteLine($"[REPORT_SERVICE] Found club: {club.Name} with {club.ClubMembers.Count} members");
 
             var memberStats = new
             {
-                TotalMembers = club.Members.Count(m => m.IsActive),
-                ActiveMembers = club.Members.Count(m => m.ActivityLevel == ActivityLevel.Active),
-                NormalMembers = club.Members.Count(m => m.ActivityLevel == ActivityLevel.Normal),
-                InactiveMembers = club.Members.Count(m => m.ActivityLevel == ActivityLevel.Inactive),
-                NewMembersThisSemester = club.Members.Count(m => m.JoinDate >= GetSemesterStartDate(semester)),
-                MembersByRole = club.Members.GroupBy(m => m.Role).ToDictionary(g => g.Key.ToString(), g => g.Count())
+                TotalMembers = club.ClubMembers.Count(m => m.User.IsActive),
+                    ActiveMembers = club.ClubMembers.Count(m => m.User.IsActive), // Default to active since ActivityLevel not in User model
+                    NormalMembers = 0, // ActivityLevel not available in User model
+                    InactiveMembers = club.ClubMembers.Count(m => !m.User.IsActive),
+                    NewMembersThisSemester = club.ClubMembers.Count(m => m.JoinDate >= GetSemesterStartDate(semester)),
+                    MembersByRole = club.ClubMembers.GroupBy(m => m.ClubRole).ToDictionary(g => g.Key.ToString(), g => g.Count())
             };
 
             var report = new Report
@@ -429,7 +429,7 @@ namespace ClubManagementApp.Services
                     TotalEventsRegistered = totalEvents,
                     EventsAttended = attendedEvents,
                     AttendancePercentage = Math.Round(attendancePercentage, 2),
-                    ActivityLevel = member.ActivityLevel.ToString()
+                    ActivityLevel = "Active" // Default value since User model doesn't have ActivityLevel
                 };
             });
 

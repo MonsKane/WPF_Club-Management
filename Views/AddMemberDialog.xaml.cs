@@ -195,7 +195,7 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            //var selectedRole = ExistingUserRoleComboBox.SelectedValue as UserRole?;
+            //var selectedRole = ExistingUserRoleComboBox.SelectedValue as SystemRole?;
             //if (selectedRole == null)
             //{
             //    MessageBox.Show("Please select a role for the user.", "No Role Selected",
@@ -229,7 +229,7 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var selectedRole = NewUserRoleComboBox.SelectedValue as UserRole?;
+            var selectedRole = NewUserRoleComboBox.SelectedValue as SystemRole?;
             if (selectedRole == null)
             {
                 MessageBox.Show("Please select a role for the user.", "No Role Selected",
@@ -266,8 +266,9 @@ namespace ClubManagementApp.Views
                 return;
             }
 
-            var roleEnum = selectedRole.Value;
-            await _clubService.AddUserToClubAsync(createdUser.UserID, _targetClub!.ClubID, roleEnum);
+            // Convert SystemRole to ClubRole (default to Member for club membership)
+            var clubRole = selectedRole.Value == SystemRole.Admin ? ClubRole.Admin : ClubRole.Member;
+            await _clubService.AddUserToClubAsync(createdUser.UserID, _targetClub!.ClubID, clubRole);
 
             MessageBox.Show($"{newUser.FullName} has been created and added to {_targetClub.Name}.",
                 "Member Created and Added", MessageBoxButton.OK, MessageBoxImage.Information);

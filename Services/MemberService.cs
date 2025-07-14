@@ -21,7 +21,7 @@ namespace ClubManagementApp.Services
         
         // Search and filtering
         Task<IEnumerable<UserDto>> SearchMembersAsync(string searchTerm);
-        Task<IEnumerable<UserDto>> GetMembersByRoleAsync(UserRole role);
+        Task<IEnumerable<UserDto>> GetMembersByRoleAsync(SystemRole role);
         Task<IEnumerable<UserDto>> GetMembersByClubAsync(int clubId);
         Task<IEnumerable<UserDto>> GetActiveMembers();
         Task<IEnumerable<UserDto>> GetInactiveMembers();
@@ -33,20 +33,20 @@ namespace ClubManagementApp.Services
         Task<int> GetMemberEventCountAsync(int memberId);
         
         // Role and club management
-        Task<bool> AssignRoleAsync(int memberId, UserRole role);
-        Task<bool> AddMemberToClubAsync(int memberId, int clubId);
+        Task<bool> AssignSystemRoleAsync(int memberId, SystemRole role);
+        Task<bool> AddMemberToClubAsync(int memberId, int clubId, ClubRole clubRole);
         Task<bool> RemoveMemberFromClubAsync(int memberId, int clubId);
         Task<IEnumerable<ClubDto>> GetMemberClubsAsync(int memberId);
         
         // Member statistics
         Task<int> GetTotalMemberCountAsync();
         Task<int> GetActiveMemberCountAsync();
-        Task<Dictionary<UserRole, int>> GetMemberCountByRoleAsync();
+        Task<Dictionary<SystemRole, int>> GetMemberCountBySystemRoleAsync();
         Task<Dictionary<string, int>> GetMemberCountByClubAsync();
         
         // Validation and business rules
         Task<bool> CanDeleteMemberAsync(int memberId);
-        Task<bool> CanAssignRoleAsync(int memberId, UserRole role);
+        Task<bool> CanAssignSystemRoleAsync(int memberId, SystemRole role);
         Task<bool> IsEmailUniqueAsync(string email, int? excludeUserId = null);
         Task<bool> IsStudentIdUniqueAsync(string studentId, int? excludeUserId = null);
     }
@@ -162,9 +162,9 @@ namespace ClubManagementApp.Services
                     Email = createUserDto.Email,
                     StudentID = createUserDto.StudentID,
                 Password = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password),
-                    Role = createUserDto.Role,
+                    SystemRole = createUserDto.SystemRole,
                     IsActive = true,
-                    JoinDate = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _context.Users.Add(user);
@@ -223,8 +223,8 @@ namespace ClubManagementApp.Services
                 if (!string.IsNullOrEmpty(updateUserDto.StudentID))
                     user.StudentID = updateUserDto.StudentID;
 
-                if (updateUserDto.Role.HasValue)
-                    user.Role = updateUserDto.Role.Value;
+                if (updateUserDto.SystemRole.HasValue)
+                user.SystemRole = updateUserDto.SystemRole.Value;
 
                 if (updateUserDto.IsActive.HasValue)
                     user.IsActive = updateUserDto.IsActive.Value;
@@ -300,13 +300,13 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task<IEnumerable<UserDto>> GetMembersByRoleAsync(UserRole role)
+        public async Task<IEnumerable<UserDto>> GetMembersByRoleAsync(SystemRole role)
         {
             try
             {
                 var users = await _context.Users
                     .Include(u => u.Club)
-                    .Where(u => u.Role == role)
+                    .Where(u => u.SystemRole == role)
                     .ToListAsync();
 
                 return users.Select(MapToUserDto);
@@ -472,7 +472,7 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task<bool> AssignRoleAsync(int memberId, UserRole role)
+        public async Task<bool> AssignSystemRoleAsync(int memberId, SystemRole role)
         {
             try
             {
@@ -480,10 +480,10 @@ namespace ClubManagementApp.Services
                 if (user == null)
                     return false;
 
-                if (!await CanAssignRoleAsync(memberId, role))
+                if (!await CanAssignSystemRoleAsync(memberId, role))
                     throw new BusinessRuleViolationException("RoleAssignment", $"Cannot assign role {role} to member");
 
-                user.Role = role;
+                user.SystemRole = role;
                 // User model doesn't have UpdatedAt property
 
                 await _context.SaveChangesAsync();
@@ -503,7 +503,7 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task<bool> AddMemberToClubAsync(int memberId, int clubId)
+        public async Task<bool> AddMemberToClubAsync(int memberId, int clubId, ClubRole clubRole)
         {
             try
             {
@@ -517,7 +517,7 @@ namespace ClubManagementApp.Services
                     return false; // Already a member
 
                 user.ClubID = clubId;
-                // User model doesn't have UpdatedAt property
+                // Note: ClubRole is not stored in User model in this implementation
                 
                 await _context.SaveChangesAsync();
 
@@ -576,7 +576,7 @@ namespace ClubManagementApp.Services
                     ClubID = c.ClubID,
                     Name = c.Name,
                     Description = c.Description ?? string.Empty,
-                    EstablishedDate = c.CreatedDate,
+                    EstablishedDate = c.EstablishedDate ?? DateTime.Now,
                     IsActive = c.IsActive
                 });
             }
@@ -613,12 +613,12 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task<Dictionary<UserRole, int>> GetMemberCountByRoleAsync()
+        public async Task<Dictionary<SystemRole, int>> GetMemberCountBySystemRoleAsync()
         {
             try
             {
                 var roleCounts = await _context.Users
-                    .GroupBy(u => u.Role)
+                    .GroupBy(u => u.SystemRole)
                     .Select(g => new { Role = g.Key, Count = g.Count() })
                     .ToDictionaryAsync(x => x.Role, x => x.Count);
 
@@ -660,7 +660,7 @@ namespace ClubManagementApp.Services
                     return false;
 
                 // Basic validation - can delete if user exists and is not an admin
-                return user.Role != UserRole.Admin;
+                return user.SystemRole != SystemRole.Admin;
             }
             catch (Exception ex)
             {
@@ -669,7 +669,7 @@ namespace ClubManagementApp.Services
             }
         }
 
-        public async Task<bool> CanAssignRoleAsync(int memberId, UserRole role)
+        public async Task<bool> CanAssignSystemRoleAsync(int memberId, SystemRole role)
         {
             try
             {
@@ -677,7 +677,7 @@ namespace ClubManagementApp.Services
                 if (user == null)
                     return false;
 
-                return ValidationHelper.UserValidation.CanAssignRole(user.Role, role);
+                return ValidationHelper.UserValidation.CanAssignRole(user.SystemRole, role);
             }
             catch (Exception ex)
             {
@@ -730,9 +730,9 @@ namespace ClubManagementApp.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 StudentID = user.StudentID ?? "",
-                Role = user.Role,
-                ActivityLevel = user.ActivityLevel,
-                JoinDate = user.JoinDate,
+                SystemRole = user.SystemRole,
+                ActivityLevel = ActivityLevel.Active, // Default value since User model doesn't have ActivityLevel
+                JoinDate = user.CreatedAt,
                 IsActive = user.IsActive,
                 ClubID = user.ClubID,
                 ClubName = user.Club?.Name ?? "",

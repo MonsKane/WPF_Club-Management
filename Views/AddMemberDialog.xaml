@@ -237,12 +237,8 @@
                                           SelectedValuePath="Tag"
                                           DisplayMemberPath="Content"
                                           SelectedIndex="5">
-                                    <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
-                                    <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
-                                    <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
-                                    <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
-                                    <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
-                                    <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
+                                    <ComboBoxItem Content="Club Owner" Tag="{x:Static models:SystemRole.ClubOwner}"/>
+                                    <ComboBoxItem Content="Member" Tag="{x:Static models:SystemRole.Member}" IsSelected="True"/>
                                 </ComboBox>
                             </StackPanel>
                             -->
@@ -303,10 +299,10 @@
                                                                        FontSize="14" 
                                                                        Foreground="#6c757d" 
                                                                        Margin="0,2,0,0"/>
-                                                            <TextBlock Text="{Binding Role}" 
-                                                                       FontSize="12" 
-                                                                       Foreground="#007bff" 
-                                                                       Margin="0,2,0,0"/>
+                                                            <TextBlock Text="{Binding SystemRole}" 
+                                                       FontSize="12" 
+                                                       Foreground="#007bff" 
+                                                       Margin="0,2,0,0"/>
                                                         </StackPanel>
                                                     </Grid>
                                                 </Border>
@@ -359,12 +355,8 @@
                                                   SelectedValuePath="Tag"
                                                   DisplayMemberPath="Content"
                                                   SelectedIndex="5">
-                                            <ComboBoxItem Content="Club President" Tag="{x:Static models:UserRole.ClubPresident}"/>
-                                            <ComboBoxItem Content="Chairman" Tag="{x:Static models:UserRole.Chairman}"/>
-                                            <ComboBoxItem Content="Vice Chairman" Tag="{x:Static models:UserRole.ViceChairman}"/>
-                                            <ComboBoxItem Content="Club Officer" Tag="{x:Static models:UserRole.ClubOfficer}"/>
-                                            <ComboBoxItem Content="Team Leader" Tag="{x:Static models:UserRole.TeamLeader}"/>
-                                            <ComboBoxItem Content="Member" Tag="{x:Static models:UserRole.Member}" IsSelected="True"/>
+                                            <ComboBoxItem Content="Club Owner" Tag="{x:Static models:SystemRole.ClubOwner}"/>
+                                            <ComboBoxItem Content="Member" Tag="{x:Static models:SystemRole.Member}" IsSelected="True"/>
                                         </ComboBox>
                                     </StackPanel>
                                 </Grid>

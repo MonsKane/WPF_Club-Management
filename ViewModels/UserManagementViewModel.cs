@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Linq;
 
 namespace ClubManagementApp.ViewModels
 {
@@ -20,7 +21,7 @@ namespace ClubManagementApp.ViewModels
         private ObservableCollection<User> _filteredUsers = new();
         private User? _selectedUser;
         private string _searchText = string.Empty;
-        private UserRole? _selectedRole;
+        private SystemRole? _selectedRole;
         private User? _currentUser;
 
         public ObservableCollection<User> Users
@@ -53,7 +54,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public UserRole? SelectedRole
+        public SystemRole? SelectedRole
         {
             get => _selectedRole;
             set
@@ -80,10 +81,10 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
-        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
-        public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.Role);
-        public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "UserManagement");
+        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.SystemRole);
+        public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.SystemRole);
+        public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.SystemRole);
 
         public ICommand RefreshCommand { get; }
         public ICommand CreateAccountCommand { get; }
@@ -135,9 +136,23 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 IsLoading = true;
+                _logger?.LogDebug("Loading users from database");
+
                 var users = await _userService.GetAllUsersAsync();
-                Users = new ObservableCollection<User>(users);
+
+                _logger?.LogDebug("Loaded {UserCount} users from database", users.Count());
+
+                // Update the Users collection
+                Users.Clear();
+                foreach (var user in users)
+                {
+                    Users.Add(user);
+                }
+
+                // Apply current filters to show updated data
                 FilterUsers();
+
+                _logger?.LogDebug("User list updated successfully");
             }
             catch (Exception ex)
             {
@@ -163,18 +178,45 @@ namespace ClubManagementApp.ViewModels
 
             if (SelectedRole.HasValue)
             {
-                filtered = filtered.Where(u => u.Role == SelectedRole.Value);
+                filtered = filtered.Where(u => u.SystemRole == SelectedRole.Value);
             }
 
             FilteredUsers = new ObservableCollection<User>(filtered);
         }
 
-        private void CreateAccount()
+        private async void CreateAccount()
         {
             try
             {
-                _navigationService.ShowAddUserDialog();
-                _ = LoadUsersAsync(); // Refresh after potential changes
+                _logger?.LogInformation("Opening create account dialog");
+
+                // Create and show the add user dialog directly to get proper dialog result
+                var addDialog = new Views.AddUserDialog(_userService);
+                addDialog.Owner = Application.Current.MainWindow;
+
+                var dialogResult = addDialog.ShowDialog();
+                _logger?.LogDebug("Add user dialog result: {DialogResult}", dialogResult);
+
+                if (dialogResult == true && addDialog.CreatedUser != null)
+                {
+                    _logger?.LogInformation("User creation successful, refreshing user list");
+
+                    // Refresh users list to show new user
+                    await LoadUsersAsync();
+
+                    // Try to select the newly created user
+                    var newUser = Users.FirstOrDefault(u => u.UserID == addDialog.CreatedUser.UserID);
+                    if (newUser != null)
+                    {
+                        SelectedUser = newUser;
+                    }
+
+                    _logger?.LogInformation("User {UserName} created successfully", addDialog.CreatedUser.FullName);
+                }
+                else
+                {
+                    _logger?.LogInformation("Create user operation cancelled by user");
+                }
             }
             catch (Exception ex)
             {
@@ -183,14 +225,41 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        private void EditUser()
+        private async void EditUser()
         {
             if (SelectedUser == null) return;
 
             try
             {
-                _navigationService.ShowEditUserDialog(SelectedUser);
-                _ = LoadUsersAsync(); // Refresh after potential changes
+                _logger?.LogInformation("Opening edit dialog for user: {UserName} (ID: {UserId})", SelectedUser.FullName, SelectedUser.UserID);
+
+                                // Create and show the edit dialog directly to get proper dialog result
+                var editDialog = new Views.EditUserDialog(SelectedUser, _userService);
+                editDialog.Owner = Application.Current.MainWindow;
+
+                var dialogResult = editDialog.ShowDialog();
+                _logger?.LogDebug("Edit dialog result: {DialogResult}", dialogResult);
+
+                if (dialogResult == true && editDialog.UpdatedUser != null)
+                {
+                    _logger?.LogInformation("User edit successful, refreshing user list");
+
+                    // Refresh users list to show updated data
+                    await LoadUsersAsync();
+
+                    // Try to reselect the updated user
+                    var updatedUser = Users.FirstOrDefault(u => u.UserID == editDialog.UpdatedUser.UserID);
+                    if (updatedUser != null)
+                    {
+                        SelectedUser = updatedUser;
+                    }
+
+                    _logger?.LogInformation("User {UserName} updated successfully", editDialog.UpdatedUser.FullName);
+                }
+                else
+                {
+                    _logger?.LogInformation("Edit user operation cancelled by user");
+                }
             }
             catch (Exception ex)
             {

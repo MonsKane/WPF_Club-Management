@@ -291,7 +291,7 @@ namespace ClubManagementApp.ViewModels
                 {
                     Console.WriteLine("[MAIN_LOGIN] Credentials validated, getting user details...");
                     CurrentUser = await _userService.GetUserByEmailAsync(email);
-                    Console.WriteLine($"[MAIN_LOGIN] User set: {CurrentUser?.FullName} ({CurrentUser?.Role})");
+                    Console.WriteLine($"[MAIN_LOGIN] User set: {CurrentUser?.FullName} ({CurrentUser?.SystemRole})");
 
                     Console.WriteLine("[MAIN_LOGIN] Loading initial data...");
                     await LoadDataAsync();
@@ -332,34 +332,34 @@ namespace ClubManagementApp.ViewModels
         }
 
         // User Management Permissions
-        public bool CanAccessUserManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
-        public bool CanCreateUsers => CurrentUser?.Role != null && _authorizationService.CanCreateUsers(CurrentUser.Role, CurrentUser.ClubID);
-        public bool CanEditUsers => CurrentUser?.Role != null && _authorizationService.CanEditUsers(CurrentUser.Role, CurrentUser.ClubID);
-        public bool CanDeleteUsers => CurrentUser?.Role != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
-        public bool CanAssignRoles => CurrentUser?.Role != null && _authorizationService.CanAssignRoles(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanAccessUserManagement => CurrentUser?.SystemRole != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "UserManagement");
+        public bool CanCreateUsers => CurrentUser?.SystemRole != null && _authorizationService.CanCreateUsers(CurrentUser.SystemRole, null);
+        public bool CanEditUsers => CurrentUser?.SystemRole != null && _authorizationService.CanEditUsers(CurrentUser.SystemRole, null);
+        public bool CanDeleteUsers => CurrentUser?.SystemRole != null && _authorizationService.CanDeleteUsers(CurrentUser.SystemRole);
+        public bool CanAssignRoles => CurrentUser?.SystemRole != null && _authorizationService.CanAssignRoles(CurrentUser.SystemRole, null);
 
         // Club Management Permissions
-        public bool CanAccessClubManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
-        public bool CanJoinEvents => CurrentUser?.Role != null && _authorizationService.CanJoinEvents(CurrentUser.Role);
-        public bool CanCreateClubs => CurrentUser?.Role != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
-        public bool CanEditClubs => CurrentUser?.Role != null && _authorizationService.CanEditClubs(CurrentUser.Role, CurrentUser.ClubID);
-        public bool CanDeleteClubs => CurrentUser?.Role != null && _authorizationService.CanDeleteClubs(CurrentUser.Role);
+        public bool CanAccessClubManagement => CurrentUser?.SystemRole != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "ClubManagement");
+        public bool CanJoinEvents => CurrentUser?.SystemRole != null && _authorizationService.CanJoinEvents(CurrentUser.SystemRole);
+        public bool CanCreateClubs => CurrentUser?.SystemRole != null && _authorizationService.CanCreateClubs(CurrentUser.SystemRole);
+        public bool CanEditClubs => CurrentUser?.SystemRole != null && _authorizationService.CanEditClubs(CurrentUser.SystemRole, null);
+        public bool CanDeleteClubs => CurrentUser?.SystemRole != null && _authorizationService.CanDeleteClubs(CurrentUser.SystemRole);
 
         // Event Management Permissions
-        public bool CanAccessEventManagement => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
-        public bool CanCreateEvents => CurrentUser?.Role != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
-        public bool CanEditEvents => CurrentUser?.Role != null && _authorizationService.CanEditEvents(CurrentUser.Role, CurrentUser.ClubID);
-        public bool CanDeleteEvents => CurrentUser?.Role != null && _authorizationService.CanDeleteEvents(CurrentUser.Role, CurrentUser.ClubID);
-        public bool CanRegisterForEvents => CurrentUser?.Role != null && _authorizationService.CanRegisterForEvents(CurrentUser.Role);
+        public bool CanAccessEventManagement => CurrentUser?.SystemRole != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "EventManagement");
+        public bool CanCreateEvents => CurrentUser?.SystemRole != null && _authorizationService.CanCreateEvents(CurrentUser.SystemRole);
+        public bool CanEditEvents => CurrentUser?.SystemRole != null && _authorizationService.CanEditEvents(CurrentUser.SystemRole, null);
+        public bool CanDeleteEvents => CurrentUser?.SystemRole != null && _authorizationService.CanDeleteEvents(CurrentUser.SystemRole, null);
+        public bool CanRegisterForEvents => CurrentUser?.SystemRole != null && _authorizationService.CanRegisterForEvents(CurrentUser.SystemRole);
 
         // System Settings Permissions
-        public bool CanAccessGlobalSettings => CurrentUser?.Role != null && _authorizationService.CanAccessGlobalSettings(CurrentUser.Role);
-        public bool CanAccessClubSettings => CurrentUser?.Role != null && _authorizationService.CanAccessClubSettings(CurrentUser.Role, CurrentUser.ClubID);
+        public bool CanAccessGlobalSettings => CurrentUser?.SystemRole != null && _authorizationService.CanAccessGlobalSettings(CurrentUser.SystemRole);
+        public bool CanAccessClubSettings => CurrentUser?.SystemRole != null && _authorizationService.CanAccessClubSettings(CurrentUser.SystemRole, null);
 
         // Reporting Permissions
-        public bool CanAccessReports => CurrentUser?.Role != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ReportView");
-        public bool CanGenerateReports => CurrentUser?.Role != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
-        public bool CanExportReports => CurrentUser?.Role != null && _authorizationService.CanExportReports(CurrentUser.Role);
+        public bool CanAccessReports => CurrentUser?.SystemRole != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "ReportView");
+        public bool CanGenerateReports => CurrentUser?.SystemRole != null && _authorizationService.CanGenerateReports(CurrentUser.SystemRole);
+        public bool CanExportReports => CurrentUser?.SystemRole != null && _authorizationService.CanExportReports(CurrentUser.SystemRole);
 
         // Legacy properties for backward compatibility
         public bool CanAccessAdminFeatures => CanAccessUserManagement || CanAccessGlobalSettings;

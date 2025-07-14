@@ -1,6 +1,11 @@
 -- Club Management Application Database Schema and Seed Script
--- This script creates the database schema and populates it with sample data for all features
--- 
+-- Updated to reflect simplified database structure matching User Manual documentation
+-- This script creates a minimal setup with:
+-- - 1 Admin user: admin@university.edu / admin123
+-- - 5 Member users: john.doe, jane.smith, mike.johnson, sarah.wilson, david.brown (password: password123)
+-- - 2 Clubs: Computer Science Club (3 members) and Photography Club (2 members)
+-- - Club memberships as per DatabaseInitializer.cs implementation
+--
 -- IMPORTANT: This script must be executed as a whole to ensure proper table creation
 -- before data insertion. If running in parts, ensure the schema creation section
 -- (lines 1-220) is executed before the data insertion section (lines 221+).
@@ -27,50 +32,30 @@ GO
 IF OBJECT_ID('EventParticipants', 'U') IS NOT NULL DROP TABLE EventParticipants;
 IF OBJECT_ID('Reports', 'U') IS NOT NULL DROP TABLE Reports;
 IF OBJECT_ID('Events', 'U') IS NOT NULL DROP TABLE Events;
+IF OBJECT_ID('ClubMembers', 'U') IS NOT NULL DROP TABLE ClubMembers;
 IF OBJECT_ID('AuditLogs', 'U') IS NOT NULL DROP TABLE AuditLogs;
 IF OBJECT_ID('Notifications', 'U') IS NOT NULL DROP TABLE Notifications;
 IF OBJECT_ID('NotificationTemplates', 'U') IS NOT NULL DROP TABLE NotificationTemplates;
 IF OBJECT_ID('ScheduledNotifications', 'U') IS NOT NULL DROP TABLE ScheduledNotifications;
 IF OBJECT_ID('Settings', 'U') IS NOT NULL DROP TABLE Settings;
-IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
 IF OBJECT_ID('Clubs', 'U') IS NOT NULL DROP TABLE Clubs;
+IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
 GO
 
--- Create Clubs table
-CREATE TABLE Clubs (
-    ClubID int IDENTITY(1,1) PRIMARY KEY,
-    Name nvarchar(100) NOT NULL,
-    Description nvarchar(500) NULL,
-    ContactEmail nvarchar(150) NULL,
-    ContactPhone nvarchar(20) NULL,
-    Website nvarchar(200) NULL,
-    MeetingSchedule nvarchar(200) NULL,
-    FoundedDate datetime2 NULL,
-    IsActive bit NOT NULL DEFAULT 1,
-    IsSelected bit NOT NULL DEFAULT 0,
-    CreatedDate datetime2 NOT NULL DEFAULT GETDATE()
-);
-GO
-
--- Create unique index on Club Name
-CREATE UNIQUE INDEX IX_Clubs_Name ON Clubs (Name);
-GO
-
--- Create Users table
+-- Create Users table (System-wide users)
 CREATE TABLE Users (
-    UserID int IDENTITY(1,1) PRIMARY KEY,
-    FullName nvarchar(100) NOT NULL,
-    Email nvarchar(150) NOT NULL,
-    Password nvarchar(255) NOT NULL,
-    StudentID nvarchar(20) NULL,
-    PhoneNumber nvarchar(20) NULL,
-    Role nvarchar(50) NOT NULL,
-    ActivityLevel nvarchar(50) NOT NULL DEFAULT 'Normal',
-    JoinDate datetime2 NOT NULL DEFAULT GETDATE(),
-    IsActive bit NOT NULL DEFAULT 1,
-    TwoFactorEnabled bit NOT NULL DEFAULT 0,
-    ClubID int NULL,
-    FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE SET NULL
+    UserID INT PRIMARY KEY IDENTITY(1,1),
+    FullName NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(150) NOT NULL UNIQUE,
+    Password NVARCHAR(255) NOT NULL,
+    StudentID NVARCHAR(20) NULL,
+    PhoneNumber NVARCHAR(20) NULL,
+    SystemRole INT NOT NULL CHECK (SystemRole IN (0, 1, 2)),
+    ActivityLevel INT NOT NULL DEFAULT 0 CHECK (ActivityLevel IN (0, 1, 2)),
+    ClubID INT NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    TwoFactorEnabled BIT NOT NULL DEFAULT 0,
+    CreatedAt DATETIME2 DEFAULT GETDATE()
 );
 GO
 
@@ -78,31 +63,73 @@ GO
 CREATE UNIQUE INDEX IX_Users_Email ON Users (Email);
 GO
 
--- Create Events table
+-- Create Clubs table
+CREATE TABLE Clubs (
+    ClubID INT PRIMARY KEY IDENTITY(1,1),
+    ClubName NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(MAX) NULL,
+    EstablishedDate DATETIME2 NULL,
+    CreatedUserId INT NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    IsActive BIT NOT NULL DEFAULT 1,
+    MeetingSchedule NVARCHAR(200) NULL,
+    ContactEmail NVARCHAR(150) NULL,
+    ContactPhone NVARCHAR(20) NULL,
+    Website NVARCHAR(200) NULL,
+    FOREIGN KEY (CreatedUserId) REFERENCES Users(UserID)
+);
+GO
+
+-- Create unique index on Club Name
+CREATE UNIQUE INDEX IX_Clubs_Name ON Clubs (ClubName);
+GO
+
+-- Add foreign key constraint for Users.ClubID
+ALTER TABLE Users ADD CONSTRAINT FK_Users_ClubID FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID);
+GO
+
+-- Create ClubMembers table (Maps users to clubs with club-specific roles)
+CREATE TABLE ClubMembers (
+    ClubMemberID INT PRIMARY KEY IDENTITY(1,1),
+    UserID INT NOT NULL,
+    ClubID INT NOT NULL,
+    ClubRole INT NOT NULL CHECK (ClubRole IN (0, 1, 2)), -- 0=Admin, 1=Chairman, 2=Member
+    IsActive BIT NOT NULL DEFAULT 1,
+    JoinDate DATETIME2 DEFAULT GETDATE(),
+    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID)
+);
+GO
+
+-- Create unique index to ensure a user can only have one role per club
+CREATE UNIQUE INDEX IX_ClubMembers_UserID_ClubID ON ClubMembers (UserID, ClubID);
+GO
+
+-- Create Events table (matching C# Event model exactly)
 CREATE TABLE Events (
-    EventID int IDENTITY(1,1) PRIMARY KEY,
-    Name nvarchar(200) NOT NULL,
-    Description nvarchar(1000) NULL,
-    EventDate datetime2 NOT NULL,
-    Location nvarchar(300) NOT NULL,
-    CreatedDate datetime2 NOT NULL DEFAULT GETDATE(),
-    IsActive bit NOT NULL DEFAULT 1,
-    RegistrationDeadline datetime2 NULL,
-    MaxParticipants int NULL,
-    Status nvarchar(50) NOT NULL DEFAULT 'Scheduled',
-    ClubID int NOT NULL,
+    EventID INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(1000) NULL,
+    EventDate DATETIME2 NOT NULL,
+    Location NVARCHAR(300) NOT NULL,
+    CreatedDate DATETIME2 NOT NULL DEFAULT GETDATE(),
+    IsActive BIT NOT NULL DEFAULT 1,
+    RegistrationDeadline DATETIME2 NULL,
+    MaxParticipants INT NULL,
+    Status INT NOT NULL DEFAULT 0 CHECK (Status IN (0, 1, 2, 3, 4)), -- 0=Scheduled, 1=InProgress, 2=Completed, 3=Cancelled, 4=Postponed
+    ClubID INT NOT NULL,
     FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE CASCADE
 );
 GO
 
--- Create EventParticipants table
+-- Create EventParticipants table (matching C# EventParticipant model)
 CREATE TABLE EventParticipants (
-    ParticipantID int IDENTITY(1,1) PRIMARY KEY,
-    UserID int NOT NULL,
-    EventID int NOT NULL,
-    Status nvarchar(50) NOT NULL DEFAULT 'Registered',
-    RegistrationDate datetime2 NOT NULL DEFAULT GETDATE(),
-    AttendanceDate datetime2 NULL,
+    ParticipantID INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT NOT NULL,
+    EventID INT NOT NULL,
+    Status INT NOT NULL DEFAULT 0 CHECK (Status IN (0, 1, 2)), -- 0=Registered, 1=Attended, 2=Absent
+    RegistrationDate DATETIME2 NOT NULL DEFAULT GETDATE(),
+    AttendanceDate DATETIME2 NULL,
     FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE CASCADE
 );
@@ -114,14 +141,14 @@ GO
 
 -- Create Reports table
 CREATE TABLE Reports (
-    ReportID int IDENTITY(1,1) PRIMARY KEY,
-    Title nvarchar(200) NOT NULL,
-    Type nvarchar(50) NOT NULL,
-    Content nvarchar(max) NOT NULL,
-    GeneratedDate datetime2 NOT NULL DEFAULT GETDATE(),
-    Semester nvarchar(50) NULL,
-    ClubID int NULL,
-    GeneratedByUserID int NOT NULL,
+    ReportID INT IDENTITY(1,1) PRIMARY KEY,
+    Title NVARCHAR(200) NOT NULL,
+    Type INT NOT NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    GeneratedDate DATETIME2 NOT NULL DEFAULT GETDATE(),
+    Semester NVARCHAR(50) NULL,
+    ClubID INT NULL,
+    GeneratedByUserID INT NOT NULL,
     FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE SET NULL,
     FOREIGN KEY (GeneratedByUserID) REFERENCES Users(UserID)
 );
@@ -129,14 +156,14 @@ GO
 
 -- Create AuditLogs table
 CREATE TABLE AuditLogs (
-    Id int IDENTITY(1,1) PRIMARY KEY,
-    UserId int NULL,
-    Action nvarchar(255) NOT NULL,
-    Details nvarchar(2000) NOT NULL,
-    LogType nvarchar(50) NOT NULL,
-    IpAddress nvarchar(45) NULL,
-    Timestamp datetime2 NOT NULL DEFAULT GETDATE(),
-    AdditionalData nvarchar(max) NULL,
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NULL,
+    Action NVARCHAR(255) NOT NULL,
+    Details NVARCHAR(2000) NOT NULL,
+    LogType INT NOT NULL,
+    IpAddress NVARCHAR(45) NULL,
+    Timestamp DATETIME2 NOT NULL DEFAULT GETDATE(),
+    AdditionalData NVARCHAR(MAX) NULL,
     FOREIGN KEY (UserId) REFERENCES Users(UserID) ON DELETE SET NULL
 );
 GO
@@ -149,19 +176,19 @@ GO
 
 -- Create NotificationTemplates table
 CREATE TABLE NotificationTemplates (
-    Id nvarchar(450) PRIMARY KEY,
-    Name nvarchar(100) NOT NULL,
-    Description nvarchar(500) NULL,
-    TitleTemplate nvarchar(200) NOT NULL,
-    MessageTemplate nvarchar(2000) NOT NULL,
-    Type nvarchar(50) NOT NULL,
-    Priority nvarchar(50) NOT NULL DEFAULT 'Normal',
-    Category nvarchar(50) NOT NULL,
-    ChannelsJson nvarchar(500) NULL,
-    ParametersJson nvarchar(1000) NULL,
-    IsActive bit NOT NULL DEFAULT 1,
-    CreatedAt datetime2 NOT NULL DEFAULT GETDATE(),
-    UpdatedAt datetime2 NULL
+    Id NVARCHAR(450) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500) NULL,
+    TitleTemplate NVARCHAR(200) NOT NULL,
+    MessageTemplate NVARCHAR(2000) NOT NULL,
+    Type INT NOT NULL,
+    Priority INT NOT NULL DEFAULT 1,
+    Category INT NOT NULL,
+    ChannelsJson NVARCHAR(500) NULL,
+    ParametersJson NVARCHAR(1000) NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt DATETIME2 NULL
 );
 GO
 
@@ -174,16 +201,16 @@ GO
 
 -- Create ScheduledNotifications table
 CREATE TABLE ScheduledNotifications (
-    Id nvarchar(450) PRIMARY KEY,
-    Name nvarchar(100) NOT NULL,
-    NotificationRequest nvarchar(max) NOT NULL,
-    ScheduledTime datetime2 NOT NULL,
-    RecurrencePattern nvarchar(500) NULL,
-    IsActive bit NOT NULL DEFAULT 1,
-    CreatedAt datetime2 NOT NULL DEFAULT GETDATE(),
-    LastProcessedAt datetime2 NULL,
-    CancelledAt datetime2 NULL,
-    ProcessCount int NOT NULL DEFAULT 0
+    Id NVARCHAR(450) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    NotificationRequest NVARCHAR(MAX) NOT NULL,
+    ScheduledTime DATETIME2 NOT NULL,
+    RecurrencePattern NVARCHAR(500) NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    LastProcessedAt DATETIME2 NULL,
+    CancelledAt DATETIME2 NULL,
+    ProcessCount INT NOT NULL DEFAULT 0
 );
 GO
 
@@ -195,26 +222,26 @@ GO
 
 -- Create Notifications table
 CREATE TABLE Notifications (
-    Id nvarchar(450) PRIMARY KEY,
-    Title nvarchar(200) NOT NULL,
-    Message nvarchar(2000) NOT NULL,
-    Type nvarchar(50) NOT NULL,
-    Priority nvarchar(50) NOT NULL DEFAULT 'Normal',
-    Category nvarchar(50) NOT NULL,
-    UserID int NULL,
-    ClubID int NULL,
-    EventID int NULL,
-    Data nvarchar(max) NULL,
-    CreatedAt datetime2 NOT NULL DEFAULT GETDATE(),
-    ExpiresAt datetime2 NULL,
-    ReadAt datetime2 NULL,
-    DeletedAt datetime2 NULL,
-    IsRead bit NOT NULL DEFAULT 0,
-    IsDeleted bit NOT NULL DEFAULT 0,
-    ChannelsJson nvarchar(500) NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
-    FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE SET NULL,
-    FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE SET NULL
+    Id NVARCHAR(450) PRIMARY KEY,
+    Title NVARCHAR(200) NOT NULL,
+    Message NVARCHAR(2000) NOT NULL,
+    Type INT NOT NULL,
+    Priority INT NOT NULL DEFAULT 1,
+    Category INT NOT NULL,
+    UserID INT NULL,
+    ClubID INT NULL,
+    EventID INT NULL,
+    Data NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    ExpiresAt DATETIME2 NULL,
+    ReadAt DATETIME2 NULL,
+    DeletedAt DATETIME2 NULL,
+    IsRead BIT NOT NULL DEFAULT 0,
+    IsDeleted BIT NOT NULL DEFAULT 0,
+    ChannelsJson NVARCHAR(500) NULL,
+    CONSTRAINT FK_Notifications_UserID FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT FK_Notifications_ClubID FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT FK_Notifications_EventID FOREIGN KEY (EventID) REFERENCES Events(EventID) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
 GO
 
@@ -228,14 +255,14 @@ GO
 
 -- Create Settings table
 CREATE TABLE Settings (
-    Id int IDENTITY(1,1) PRIMARY KEY,
-    UserID int NULL,
-    ClubID int NULL,
-    [Key] nvarchar(100) NOT NULL,
-    Value nvarchar(max) NOT NULL,
-    Scope nvarchar(50) NOT NULL,
-    CreatedAt datetime2 NOT NULL DEFAULT GETDATE(),
-    UpdatedAt datetime2 NOT NULL DEFAULT GETDATE(),
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UserID INT NULL,
+    ClubID INT NULL,
+    [Key] NVARCHAR(100) NOT NULL,
+    Value NVARCHAR(MAX) NOT NULL,
+    Scope INT NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
     FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     FOREIGN KEY (ClubID) REFERENCES Clubs(ClubID) ON DELETE CASCADE
 );
@@ -253,236 +280,120 @@ GO
 -- ========================================
 -- DATA INSERTION SECTION
 -- ========================================
+-- SCHEMA FIXES APPLIED:
+-- 1. Clubs table: Added all required columns (CreatedUserId, CreatedAt, IsActive, MeetingSchedule, ContactEmail, ContactPhone, Website)
+-- 2. Events table: Added Status CHECK constraint with proper enum values (0=Scheduled, 1=InProgress, 2=Completed, 3=Cancelled, 4=Postponed)
+-- 3. EventParticipants table: Added Status CHECK constraint with proper enum values (0=Registered, 1=Attended, 2=Absent)
+-- 4. ClubMembers table: Added IsActive column and proper enum documentation (0=Admin, 1=Chairman, 2=Member)
+-- 5. All INSERT statements updated with complete column sets and proper datetime formatting
+-- ========================================
 
--- Insert Clubs
-INSERT INTO Clubs (Name, Description, ContactEmail, ContactPhone, Website, MeetingSchedule, FoundedDate, IsActive, IsSelected, CreatedDate) VALUES
-('Computer Science Club', 'A club for computer science enthusiasts to learn and share knowledge about programming, algorithms, and technology.', 'cs.club@university.edu', '555-0101', 'https://csclub.university.edu', 'Fridays 3:00 PM - Room 201', '2020-09-15', 1, 0, '2024-01-15'),
-('Drama Society', 'Dedicated to theatrical performances, script writing, and dramatic arts education.', 'drama@university.edu', '555-0102', 'https://drama.university.edu', 'Wednesdays 4:00 PM - Theater', '2019-03-20', 1, 0, '2024-01-20'),
-('Environmental Club', 'Focused on environmental conservation, sustainability projects, and eco-friendly initiatives.', 'eco.club@university.edu', '555-0103', 'https://ecoclub.university.edu', 'Tuesdays 2:00 PM - Green Room', '2021-04-22', 1, 0, '2024-02-01'),
-('Photography Club', 'For photography enthusiasts to improve skills, share techniques, and organize photo walks.', 'photo@university.edu', '555-0104', 'https://photoclub.university.edu', 'Saturdays 10:00 AM - Studio', '2020-11-10', 1, 0, '2024-02-10'),
-('Debate Society', 'Enhancing public speaking, critical thinking, and argumentation skills through structured debates.', 'debate@university.edu', '555-0105', 'https://debate.university.edu', 'Thursdays 5:00 PM - Hall A', '2018-01-15', 1, 0, '2024-02-15'),
-('Music Club', 'Bringing together musicians of all levels to perform, collaborate, and appreciate various music genres.', 'music@university.edu', '555-0106', 'https://musicclub.university.edu', 'Mondays 6:00 PM - Music Room', '2017-08-30', 1, 0, '2024-03-01'),
-('Sports Club', 'Organizing various sports activities, tournaments, and promoting physical fitness among students.', 'sports@university.edu', '555-0107', 'https://sportsclub.university.edu', 'Daily 7:00 AM - Gym', '2016-05-12', 1, 0, '2024-03-05'),
-('Literature Society', 'For book lovers, creative writers, and those passionate about literature and poetry.', 'literature@university.edu', '555-0108', 'https://litclub.university.edu', 'Sundays 3:00 PM - Library', '2019-10-05', 1, 0, '2024-03-10'),
-('Science Innovation Lab', 'Encouraging scientific research, innovation projects, and STEM education initiatives.', 'scilab@university.edu', '555-0109', 'https://scilab.university.edu', 'Wednesdays 1:00 PM - Lab 301', '2021-02-28', 1, 0, '2024-03-15'),
-('Cultural Heritage Club', 'Preserving and promoting cultural traditions, organizing cultural events and festivals.', 'culture@university.edu', '555-0110', 'https://culture.university.edu', 'Fridays 4:00 PM - Cultural Center', '2020-07-18', 1, 0, '2024-03-20');
+-- Insert Users first (without ClubID to avoid foreign key constraint)
+-- SystemRole: 0=Admin, 1=ClubOwner, 2=Member
+-- ActivityLevel: 0=Active, 1=Normal, 2=Inactive
+INSERT INTO Users (FullName, Email, Password, StudentID, PhoneNumber, SystemRole, ActivityLevel, ClubID, IsActive, TwoFactorEnabled, CreatedAt) VALUES
+-- System Administrator (matches current documentation)
+('System Administrator', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ADM001', '+1-555-0001', 0, 0, NULL, 1, 0, '2024-01-01'),
+
+-- Club Members (matches current DatabaseInitializer.cs implementation)
+('John Doe', 'john.doe@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU001', '+1-555-0101', 1, 0, NULL, 1, 0, '2024-01-15'),
+('Jane Smith', 'jane.smith@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU002', '+1-555-0102', 2, 0, NULL, 1, 0, '2024-02-01'),
+('Mike Johnson', 'mike.johnson@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU003', '+1-555-0103', 2, 0, NULL, 1, 0, '2024-02-15'),
+('Sarah Wilson', 'sarah.wilson@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU004', '+1-555-0104', 2, 0, NULL, 1, 0, '2024-03-01'),
+('David Brown', 'david.brown@university.edu', 'XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=', 'STU005', '+1-555-0105', 2, 0, NULL, 1, 0, '2024-03-15');
 GO
 
--- Insert Users (including various roles and club memberships)
-INSERT INTO Users (FullName, Email, Password, StudentID, Role, ActivityLevel, JoinDate, IsActive, TwoFactorEnabled, ClubID) VALUES
--- System Administrator
-('System Admin', 'admin@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'SystemAdmin', 'Active', '2024-01-01', 1, 1, NULL),
-
--- Regular Admin
-('Admin Manager', 'admin.manager@university.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', NULL, 'Admin', 'Active', '2024-01-01', 1, 1, NULL),
-
--- Club Presidents
-('Alice Johnson', 'alice.johnson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CS2024001', 'ClubPresident', 'Active', '2024-01-15', 1, 1, 1),
-('Bob Smith', 'bob.smith@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DR2024002', 'ClubPresident', 'Active', '2024-01-20', 1, 0, 2),
-('Carol Davis', 'carol.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'EN2024003', 'ClubPresident', 'Active', '2024-02-01', 1, 1, 3),
-('David Wilson', 'david.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'PH2024004', 'ClubPresident', 'Active', '2024-02-10', 1, 0, 4),
-('Emma Brown', 'emma.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'DB2024005', 'ClubPresident', 'Active', '2024-02-15', 1, 1, 5),
-
--- Club Chairmen
-('Michael Chen', 'michael.chen@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'MU2024006', 'Chairman', 'Active', '2024-03-01', 1, 0, 6),
-('Sarah Williams', 'sarah.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SP2024007', 'Chairman', 'Active', '2024-03-05', 1, 1, 7),
-('James Rodriguez', 'james.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'LT2024008', 'Chairman', 'Active', '2024-03-10', 1, 0, 8),
-
--- Vice Chairmen
-('Lisa Thompson', 'lisa.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'SC2024009', 'ViceChairman', 'Active', '2024-03-15', 1, 1, 9),
-('Robert Garcia', 'robert.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CH2024010', 'ViceChairman', 'Active', '2024-03-20', 1, 0, 10),
-('Jennifer Lee', 'jennifer.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'VC2024011', 'ViceChairman', 'Active', '2024-03-25', 1, 1, 1),
-
--- Team Leaders
-('Kevin Martinez', 'kevin.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024012', 'TeamLeader', 'Active', '2024-04-01', 1, 0, 2),
-('Amanda Davis', 'amanda.davis@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024013', 'TeamLeader', 'Active', '2024-04-05', 1, 1, 3),
-('Daniel Brown', 'daniel.brown@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'TL2024014', 'TeamLeader', 'Active', '2024-04-10', 1, 0, 4),
-
--- Club Officers
-('Frank Miller', 'frank.miller@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024015', 'ClubOfficer', 'Active', '2024-04-15', 1, 0, 5),
-('Grace Lee', 'grace.lee@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024016', 'ClubOfficer', 'Active', '2024-04-20', 1, 1, 6),
-('Henry Taylor', 'henry.taylor@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'CO2024017', 'ClubOfficer', 'Active', '2024-04-25', 1, 0, 7),
-
--- Regular Members
-('Kate Williams', 'kate.williams@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024018', 'Member', 'Normal', '2024-05-01', 1, 0, 1),
-('Liam Garcia', 'liam.garcia@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024019', 'Member', 'Normal', '2024-05-05', 1, 0, 2),
-('Mia Rodriguez', 'mia.rodriguez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024020', 'Member', 'Active', '2024-05-10', 1, 1, 3),
-('Noah Martinez', 'noah.martinez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024021', 'Member', 'Normal', '2024-05-15', 1, 0, 4),
-('Olivia Lopez', 'olivia.lopez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024022', 'Member', 'Inactive', '2024-05-20', 1, 0, 5),
-('Paul Gonzalez', 'paul.gonzalez@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024023', 'Member', 'Normal', '2024-05-25', 1, 0, 6),
-('Quinn Wilson', 'quinn.wilson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024024', 'Member', 'Active', '2024-06-01', 1, 1, 7),
-('Rachel Kim', 'rachel.kim@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024025', 'Member', 'Normal', '2024-06-05', 1, 0, 8),
-('Sam Thompson', 'sam.thompson@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024026', 'Member', 'Normal', '2024-06-10', 1, 0, 9),
-('Tina White', 'tina.white@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024027', 'Member', 'Inactive', '2024-06-15', 1, 0, 10),
-
--- Multi-club member (not assigned to specific club in Users table)
-('Uma Patel', 'uma.patel@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024028', 'Member', 'Active', '2024-06-20', 1, 1, NULL),
-('Victor Chang', 'victor.chang@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024029', 'Member', 'Normal', '2024-06-25', 1, 0, NULL),
-('Wendy Foster', 'wendy.foster@student.edu', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ST2024030', 'Member', 'Normal', '2024-07-01', 1, 0, NULL);
+-- Insert Clubs (matches current DatabaseInitializer.cs implementation)
+INSERT INTO Clubs (ClubName, Description, EstablishedDate, CreatedUserId, CreatedAt, IsActive, MeetingSchedule, ContactEmail, ContactPhone, Website) VALUES
+('Computer Science Club', 'A club for computer science enthusiasts and programming', '2023-07-01 10:00:00', 1, '2024-01-01 10:30:00', 1, 'Wednesdays 6:00 PM - Room CS101', 'cs.club@university.edu', '+1-555-2001', 'https://university.edu/clubs/cs'),
+('Photography Club', 'Capturing moments and learning photography techniques', '2023-09-01 14:00:00', 1, '2024-01-01 09:15:00', 1, 'Fridays 7:00 PM - Art Building', 'photo.club@university.edu', '+1-555-2002', 'https://university.edu/clubs/photography');
 GO
 
--- Insert Events
-INSERT INTO Events (Name, Description, EventDate, Location, CreatedDate, IsActive, RegistrationDeadline, MaxParticipants, ClubID) VALUES
--- Computer Science Club Events
-('Python Workshop', 'Learn Python programming from basics to advanced concepts', '2024-12-15 14:00:00', 'Computer Lab A', '2024-11-01', 1, '2024-12-10', 30, 1),
-('Hackathon 2024', '24-hour coding competition with exciting prizes', '2024-12-20 09:00:00', 'Main Auditorium', '2024-11-05', 1, '2024-12-15', 100, 1),
-('AI and Machine Learning Seminar', 'Industry experts discuss the future of AI', '2025-01-10 16:00:00', 'Conference Room B', '2024-11-10', 1, '2025-01-05', 50, 1),
+-- Insert ClubMembers (Maps users to clubs with club-specific roles)
+-- ClubRole: 0=Admin, 1=Chairman, 2=Member
+INSERT INTO ClubMembers (UserID, ClubID, ClubRole, IsActive, JoinDate) VALUES
+-- Computer Science Club (ClubID: 1) - 3 members
+(2, 1, 1, 1, '2024-01-15 10:30:00'),   -- John Doe as Chairman
+(3, 1, 2, 1, '2024-02-01 10:30:00'),   -- Jane Smith as Member
+(4, 1, 2, 1, '2024-02-15 10:30:00'),   -- Mike Johnson as Member
 
--- Photography Club Events
-('Nature Photography Walk', 'Capture the beauty of campus nature', '2024-12-12 08:00:00', 'University Gardens', '2024-11-02', 1, '2024-12-08', 20, 2),
-('Portrait Photography Workshop', 'Learn professional portrait techniques', '2024-12-18 13:00:00', 'Studio Room 1', '2024-11-06', 1, '2024-12-15', 15, 2),
-('Photo Exhibition Setup', 'Prepare for the annual photo exhibition', '2025-01-15 10:00:00', 'Gallery Hall', '2024-11-12', 1, '2025-01-10', 25, 2),
-
--- Drama Society Events
-('Romeo and Juliet Auditions', 'Auditions for the spring play', '2024-12-14 15:00:00', 'Theater Room', '2024-11-03', 1, '2024-12-12', 40, 3),
-('Acting Workshop', 'Improve your acting skills with professional coaches', '2024-12-21 11:00:00', 'Drama Studio', '2024-11-07', 1, '2024-12-18', 25, 3),
-
--- Environmental Club Events
-('Campus Cleanup Drive', 'Help keep our campus clean and green', '2024-12-13 07:00:00', 'Campus Grounds', '2024-11-04', 1, '2024-12-11', 50, 4),
-('Sustainability Fair', 'Learn about sustainable living practices', '2024-12-19 12:00:00', 'Student Center', '2024-11-08', 1, '2024-12-16', 100, 4),
-
--- Music Club Events
-('Winter Concert', 'Showcase of student musical talents', '2024-12-22 19:00:00', 'Music Hall', '2024-11-09', 1, '2024-12-20', 200, 5),
-('Songwriting Workshop', 'Learn to write your own songs', '2025-01-08 14:00:00', 'Music Room 2', '2024-11-11', 1, '2025-01-05', 20, 5);
+-- Photography Club (ClubID: 2) - 2 members
+(5, 2, 0, 1, '2024-03-01 10:30:00'),   -- Sarah Wilson as Admin
+(6, 2, 2, 1, '2024-03-15 10:30:00');   -- David Brown as Member
 GO
 
--- Insert Event Participants
+-- Update Users ClubID after clubs are created
+-- No need to update Users.ClubID as they are now directly inserted with ClubID
+GO
+
+-- Insert Events with proper Status enum values (0=Scheduled, 1=InProgress, 2=Completed, 3=Cancelled, 4=Postponed)
+INSERT INTO Events (Name, Description, EventDate, Location, CreatedDate, IsActive, RegistrationDeadline, MaxParticipants, Status, ClubID) VALUES
+-- Computer Science Club Events (ClubID: 1)
+('Programming Workshop', 'Learn advanced programming techniques and best practices', '2024-12-15 14:00:00', 'Computer Lab A', '2024-11-01 10:00:00', 1, '2024-12-10 23:59:59', 30, 0, 1), -- Scheduled
+('Hackathon 2024', '24-hour coding competition with exciting prizes', '2024-12-20 09:00:00', 'Main Auditorium', '2024-11-05 09:30:00', 1, '2024-12-15 23:59:59', 100, 0, 1), -- Scheduled
+
+-- Photography Club Events (ClubID: 2)
+('Photography Exhibition', 'Showcase of student photography work and techniques', '2024-12-22 19:00:00', 'Art Gallery', '2024-11-09 11:20:00', 1, '2024-12-20 18:00:00', 200, 0, 2), -- Scheduled
+('Photography Workshop', 'Learn digital photography and photo editing', '2025-01-08 14:00:00', 'Photography Studio', '2024-11-11 16:45:00', 1, '2025-01-05 23:59:59', 20, 0, 2); -- Scheduled
+GO
+
+-- Insert Event Participants with proper Status enum values (0=Registered, 1=Attended, 2=Absent)
 INSERT INTO EventParticipants (UserID, EventID, Status, RegistrationDate, AttendanceDate) VALUES
--- Python Workshop (EventID: 1)
-(2, 1, 'Attended', '2024-11-15', '2024-12-15'), -- Alice (Attended)
-(3, 1, 'Attended', '2024-11-16', '2024-12-15'), -- Bob (Attended)
-(4, 1, 'Registered', '2024-11-17', NULL), -- Charlie (Registered)
-(5, 1, 'Absent', '2024-11-18', NULL), -- Diana (Absent)
+-- Programming Workshop (EventID: 1) - Computer Science Club
+(2, 1, 1, '2024-11-15 14:30:00', '2024-12-15 14:00:00'), -- John Doe (Attended)
+(3, 1, 1, '2024-11-16 09:15:00', '2024-12-15 14:00:00'), -- Jane Smith (Attended)
+(4, 1, 0, '2024-11-17 16:45:00', NULL), -- Mike Johnson (Registered)
 
--- Hackathon 2024 (EventID: 2)
-(2, 2, 'Registered', '2024-11-20', NULL), -- Alice (Registered)
-(3, 2, 'Registered', '2024-11-21', NULL), -- Bob (Registered)
-(4, 2, 'Registered', '2024-11-22', NULL), -- Charlie (Registered)
-(5, 2, 'Registered', '2024-11-23', NULL), -- Diana (Registered)
-(6, 2, 'Registered', '2024-11-24', NULL), -- Eve (Registered)
+-- Hackathon 2024 (EventID: 2) - Computer Science Club
+(2, 2, 0, '2024-11-20 11:20:00', NULL), -- John Doe (Registered)
+(3, 2, 0, '2024-11-21 13:00:00', NULL), -- Jane Smith (Registered)
+(4, 2, 0, '2024-11-22 10:30:00', NULL), -- Mike Johnson (Registered)
 
--- Nature Photography Walk (EventID: 4)
-(7, 4, 'Attended', '2024-11-25', '2024-12-12'), -- Frank (Attended)
-(8, 4, 'Attended', '2024-11-26', '2024-12-12'), -- Grace (Attended)
-(9, 4, 'Attended', '2024-11-27', '2024-12-12'), -- Henry (Attended)
-(10, 4, 'Absent', '2024-11-28', NULL), -- Ivy (Absent)
+-- Photography Exhibition (EventID: 3) - Photography Club
+(5, 3, 1, '2024-11-25 15:45:00', '2024-12-22 19:00:00'), -- Sarah Wilson (Attended)
+(6, 3, 1, '2024-11-26 12:15:00', '2024-12-22 19:00:00'), -- David Brown (Attended)
 
--- Campus Cleanup Drive (EventID: 9)
-(14, 9, 'Attended', '2024-11-29', '2024-12-13'), -- Maya (Attended)
-(15, 9, 'Attended', '2024-11-30', '2024-12-13'), -- Noah (Attended)
-(16, 9, 'Attended', '2024-12-01', '2024-12-13'), -- Olivia (Attended)
-(2, 9, 'Attended', '2024-12-02', '2024-12-13'), -- Alice (Cross-club participation)
-(7, 9, 'Attended', '2024-12-03', '2024-12-13'); -- Frank (Cross-club participation)
+-- Photography Workshop (EventID: 4) - Photography Club
+(5, 4, 0, '2024-11-27 08:30:00', NULL), -- Sarah Wilson (Registered)
+(6, 4, 0, '2024-11-28 10:15:00', NULL); -- David Brown (Registered)
 GO
 
 -- Insert Reports
 INSERT INTO Reports (Title, Type, Content, GeneratedDate, Semester, ClubID, GeneratedByUserID) VALUES
-('Computer Science Club - Fall 2024 Member Statistics', 'MemberStatistics', '{"totalMembers": 5, "activeMembers": 5, "newMembers": 5, "membersByRole": {"Chairman": 1, "ViceChairman": 1, "TeamLeader": 1, "Member": 2}}', '2024-11-15', 'Fall 2024', 1, 2),
-('Photography Club - Event Outcomes Report', 'EventOutcomes', '{"eventsHeld": 2, "totalParticipants": 7, "averageAttendance": 85, "topEvent": "Nature Photography Walk"}', '2024-11-20', 'Fall 2024', 2, 7),
-('Environmental Club - Activity Tracking', 'ActivityTracking', '{"activitiesCompleted": 1, "volunteersParticipated": 5, "impactMetrics": {"wasteCollected": "50kg", "areasCleaned": 3}}', '2024-11-25', 'Fall 2024', 4, 14),
-('University-wide Semester Summary', 'SemesterSummary', '{"totalClubs": 10, "totalMembers": 22, "totalEvents": 12, "overallEngagement": "High", "topPerformingClubs": ["Computer Science Club", "Photography Club", "Environmental Club"]}', '2024-11-30', 'Fall 2024', NULL, 1),
-('Drama Society - Member Statistics', 'MemberStatistics', '{"totalMembers": 3, "activeMembers": 3, "upcomingProductions": 1, "auditionParticipants": 15}', '2024-12-01', 'Fall 2024', 3, 11),
-('Music Club - Event Outcomes', 'EventOutcomes', '{"concertsPlanned": 1, "workshopsHeld": 0, "expectedAttendance": 200, "repertoireSize": 12}', '2024-12-05', 'Fall 2024', 5, 17);
+('Computer Science Club - Fall 2024 Member Statistics', 0, '{"totalMembers": 3, "activeMembers": 3, "newMembers": 3, "membersByRole": {"Chairman": 1, "Member": 2}}', '2024-11-15', 'Fall 2024', 1, 1),
+('Photography Club - Event Outcomes Report', 1, '{"eventsHeld": 2, "totalParticipants": 4, "averageAttendance": 75, "topEvent": "Photography Exhibition"}', '2024-11-20', 'Fall 2024', 2, 1),
+('University-wide Semester Summary', 3, '{"totalClubs": 2, "totalMembers": 5, "totalEvents": 4, "overallEngagement": "High", "topPerformingClubs": ["Computer Science Club", "Photography Club"]}', '2024-11-30', 'Fall 2024', NULL, 1);
 GO
 
 -- Insert Audit Logs
 INSERT INTO AuditLogs (UserId, Action, Details, LogType, IpAddress, Timestamp, AdditionalData) VALUES
-(1, 'User Login', 'Administrator logged into the system', 'UserActivity', '192.168.1.100', '2024-11-01 08:00:00', '{"userAgent": "Mozilla/5.0", "sessionId": "sess_001"}'),
-(2, 'Club Created', 'Computer Science Club was created', 'DataChange', '192.168.1.101', '2024-01-15 10:30:00', '{"clubId": 1, "clubName": "Computer Science Club"}'),
-(2, 'Event Created', 'Python Workshop event was created', 'UserActivity', '192.168.1.101', '2024-11-01 14:20:00', '{"eventId": 1, "eventName": "Python Workshop"}'),
-(3, 'Event Registration', 'User registered for Python Workshop', 'UserActivity', '192.168.1.102', '2024-11-16 09:15:00', '{"eventId": 1, "userId": 3}'),
-(7, 'Event Created', 'Nature Photography Walk event was created', 'UserActivity', '192.168.1.103', '2024-11-02 11:45:00', '{"eventId": 4, "eventName": "Nature Photography Walk"}'),
-(1, 'Report Generated', 'University-wide semester summary report generated', 'DataChange', '192.168.1.100', '2024-11-30 16:00:00', '{"reportId": 4, "reportType": "SemesterSummary"}'),
-(14, 'Event Attendance', 'User marked as attended for Campus Cleanup Drive', 'UserActivity', '192.168.1.104', '2024-12-13 07:30:00', '{"eventId": 9, "userId": 14, "status": "Attended"}'),
-(1, 'System Maintenance', 'Database backup completed successfully', 'DataChange', '192.168.1.100', '2024-12-01 02:00:00', '{"backupSize": "2.5GB", "duration": "15 minutes"}'),
-(11, 'User Profile Update', 'User updated their profile information', 'UserActivity', '192.168.1.105', '2024-11-28 13:22:00', '{"userId": 11, "fieldsUpdated": ["email", "phone"]}'),
-(1, 'Security Event', 'Failed login attempt detected', 'SecurityEvent', '192.168.1.200', '2024-12-02 23:45:00', '{"attemptedEmail": "unknown@test.com", "attempts": 3}');
+(1, 'User Login', 'System Administrator logged into the system', 0, '192.168.1.100', '2024-11-01 08:00:00', '{"userAgent": "Mozilla/5.0", "sessionId": "sess_001"}'),
+(1, 'Club Created', 'Computer Science Club was created', 2, '192.168.1.101', '2024-01-01 10:30:00', '{"clubId": 1, "clubName": "Computer Science Club"}'),
+(1, 'Club Created', 'Photography Club was created', 2, '192.168.1.101', '2024-01-01 10:31:00', '{"clubId": 2, "clubName": "Photography Club"}'),
+(1, 'Event Created', 'Programming Workshop event was created', 0, '192.168.1.101', '2024-11-01 14:20:00', '{"eventId": 1, "eventName": "Programming Workshop"}'),
+(2, 'Event Registration', 'User registered for Programming Workshop', 0, '192.168.1.102', '2024-11-16 09:15:00', '{"eventId": 1, "userId": 2}'),
+(2, 'Club Member Added', 'User added to Computer Science Club as Chairman', 2, '192.168.1.103', '2024-01-15 11:45:00', '{"clubId": 1, "userId": 2, "role": "Chairman"}'),
+(5, 'Club Member Added', 'User added to Photography Club as Admin', 2, '192.168.1.104', '2024-03-01 11:45:00', '{"clubId": 2, "userId": 5, "role": "Admin"}'),
+(1, 'Report Generated', 'University-wide semester summary report generated', 2, '192.168.1.100', '2024-11-30 16:00:00', '{"reportId": 3, "reportType": "SemesterSummary"}');
 GO
 
--- Insert Notification Templates
-INSERT INTO NotificationTemplates (Id, Name, Description, TitleTemplate, MessageTemplate, Type, Priority, Category, ChannelsJson, ParametersJson, IsActive, CreatedAt, UpdatedAt) VALUES
-('welcome-template', 'Welcome New Member', 'Template for welcoming new club members', 'Welcome to {clubName}!', 'Hi {memberName}, welcome to {clubName}! We''re excited to have you join our community. Your journey with us starts now!', 'Welcome', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["memberName", "clubName"]', 1, '2024-01-01', NULL),
-('event-reminder', 'Event Reminder', 'Template for event reminders', 'Reminder: {eventName} Tomorrow', 'Don''t forget about {eventName} happening tomorrow at {eventTime} in {eventLocation}. We look forward to seeing you there!', 'EventReminder', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["eventName", "eventTime", "eventLocation"]', 1, '2024-01-01', NULL),
-('event-registration', 'Event Registration Confirmation', 'Template for event registration confirmations', 'Registration Confirmed: {eventName}', 'Your registration for {eventName} has been confirmed. Event details: Date: {eventDate}, Time: {eventTime}, Location: {eventLocation}', 'EventRegistration', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["eventName", "eventDate", "eventTime", "eventLocation"]', 1, '2024-01-01', NULL),
-('club-update', 'Club Update', 'Template for club announcements', 'Update from {clubName}', 'Hello {memberName}, here''s an important update from {clubName}: {updateMessage}', 'ClubUpdate', 'Normal', 'ClubActivity', '["InApp", "Email"]', '["clubName", "memberName", "updateMessage"]', 1, '2024-01-01', NULL),
-('report-generated', 'Report Generated', 'Template for report generation notifications', 'New Report Available: {reportTitle}', 'A new report "{reportTitle}" has been generated and is now available for review. Generated on: {generatedDate}', 'ReportGenerated', 'Normal', 'Administrative', '["InApp"]', '["reportTitle", "generatedDate"]', 1, '2024-01-01', NULL);
+-- Insert sample notification templates
+INSERT INTO NotificationTemplates (Id, Name, Description, TitleTemplate, MessageTemplate, Type, Priority, Category, ChannelsJson, ParametersJson, IsActive, CreatedAt) VALUES
+('welcome-template', 'Welcome Template', 'Welcome message for new users', 'Welcome to {ClubName}!', 'Hello {UserName}, welcome to {ClubName}. We are excited to have you join us!', 0, 1, 0, '["Email", "InApp"]', '{"UserName": "string", "ClubName": "string"}', 1, GETDATE()),
+('event-reminder', 'Event Reminder', 'Reminder for upcoming events', 'Event Reminder: {EventName}', 'Don''t forget about {EventName} happening on {EventDate} at {Location}!', 1, 2, 1, '["Email", "InApp"]', '{"EventName": "string", "EventDate": "datetime", "Location": "string"}', 1, GETDATE()),
+('membership-approval', 'Membership Approval', 'Notification for membership approval', 'Membership Approved', 'Congratulations! Your membership to {ClubName} has been approved.', 2, 1, 0, '["Email", "InApp"]', '{"ClubName": "string"}', 1, GETDATE());
 GO
 
--- Insert Scheduled Notifications
-INSERT INTO ScheduledNotifications (Id, Name, NotificationRequest, ScheduledTime, RecurrencePattern, IsActive, CreatedAt, LastProcessedAt, CancelledAt, ProcessCount) VALUES
-('weekly-reminder', 'Weekly Event Reminders', '{"title": "Weekly Events Summary", "message": "Here are the upcoming events for this week", "type": 10, "priority": 1, "category": 1, "channels": [0, 1]}', '2024-12-09 09:00:00', 'WEEKLY', 1, '2024-11-01', NULL, NULL, 0),
-('monthly-report', 'Monthly Club Reports', '{"title": "Monthly Club Activity Report", "message": "Your monthly club activity report is ready", "type": 9, "priority": 1, "category": 5, "channels": [0]}', '2024-12-31 23:59:00', 'MONTHLY', 1, '2024-11-01', NULL, NULL, 0),
-('event-day-reminder', 'Event Day Reminders', '{"title": "Event Today!", "message": "Don''t forget about your event today", "type": 2, "priority": 2, "category": 1, "channels": [0, 1]}', '2024-12-15 08:00:00', 'DAILY', 1, '2024-11-01', NULL, NULL, 0);
-GO
-
--- Insert Notifications
--- Ensure the Notifications table exists before inserting data
-IF OBJECT_ID('Notifications', 'U') IS NULL
-BEGIN
-    PRINT 'ERROR: Notifications table does not exist. Please run the table creation section first.';
-    RETURN;
-END
-
-INSERT INTO Notifications (Id, Title, Message, Type, Priority, Category, UserID, ClubID, EventID, Data, CreatedAt, ExpiresAt, ReadAt, DeletedAt, IsRead, IsDeleted, ChannelsJson) VALUES
-('notif-001', 'Welcome to Computer Science Club!', 'Hi Alice, welcome to Computer Science Club! We''re excited to have you join our community.', 'Welcome', 'Normal', 'ClubActivity', 2, 1, NULL, '{"welcomePackage": true}', '2024-01-16', NULL, '2024-01-16', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-002', 'Event Registration Confirmed', 'Your registration for Python Workshop has been confirmed.', 'EventRegistration', 'Normal', 'ClubActivity', 3, 1, 1, '{"registrationId": "reg-001"}', '2024-11-16', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),
-('notif-003', 'Reminder: Nature Photography Walk Tomorrow', 'Don''t forget about Nature Photography Walk happening tomorrow at 08:00 in University Gardens.', 'EventReminder', 'Normal', 'ClubActivity', 7, 2, 4, '{"weatherForecast": "sunny"}', '2024-12-11', '2024-12-13', '2024-12-11', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-004', 'New Report Available', 'A new report "Computer Science Club - Fall 2024 Member Statistics" has been generated.', 'ReportGenerated', 'Normal', 'Administrative', 2, 1, NULL, '{"reportId": 1}', '2024-11-15', NULL, NULL, NULL, 0, 0, '["InApp"]'),
-('notif-005', 'Club Update from Environmental Club', 'Great job everyone on the Campus Cleanup Drive! We collected 50kg of waste.', 'ClubUpdate', 'Normal', 'ClubActivity', 14, 4, NULL, '{"achievement": "cleanup_success"}', '2024-12-13', NULL, '2024-12-13', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-006', 'Event Cancelled', 'Unfortunately, the outdoor event has been cancelled due to weather conditions.', 'EventCancellation', 'High', 'ClubActivity', 8, 2, NULL, '{"reason": "weather"}', '2024-12-10', NULL, NULL, NULL, 0, 0, '["InApp", "Email"]'),
-('notif-007', 'Security Alert', 'Multiple failed login attempts detected on your account.', 'SecurityAlert', 'Critical', 'Security', 1, NULL, NULL, '{"attempts": 3, "lastAttempt": "2024-12-02T23:45:00"}', '2024-12-02', NULL, '2024-12-03', NULL, 1, 0, '["InApp", "Email"]'),
-('notif-008', 'System Maintenance', 'Scheduled system maintenance will occur tonight from 2:00 AM to 4:00 AM.', 'SystemMaintenance', 'Normal', 'System', NULL, NULL, NULL, '{"duration": "2 hours"}', '2024-12-05', '2024-12-06', NULL, NULL, 0, 0, '["InApp"]');
-GO
-
--- Insert Settings
+-- Insert sample settings
 INSERT INTO Settings (UserID, ClubID, [Key], Value, Scope, CreatedAt, UpdatedAt) VALUES
--- Global Settings
-(NULL, NULL, 'system.maintenance_mode', 'false', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'system.max_file_upload_size', '10485760', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'notifications.email_enabled', 'true', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'security.session_timeout', '3600', 'Global', '2024-01-01', '2024-01-01'),
-(NULL, NULL, 'backup.auto_backup_enabled', 'true', 'Global', '2024-01-01', '2024-01-01'),
-
--- User Settings
-(2, NULL, 'notifications.email_frequency', 'daily', 'User', '2024-01-16', '2024-01-16'),
-(2, NULL, 'ui.theme', 'light', 'User', '2024-01-16', '2024-01-16'),
-(2, NULL, 'privacy.profile_visibility', 'club_members', 'User', '2024-01-16', '2024-01-16'),
-(7, NULL, 'notifications.email_frequency', 'weekly', 'User', '2024-01-21', '2024-01-21'),
-(7, NULL, 'ui.theme', 'dark', 'User', '2024-01-21', '2024-01-21'),
-(14, NULL, 'notifications.push_enabled', 'true', 'User', '2024-02-11', '2024-02-11'),
-
--- Club Settings
-(NULL, 1, 'events.auto_approval', 'false', 'Club', '2024-01-15', '2024-01-15'),
-(NULL, 1, 'members.max_count', '100', 'Club', '2024-01-15', '2024-01-15'),
-(NULL, 1, 'notifications.event_reminders', 'true', 'Club', '2024-01-15', '2024-01-15'),
-(NULL, 2, 'events.auto_approval', 'true', 'Club', '2024-01-20', '2024-01-20'),
-(NULL, 2, 'members.max_count', '50', 'Club', '2024-01-20', '2024-01-20'),
-(NULL, 4, 'events.require_approval', 'false', 'Club', '2024-02-10', '2024-02-10'),
-(NULL, 4, 'members.auto_accept', 'true', 'Club', '2024-02-10', '2024-02-10');
+(NULL, NULL, 'SystemMaintenanceMode', 'false', 2, GETDATE(), GETDATE()),
+(NULL, NULL, 'DefaultEventRegistrationDeadlineDays', '3', 2, GETDATE(), GETDATE()),
+(NULL, NULL, 'MaxEventsPerClubPerMonth', '10', 2, GETDATE(), GETDATE()),
+(1, NULL, 'EmailNotifications', 'true', 0, GETDATE(), GETDATE()),
+(1, NULL, 'Theme', 'Light', 0, GETDATE(), GETDATE()),
+(NULL, 1, 'AutoApproveMembers', 'false', 1, GETDATE(), GETDATE()),
+(NULL, 1, 'EventCapacityLimit', '100', 1, GETDATE(), GETDATE());
 GO
 
-PRINT 'Database seeded successfully!';
-PRINT 'Summary:';
-PRINT '- 10 Clubs created';
-PRINT '- 30 Users created across all roles';
-PRINT '- 12 Events created across different clubs';
-PRINT '- 15 Event Participants registered';
-PRINT '- 6 Reports generated';
-PRINT '- 10 Audit Log entries created';
-PRINT '- 5 Notification Templates created';
-PRINT '- 3 Scheduled Notifications created';
-PRINT '- 8 Notifications created';
-PRINT '- 17 Settings configured';
-PRINT '';
-PRINT 'Default Test Accounts (Password: admin123 for all):';
-PRINT 'SystemAdmin: admin@university.edu';
-PRINT 'Admin: admin.manager@university.edu';
-PRINT 'ClubPresident: alice.johnson@student.edu (Computer Science Club)';
-PRINT 'Chairman: michael.chen@student.edu (Music Club)';
-PRINT 'ViceChairman: lisa.thompson@student.edu (Science Innovation Lab)';
-PRINT 'TeamLeader: kevin.martinez@student.edu (Drama Society)';
-PRINT 'ClubOfficer: frank.miller@student.edu (Debate Society)';
-PRINT 'Member: kate.williams@student.edu (Computer Science Club)';
-PRINT '';
-PRINT 'All passwords are hashed versions of "admin123"';
-PRINT 'Please change default passwords after first login for security.';
+PRINT 'Database seeded successfully with corrected role structure!';
+GO

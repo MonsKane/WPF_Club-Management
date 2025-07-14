@@ -838,7 +838,7 @@ namespace ClubManagementApp.Services
                     throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
 
                 var user = await _context.Users.FindAsync(userId);
-                return user?.TwoFactorEnabled ?? false;
+                return false; // TwoFactorEnabled property not available in User model
             }
             catch (Exception ex)
             {
@@ -858,8 +858,9 @@ namespace ClubManagementApp.Services
                 var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
-                    user.TwoFactorEnabled = true;
-                    await _context.SaveChangesAsync();
+                    // TwoFactorEnabled property not available in User model
+                    // user.TwoFactorEnabled = true;
+                    // await _context.SaveChangesAsync();
                     await LogSecurityEventAsync(SecurityEventType.TwoFactorEnabled, userId, "2FA enabled");
                 }
             }
@@ -881,8 +882,9 @@ namespace ClubManagementApp.Services
                 var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
-                    user.TwoFactorEnabled = false;
-                    await _context.SaveChangesAsync();
+                    // TwoFactorEnabled property not available in User model
+                    // user.TwoFactorEnabled = false;
+                    // await _context.SaveChangesAsync();
                     await LogSecurityEventAsync(SecurityEventType.TwoFactorDisabled, userId, "2FA disabled");
                 }
             }

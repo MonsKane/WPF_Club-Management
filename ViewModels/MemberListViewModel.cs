@@ -18,6 +18,15 @@ namespace ClubManagementApp.ViewModels
         // Static event for member changes
         public static event Action? MemberChanged;
 
+        // Enhanced notification method for club statistics refresh
+        public static void NotifyClubMemberCountChanged(int clubId)
+        {
+            ClubMemberCountChanged?.Invoke(clubId);
+        }
+
+        // Static event for club member count changes
+        public static event Action<int>? ClubMemberCountChanged;
+
         // Public method to trigger the leadership changed event
         public static void NotifyLeadershipChanged()
         {
@@ -40,7 +49,7 @@ namespace ClubManagementApp.ViewModels
         private ObservableCollection<User> _members = new();
         private ObservableCollection<User> _filteredMembers = new();
         private string _searchText = string.Empty;
-        private UserRole? _selectedRole;
+        private SystemRole? _selectedRole;
         private bool _isLoading;
         private User? _selectedMember;
         private bool _disposed;
@@ -95,7 +104,7 @@ namespace ClubManagementApp.ViewModels
             }
         }
 
-        public UserRole? SelectedRole
+        public SystemRole? SelectedRole
         {
             get => _selectedRole;
             set
@@ -152,11 +161,11 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Authorization Properties
-        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
-        public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.Role);
-        public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.Role);
-        public bool CanExportUsers => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.Role); // Using CanExportReports as equivalent
-        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "MemberManagement");
+        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.SystemRole);
+        public bool CanEditUsers => CurrentUser != null && _authorizationService.CanEditUsers(CurrentUser.SystemRole);
+        public bool CanDeleteUsers => CurrentUser != null && _authorizationService.CanDeleteUsers(CurrentUser.SystemRole);
+        public bool CanExportUsers => CurrentUser != null && _authorizationService.CanExportReports(CurrentUser.SystemRole); // Using CanExportReports as equivalent
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "MemberManagement");
 
         // Commands
         public ICommand AddMemberCommand { get; private set; } = null!;
@@ -181,7 +190,7 @@ namespace ClubManagementApp.ViewModels
         private bool CanEditMember(User? member) => member != null && CanEditUsers && CanExecuteCommand();
 
         private bool CanDeleteMember(User? member) => member != null && CanDeleteUsers && CanExecuteCommand() &&
-            (CurrentUser?.Role == UserRole.SystemAdmin || member.UserID != CurrentUser?.UserID);
+            (CurrentUser?.SystemRole == SystemRole.Admin || member.UserID != CurrentUser?.UserID);
 
         private bool CanExportMembers() => FilteredMembers.Any() && CanExportUsers && CanExecuteCommand();
 
@@ -191,7 +200,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 CurrentUser = await _userService.GetCurrentUserAsync();
-                Console.WriteLine($"[MemberListViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                Console.WriteLine($"[MemberListViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.SystemRole})");
             }
             catch (Exception ex)
             {
@@ -228,7 +237,8 @@ namespace ClubManagementApp.ViewModels
                 if (ClubFilter != null)
                 {
                     Console.WriteLine($"[MemberListViewModel] Loading members for club: {ClubFilter.Name} (ID: {ClubFilter.ClubID})");
-                    members = await _clubService.GetClubMembersAsync(ClubFilter.ClubID);
+                    var clubMembers = await _clubService.GetClubMembersAsync(ClubFilter.ClubID);
+                    members = clubMembers.Select(cm => cm.User);
                 }
                 else
                 {
@@ -307,14 +317,11 @@ namespace ClubManagementApp.ViewModels
             // Apply role filter
             if (SelectedRole.HasValue)
             {
-                filtered = filtered.Where(m => m.Role == SelectedRole);
+                filtered = filtered.Where(m => m.SystemRole == SelectedRole);
             }
 
-            // Apply club filter
-            if (ClubFilter is not null)
-            {
-                filtered = filtered.Where(m => m.ClubID == ClubFilter.ClubID);
-            }
+            // Note: Don't apply club filter here if ClubFilter is set, because we already loaded only club members
+            // The club filter is applied during LoadMembersAsync() when ClubFilter != null
 
             var result = filtered.ToList();
 
@@ -323,6 +330,8 @@ namespace ClubManagementApp.ViewModels
             {
                 FilteredMembers.Add(member);
             }
+
+            Console.WriteLine($"[MemberListViewModel] Filtered {Members.Count} members to {FilteredMembers.Count} results");
         }
 
         private async void AddMember(object? parameter)
@@ -344,6 +353,12 @@ namespace ClubManagementApp.ViewModels
 
                     // Notify other ViewModels about member change
                     MemberChanged?.Invoke();
+
+                    // If a club filter is active, notify about member count change for that club
+                    if (ClubFilter != null)
+                    {
+                        NotifyClubMemberCountChanged(ClubFilter.ClubID);
+                    }
                 }
                 else
                 {
@@ -366,62 +381,62 @@ namespace ClubManagementApp.ViewModels
         {
             if (member == null)
             {
-                Console.WriteLine("[MemberListViewModel] Edit member failed - no member selected");
+                _logger?.LogWarning("Edit member failed - no member selected");
                 await ShowNotificationAsync("Please select a member to edit");
                 return;
             }
 
             try
             {
-                Console.WriteLine($"[MemberListViewModel] Edit Member command executed for: {member.FullName} (ID: {member.UserID})");
+                _logger?.LogInformation("Edit Member command executed for: {MemberName} (ID: {MemberId})", member.FullName, member.UserID);
 
                 // Create and show the edit dialog
                 var editDialog = new Views.EditUserDialog(member, _userService);
-                Console.WriteLine($"[MemberListViewModel] EditUserDialog created successfully for {member.FullName}");
+                _logger?.LogDebug("EditUserDialog created successfully for {MemberName}", member.FullName);
 
                 var dialogResult = editDialog.ShowDialog();
-                Console.WriteLine($"[MemberListViewModel] Dialog result: {dialogResult}");
+                _logger?.LogDebug("Dialog result: {DialogResult}", dialogResult);
 
                 if (dialogResult == true && editDialog.UpdatedUser != null)
                 {
-                    Console.WriteLine($"[MemberListViewModel] Updating member: {editDialog.UpdatedUser.FullName}");
+                    _logger?.LogInformation("Processing member update: {MemberName} (ID: {MemberId})", editDialog.UpdatedUser.FullName, editDialog.UpdatedUser.UserID);
                     IsLoading = true;
 
+                    // Update the user
                     var updatedUser = await _userService.UpdateUserAsync(editDialog.UpdatedUser);
 
-                    // Refresh the member from database to ensure we have the latest data
-                    var refreshedUser = await _userService.GetUserByIdAsync(editDialog.UpdatedUser.UserID);
+                    // Reload members to ensure we have the latest data
+                    await LoadMembersAsync();
 
-                    if (refreshedUser != null)
-                    {
-                        // Find the member in the collection and update it
-                        var index = Members.ToList().FindIndex(m => m.UserID == editDialog.UpdatedUser.UserID);
-                        if (index >= 0)
-                        {
-                            await Application.Current.Dispatcher.InvokeAsync(() =>
-                            {
-                                // Direct assignment works correctly with tracking enabled
-                                Members[index] = refreshedUser;
-                                FilterMembers();
-                            });
-                        }
-                    }
-
-                    Console.WriteLine($"[MemberListViewModel] Member {editDialog.UpdatedUser.FullName} updated successfully");
+                    _logger?.LogInformation("Member {MemberName} updated successfully", editDialog.UpdatedUser.FullName);
                     await ShowNotificationAsync($"Member {editDialog.UpdatedUser.FullName} updated successfully");
 
                     // Notify other ViewModels about member change
                     MemberChanged?.Invoke();
+
+                    // If a club filter is active or member was associated with a club, notify about member count changes
+                    if (ClubFilter != null)
+                    {
+                        NotifyClubMemberCountChanged(ClubFilter.ClubID);
+                    }
+                    if (member.ClubID.HasValue && (ClubFilter == null || member.ClubID.Value != ClubFilter.ClubID))
+                    {
+                        NotifyClubMemberCountChanged(member.ClubID.Value);
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("[MemberListViewModel] Edit member cancelled by user");
+                    _logger?.LogInformation("Edit member operation cancelled by user");
                 }
-                _logger?.LogInformation("Edit Member action triggered for user {UserId}", member.UserID);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger?.LogWarning(ex, "Business logic error while updating member {MemberName}: {Error}", member.FullName, ex.Message);
+                await ShowNotificationAsync($"Update failed: {ex.Message}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[MemberListViewModel] Error editing member {member.FullName}: {ex.Message}");
+                _logger?.LogError(ex, "Error editing member {MemberName}: {Error}", member.FullName, ex.Message);
                 await HandleErrorAsync($"Failed to edit member {member.FullName}", ex);
             }
             finally
@@ -444,7 +459,7 @@ namespace ClubManagementApp.ViewModels
                 Console.WriteLine($"[MemberListViewModel] Delete Member command executed for: {member.FullName} (ID: {member.UserID})");
                 // Using MessageBox for confirmation dialog
                 var result = System.Windows.MessageBox.Show(
-                    $"Are you sure you want to delete {member.FullName}?\n\nThis action cannot be undone.",
+                    $"Are you sure you want to delete {member.FullName}?\n\nThis action cannot be undone and will remove them from any clubs.",
                     "Confirm Delete",
                     System.Windows.MessageBoxButton.YesNo,
                     System.Windows.MessageBoxImage.Warning);
@@ -454,18 +469,18 @@ namespace ClubManagementApp.ViewModels
                     Console.WriteLine($"[MemberListViewModel] User confirmed deletion of member: {member.FullName}");
                     IsLoading = true;
 
-                    await _userService.RemoveUserFromClubAsync(member.UserID);
-
-                    // Update UI on main thread
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    // If member belongs to a club, remove from club first
+                    if (member.ClubID.HasValue)
                     {
-                        Members.Remove(member);
-                        if (SelectedMember == member)
-                        {
-                            SelectedMember = null;
-                        }
-                        FilterMembers();
-                    });
+                        await _clubService.RemoveClubMembershipAsync(member.ClubID.Value, member.UserID);
+                        Console.WriteLine($"[MemberListViewModel] Removed member {member.FullName} from club {member.ClubID}");
+                    }
+
+                    // Delete the user
+                    await _userService.DeleteUserAsync(member.UserID);
+
+                    // Reload members to ensure accurate list
+                    await LoadMembersAsync();
 
                     Console.WriteLine($"[MemberListViewModel] Member {member.FullName} deleted successfully");
                     await ShowNotificationAsync($"Member {member.FullName} has been deleted successfully");
@@ -473,6 +488,12 @@ namespace ClubManagementApp.ViewModels
 
                     // Notify other ViewModels about member change
                     MemberChanged?.Invoke();
+
+                    // Notify about club member count change if member was in a club
+                    if (member.ClubID.HasValue)
+                    {
+                        NotifyClubMemberCountChanged(member.ClubID.Value);
+                    }
                 }
                 else
                 {
@@ -518,7 +539,7 @@ namespace ClubManagementApp.ViewModels
 
                     foreach (var member in FilteredMembers)
                     {
-                        csvContent.AppendLine($"{member.FullName},{member.Email},{member.Role},{member.Club?.Name ?? "N/A"},{member.JoinDate:yyyy-MM-dd},{(member.IsActive ? "Active" : "Inactive")}");
+                        csvContent.AppendLine($"{member.FullName},{member.Email},{member.SystemRole},{member.Club?.Name ?? "N/A"},{member.CreatedAt:yyyy-MM-dd},{(member.IsActive ? "Active" : "Inactive")}");
                     }
 
                     await File.WriteAllTextAsync(saveFileDialog.FileName, csvContent.ToString());

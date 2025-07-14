@@ -2,13 +2,13 @@
 FE:\Pet Projects\Freelancers\WPF_Club-Management\App.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\MainWindow.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\AddEventDialog.xaml;;
-FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\AddUserDialog.xaml;;
+FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\AddMemberDialog.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\ClubManagementView.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\EditEventDialog.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\EditUserDialog.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\EventManagementView.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\LoginWindow.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\ManageLeadershipDialog.xaml;;
-FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\MemberListView.xaml;;
 FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\ReportsView.xaml;;
+FE:\Pet Projects\Freelancers\WPF_Club-Management\Views\UserManagementView.xaml;;
 

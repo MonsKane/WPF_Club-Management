@@ -124,14 +124,14 @@ namespace ClubManagementApp.ViewModels
         }
 
         // Authorization Properties
-        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.Role);
-        public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.Role);
-        public bool CanCreateEvents => CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.Role);
-        public bool CanGenerateReports => CurrentUser != null && _authorizationService.CanGenerateReports(CurrentUser.Role);
-        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "UserManagement");
-        public bool CanAccessClubManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "ClubManagement");
-        public bool CanAccessEventManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "EventManagement");
-        public bool CanAccessReports => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.Role, "Reports");
+        public bool CanCreateUsers => CurrentUser != null && _authorizationService.CanCreateUsers(CurrentUser.SystemRole, null);
+        public bool CanCreateClubs => CurrentUser != null && _authorizationService.CanCreateClubs(CurrentUser.SystemRole);
+        public bool CanCreateEvents => CurrentUser != null && _authorizationService.CanCreateEvents(CurrentUser.SystemRole);
+        public bool CanGenerateReports => CurrentUser != null && _authorizationService.CanGenerateReports(CurrentUser.SystemRole);
+        public bool CanAccessUserManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "UserManagement");
+        public bool CanAccessClubManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "ClubManagement");
+        public bool CanAccessEventManagement => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "EventManagement");
+        public bool CanAccessReports => CurrentUser != null && _authorizationService.CanAccessFeature(CurrentUser.SystemRole, "Reports");
 
         // Commands
         public ICommand AddUserCommand { get; private set; } = null!;
@@ -172,7 +172,7 @@ namespace ClubManagementApp.ViewModels
             // Enhanced Quick Actions Commands
             QuickSearchCommand = new RelayCommand(QuickSearch);
             ExportDataCommand = new RelayCommand(ExportData, _ => CanGenerateReports);
-            BackupDataCommand = new RelayCommand(BackupData, _ => CurrentUser?.Role == UserRole.SystemAdmin);
+            BackupDataCommand = new RelayCommand(BackupData, _ => CurrentUser?.SystemRole == SystemRole.Admin);
             ViewNotificationsCommand = new RelayCommand(ViewNotifications);
             SettingsCommand = new RelayCommand(OpenSettings);
             ViewUpcomingEventsCommand = new RelayCommand(ViewUpcomingEvents, _ => CanAccessEventManagement);
@@ -184,7 +184,7 @@ namespace ClubManagementApp.ViewModels
             try
             {
                 CurrentUser = await _userService.GetCurrentUserAsync();
-                Console.WriteLine($"[DashboardViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.Role})");
+                Console.WriteLine($"[DashboardViewModel] Current user loaded: {CurrentUser?.FullName} (Role: {CurrentUser?.SystemRole})");
             }
             catch (Exception ex)
             {
@@ -201,10 +201,10 @@ namespace ClubManagementApp.ViewModels
                 IsLoading = true;
 
                 // Load statistics efficiently using count methods
-                var canViewUser = _authorizationService.CanViewUser(CurrentUser!.Role);
-                var canViewClub = _authorizationService.CanViewClub(CurrentUser!.Role);
-                var canViewEvent = _authorizationService.CanViewEvent(CurrentUser!.Role);
-                var canViewReport = _authorizationService.CanViewReports(CurrentUser!.Role, default, default);
+                var canViewUser = _authorizationService.CanViewUser(CurrentUser!.SystemRole);
+                var canViewClub = _authorizationService.CanViewClub(CurrentUser!.SystemRole);
+                var canViewEvent = _authorizationService.CanViewEvent(CurrentUser!.SystemRole);
+                var canViewReport = _authorizationService.CanViewReports(CurrentUser!.SystemRole, default, default);
 
                 TotalUsers = canViewUser ? await _userService.GetTotalUsersCountAsync() : 0;
                 TotalClubs = canViewClub ? await _clubService.GetTotalClubsCountAsync() : 0;

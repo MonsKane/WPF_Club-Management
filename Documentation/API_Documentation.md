@@ -138,7 +138,7 @@ Task UpdateActivityLevelAsync(int userId, ActivityLevel activityLevel)
 **Authorization**: Admin, Chairman
 
 ```csharp
-Task<bool> UpdateUserRoleAsync(int userId, UserRole newRole)
+Task<bool> UpdateUserRoleAsync(int userId, SystemRole newRole)
 ```
 **Description**: Updates a user's role  
 **Parameters**: 
@@ -178,7 +178,7 @@ Task<Dictionary<ActivityLevel, int>> GetActivityStatisticsAsync(int? clubId = nu
 **Authorization**: Admin, Chairman
 
 ```csharp
-Task<IEnumerable<User>> GetMembersByRoleAsync(UserRole role, int? clubId = null)
+Task<IEnumerable<User>> GetMembersByRoleAsync(SystemRole role, int? clubId = null)
 ```
 **Description**: Retrieves users by their role  
 **Parameters**: 
@@ -295,7 +295,7 @@ Task<IEnumerable<User>> GetClubMembersAsync(int clubId)
 ##### Leadership Management
 
 ```csharp
-Task<bool> AssignClubLeadershipAsync(int clubId, int userId, UserRole role)
+Task<bool> AssignClubLeadershipAsync(int clubId, int userId, SystemRole role)
 ```
 **Description**: Assigns a leadership role to a user within a club  
 **Parameters**: 
@@ -346,7 +346,7 @@ Task<bool> RemoveClubLeadershipAsync(int clubId, int userId)
 ##### Statistics & Analytics
 
 ```csharp
-Task<Dictionary<UserRole, int>> GetClubRoleDistributionAsync(int clubId)
+Task<Dictionary<SystemRole, int>> GetClubRoleDistributionAsync(int clubId)
 ```
 **Description**: Retrieves role distribution statistics for a club  
 **Parameters**: 
@@ -705,7 +705,7 @@ Task SendBulkNotificationAsync(BulkNotificationRequest request)
 #### Key Methods
 
 ```csharp
-bool CanAccessFeature(string feature, UserRole userRole)
+bool CanAccessFeature(string feature, SystemRole userRole)
 bool CanManageClub(int clubId, int userId)
 bool CanManageEvent(int eventId, int userId)
 bool CanViewReport(int reportId, int userId)

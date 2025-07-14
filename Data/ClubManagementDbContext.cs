@@ -7,6 +7,7 @@ namespace ClubManagementApp.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Club> Clubs { get; set; }
+        public DbSet<ClubMember> ClubMembers { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<EventParticipant> EventParticipants { get; set; }
         public DbSet<Report> Reports { get; set; }
@@ -43,27 +44,56 @@ namespace ClubManagementApp.Data
             {
                 entity.HasKey(e => e.UserID);
                 entity.HasIndex(e => e.Email).IsUnique();
-                entity.Property(e => e.Role).HasConversion<string>();
-                entity.Property(e => e.ActivityLevel).HasConversion<string>();
-
-                entity.HasOne(e => e.Club)
-                      .WithMany(c => c.Members)
-                      .HasForeignKey(e => e.ClubID)
-                      .OnDelete(DeleteBehavior.SetNull);
+                entity.Property(e => e.SystemRole).HasConversion<int>();
+                entity.Property(e => e.ActivityLevel).HasConversion<int>();
             });
 
-            // Configure Club entity
+            // Configure ClubMember entity
+            modelBuilder.Entity<ClubMember>(entity =>
+            {
+                entity.HasKey(e => e.ClubMemberID);
+                entity.Property(e => e.ClubRole).HasConversion<int>();
+
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.ClubMemberships)
+                      .HasForeignKey(e => e.UserID)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Club)
+                      .WithMany(c => c.ClubMembers)
+                      .HasForeignKey(e => e.ClubID)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Ensure a user can only have one role per club
+                entity.HasIndex(e => new { e.UserID, e.ClubID }).IsUnique();
+            });
+
+                        // Configure Club entity
             modelBuilder.Entity<Club>(entity =>
             {
                 entity.HasKey(e => e.ClubID);
-                entity.HasIndex(e => e.Name).IsUnique();
+                entity.HasIndex(e => e.ClubName).IsUnique();
+
+                // Ignore UI-only and computed properties
+                entity.Ignore(e => e.IsSelected);
+                entity.Ignore(e => e.Status);
+                entity.Ignore(e => e.MemberCount);
+                entity.Ignore(e => e.EventCount);
+                entity.Ignore(e => e.Name);
+                entity.Ignore(e => e.FoundedDate);
+                // Removed: entity.Ignore(e => e.IsActive); - Now mapping IsActive to database
+
+                entity.HasOne(e => e.CreatedUser)
+                      .WithMany(u => u.CreatedClubs)
+                      .HasForeignKey(e => e.CreatedUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Configure Event entity
             modelBuilder.Entity<Event>(entity =>
             {
                 entity.HasKey(e => e.EventID);
-                entity.Property(e => e.Status).HasConversion<string>();
+                entity.Property(e => e.Status).HasConversion<int>();
 
                 entity.HasOne(e => e.Club)
                       .WithMany(c => c.Events)
@@ -75,7 +105,7 @@ namespace ClubManagementApp.Data
             modelBuilder.Entity<EventParticipant>(entity =>
             {
                 entity.HasKey(e => e.ParticipantID);
-                entity.Property(e => e.Status).HasConversion<string>();
+                entity.Property(e => e.Status).HasConversion<int>();
 
                 entity.HasOne(e => e.User)
                       .WithMany(u => u.EventParticipations)
@@ -95,7 +125,7 @@ namespace ClubManagementApp.Data
             modelBuilder.Entity<Report>(entity =>
             {
                 entity.HasKey(e => e.ReportID);
-                entity.Property(e => e.Type).HasConversion<string>();
+                entity.Property(e => e.Type).HasConversion<int>();
 
                 entity.HasOne(e => e.Club)
                       .WithMany()
@@ -112,7 +142,7 @@ namespace ClubManagementApp.Data
             modelBuilder.Entity<AuditLog>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.LogType).HasConversion<string>();
+                entity.Property(e => e.LogType).HasConversion<int>();
                 entity.Property(e => e.Action).HasMaxLength(255);
                 entity.Property(e => e.Details).HasMaxLength(2000);
                 entity.Property(e => e.IpAddress).HasMaxLength(45); // IPv6 max length
@@ -131,7 +161,7 @@ namespace ClubManagementApp.Data
             modelBuilder.Entity<Setting>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Scope).HasConversion<string>();
+                entity.Property(e => e.Scope).HasConversion<int>();
                 entity.Property(e => e.Key).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Value).IsRequired();
 
@@ -154,9 +184,9 @@ namespace ClubManagementApp.Data
             modelBuilder.Entity<Notification>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Type).HasConversion<string>();
-                entity.Property(e => e.Priority).HasConversion<string>();
-                entity.Property(e => e.Category).HasConversion<string>();
+                entity.Property(e => e.Type).HasConversion<int>();
+                entity.Property(e => e.Priority).HasConversion<int>();
+                entity.Property(e => e.Category).HasConversion<int>();
                 entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.Message).HasMaxLength(2000).IsRequired();
                 entity.Property(e => e.ChannelsJson).HasMaxLength(500);
@@ -187,9 +217,9 @@ namespace ClubManagementApp.Data
             modelBuilder.Entity<NotificationTemplate>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Type).HasConversion<string>();
-                entity.Property(e => e.Priority).HasConversion<string>();
-                entity.Property(e => e.Category).HasConversion<string>();
+                entity.Property(e => e.Type).HasConversion<int>();
+                entity.Property(e => e.Priority).HasConversion<int>();
+                entity.Property(e => e.Category).HasConversion<int>();
                 entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.TitleTemplate).HasMaxLength(200).IsRequired();

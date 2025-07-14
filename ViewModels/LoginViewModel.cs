@@ -86,7 +86,7 @@ namespace ClubManagementApp.ViewModels
                     var user = await _userService.GetUserByEmailAsync(Email);
                     if (user != null)
                     {
-                        Console.WriteLine($"[LOGIN] SUCCESS - User authenticated: {user.FullName} ({user.Role})");
+                        Console.WriteLine($"[LOGIN] SUCCESS - User authenticated: {user.FullName} ({user.SystemRole})");
                         _userService.SetCurrentUser(user);
 
                         // Show success dialog

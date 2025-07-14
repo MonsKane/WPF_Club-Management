@@ -2,15 +2,17 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ClubManagementApp.Models
 {
-    public enum UserRole
+    public enum SystemRole
     {
-        SystemAdmin,
         Admin,
-        ClubPresident,
+        ClubOwner,
+        Member
+    }
+
+    public enum ClubRole
+    {
+        Admin,
         Chairman,
-        ViceChairman,
-        ClubOfficer,
-        TeamLeader,
         Member
     }
 
@@ -46,21 +48,22 @@ namespace ClubManagementApp.Models
         public string? PhoneNumber { get; set; }
 
         [Required]
-        public UserRole Role { get; set; }
+        public SystemRole SystemRole { get; set; }
 
-        public ActivityLevel ActivityLevel { get; set; } = ActivityLevel.Normal;
+        public ActivityLevel ActivityLevel { get; set; } = ActivityLevel.Active;
 
-        public DateTime JoinDate { get; set; } = DateTime.Now;
+        public int? ClubID { get; set; }
 
         public bool IsActive { get; set; } = true;
 
         public bool TwoFactorEnabled { get; set; } = false;
 
-        // Foreign key
-        public int? ClubID { get; set; } // Nullable for admins or users without clubs
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Navigation properties
         public virtual Club? Club { get; set; }
+        public virtual ICollection<ClubMember> ClubMemberships { get; set; } = new List<ClubMember>();
+        public virtual ICollection<Club> CreatedClubs { get; set; } = new List<Club>();
         public virtual ICollection<EventParticipant> EventParticipations { get; set; } = new List<EventParticipant>();
         public virtual ICollection<Report> GeneratedReports { get; set; } = new List<Report>();
     }

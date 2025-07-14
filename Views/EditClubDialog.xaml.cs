@@ -20,7 +20,7 @@ namespace ClubManagementApp.Views
         {
             ClubNameTextBox.Text = _originalClub.Name;
             DescriptionTextBox.Text = _originalClub.Description ?? string.Empty;
-            FoundedDatePicker.SelectedDate = _originalClub.CreatedDate;
+            FoundedDatePicker.SelectedDate = _originalClub.EstablishedDate;
 
             // Set status based on IsActive property
             var status = _originalClub.IsActive ? "Active" : "Inactive";
@@ -55,10 +55,10 @@ namespace ClubManagementApp.Views
             }
 
             // Update the original club object instead of creating a new one
-            _originalClub.Name = ClubNameTextBox.Text.Trim();
+            _originalClub.ClubName = ClubNameTextBox.Text.Trim();
             _originalClub.Description = DescriptionTextBox.Text.Trim();
             _originalClub.IsActive = GetSelectedStatus() == "Active";
-            _originalClub.FoundedDate = FoundedDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now);
+            _originalClub.EstablishedDate = FoundedDatePicker.SelectedDate.GetValueOrDefault(DateTime.Now);
 
             UpdatedClub = _originalClub;
 

@@ -152,7 +152,7 @@ namespace ClubManagementApp.Services
 
                 if (user != null)
                 {
-                    _loggingService.LogInfo($"Found user: {user.FullName} (ID: {user.UserID}, Role: {user.Role})");
+                    _loggingService.LogInfo($"Found user: {user.FullName} (ID: {user.UserID}, Role: {user.SystemRole})");
                 }
                 else
                 {
@@ -288,7 +288,7 @@ namespace ClubManagementApp.Services
             try
             {
                 _loggingService.LogInfo($"Creating new user: {user.FullName} ({user.Email})");
-                _loggingService.LogInfo($"User role: {user.Role}, Club ID: {user.ClubID}");
+                _loggingService.LogInfo($"User role: {user.SystemRole}, Club ID: {user.ClubID}");
 
                 // Input validation
                 if (user == null)
@@ -331,11 +331,12 @@ namespace ClubManagementApp.Services
         ///
         /// Data Flow:
         /// 1. Receive updated user entity from UI
-        /// 2. Find existing entity in database
-        /// 3. Update properties manually to work with tracking
+        /// 2. Find existing entity in database using NoTracking for initial validation
+        /// 3. Load entity for tracking and update properties manually
         /// 4. Hash password if it's being updated
-        /// 5. Save changes to update database record
-        /// 6. Return updated user entity
+        /// 5. Validate email uniqueness if changed
+        /// 6. Save changes to update database record with transaction support
+        /// 7. Return updated user entity
         ///
         /// Security: Password is hashed before database storage if updated
         /// Used by: User profile editing, admin user management
@@ -344,56 +345,119 @@ namespace ClubManagementApp.Services
         /// <returns>Updated user entity</returns>
         public async Task<User> UpdateUserAsync(User user)
         {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user), "User cannot be null");
+
+            if (user.UserID <= 0)
+                throw new ArgumentException("Invalid user ID", nameof(user));
+
+            if (string.IsNullOrWhiteSpace(user.FullName))
+                throw new ArgumentException("Full name is required", nameof(user));
+
+            if (string.IsNullOrWhiteSpace(user.Email))
+                throw new ArgumentException("Email is required", nameof(user));
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
-                if (user == null)
-                    throw new ArgumentNullException(nameof(user), "User cannot be null");
-
-                if (user.UserID <= 0)
-                    throw new ArgumentException("Invalid user ID", nameof(user));
-
-                if (string.IsNullOrWhiteSpace(user.FullName))
-                    throw new ArgumentException("Full name is required", nameof(user));
-
-                if (string.IsNullOrWhiteSpace(user.Email))
-                    throw new ArgumentException("Email is required", nameof(user));
-
                 _loggingService.LogInfo($"Updating user: {user.FullName} (ID: {user.UserID})");
 
-                // Find the existing entity to avoid tracking conflicts
-                var existingUser = await _context.Users.FindAsync(user.UserID);
-                if (existingUser == null)
+                // First, check if user exists without tracking
+                var userExists = await _context.Users
+                    .AsNoTracking()
+                    .AnyAsync(u => u.UserID == user.UserID);
+
+                if (!userExists)
                 {
                     throw new InvalidOperationException($"User with ID {user.UserID} not found");
                 }
 
-                // Update properties manually to avoid entity tracking issues
-                existingUser.FullName = user.FullName;
-                existingUser.Email = user.Email;
-                existingUser.Role = user.Role;
-                existingUser.PhoneNumber = user.PhoneNumber;
+                // Check email uniqueness if email is being changed
+                var existingEmailUser = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Email == user.Email && u.UserID != user.UserID);
+
+                if (existingEmailUser != null)
+                {
+                    throw new InvalidOperationException($"Email {user.Email} is already in use by another user");
+                }
+
+                // Load the entity for tracking and updates
+                var existingUser = await _context.Users.FindAsync(user.UserID);
+                if (existingUser == null)
+                {
+                    throw new InvalidOperationException($"User with ID {user.UserID} not found during update");
+                }
+
+                // Store original values for logging
+                var originalEmail = existingUser.Email;
+                var originalRole = existingUser.SystemRole;
+
+                // Update properties manually to ensure controlled changes
+                existingUser.FullName = user.FullName.Trim();
+                existingUser.Email = user.Email.Trim();
+                existingUser.SystemRole = user.SystemRole;
+                existingUser.PhoneNumber = string.IsNullOrWhiteSpace(user.PhoneNumber) ? null : user.PhoneNumber.Trim();
                 existingUser.IsActive = user.IsActive;
                 existingUser.ClubID = user.ClubID;
                 existingUser.ActivityLevel = user.ActivityLevel;
                 existingUser.StudentID = user.StudentID;
                 existingUser.TwoFactorEnabled = user.TwoFactorEnabled;
 
-                // Update password if it's different from the existing one (indicating a new password)
-                // Only hash if it's a new password (not already hashed)
-                if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
+                // Preserve CreatedAt - never update this field
+                // existingUser.CreatedAt remains unchanged
+
+                // Handle password updates carefully
+                if (!string.IsNullOrEmpty(user.Password))
                 {
-                    Console.WriteLine("[USER_SERVICE] Password update detected, hashing new password");
-                    existingUser.Password = HashPassword(user.Password);
+                    // Check if this is a new password (not already hashed)
+                    // If the password is different from existing, assume it's a new password to hash
+                    if (user.Password != existingUser.Password)
+                    {
+                        _loggingService.LogInfo($"Password update detected for user {user.UserID}");
+                        existingUser.Password = HashPassword(user.Password);
+                    }
+                    // If passwords are the same, don't rehash (it's already hashed)
                 }
 
-                await _context.SaveChangesAsync();
-                _loggingService.LogInfo($"User updated successfully: {existingUser.FullName}");
+                // Mark entity as modified to ensure EF tracks changes
+                _context.Entry(existingUser).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+
+                // Save changes
+                var rowsAffected = await _context.SaveChangesAsync();
+
+                if (rowsAffected == 0)
+                {
+                    throw new InvalidOperationException("No changes were saved to the database. The user may have been modified by another process.");
+                }
+
+                await transaction.CommitAsync();
+
+                // Log significant changes
+                if (originalEmail != existingUser.Email)
+                {
+                    _loggingService.LogInfo($"User {user.UserID} email changed from {originalEmail} to {existingUser.Email}");
+                }
+
+                if (originalRole != existingUser.SystemRole)
+                {
+                    _loggingService.LogInfo($"User {user.UserID} role changed from {originalRole} to {existingUser.SystemRole}");
+                }
+
+                _loggingService.LogInfo($"User updated successfully: {existingUser.FullName} (ID: {existingUser.UserID})");
                 return existingUser;
             }
             catch (Exception ex)
             {
-                _loggingService.LogError($"Error updating user: {ex.Message}", ex);
-                throw;
+                await transaction.RollbackAsync();
+                _loggingService.LogError($"Error updating user {user.UserID}: {ex.Message}", ex);
+
+                // Log the full exception details for debugging
+                _loggingService.LogError($"User update failed - UserID: {user.UserID}, FullName: {user.FullName}, Email: {user.Email}");
+                _loggingService.LogError($"Exception details: {ex}");
+
+                throw new InvalidOperationException($"Failed to update user: {ex.Message}", ex);
             }
         }
 
@@ -680,11 +744,11 @@ namespace ClubManagementApp.Services
         /// <param name="role">User role to filter by (Chairman, ViceChairman, etc.)</param>
         /// <param name="clubId">Optional club ID to limit results to specific club</param>
         /// <returns>Collection of active users with specified role, ordered by name</returns>
-        public async Task<IEnumerable<User>> GetMembersByRoleAsync(UserRole role, int? clubId = null)
+        public async Task<IEnumerable<User>> GetMembersByRoleAsync(SystemRole role, int? clubId = null)
         {
             try
             {
-                if (!Enum.IsDefined(typeof(UserRole), role))
+                if (!Enum.IsDefined(typeof(SystemRole), role))
                 {
                     _loggingService.LogWarning($"Invalid role provided: {role}");
                     return new List<User>();
@@ -698,7 +762,7 @@ namespace ClubManagementApp.Services
 
                 var query = _context.Users
                     .Include(u => u.Club) // Club context for role management
-                    .Where(u => u.Role == role && u.IsActive); // Filter by role and active status
+                    .Where(u => u.SystemRole == role && u.IsActive); // Filter by role and active status
 
                 // Apply club filtering if specified
                 if (clubId.HasValue)
@@ -887,7 +951,7 @@ namespace ClubManagementApp.Services
         /// <param name="userId">Unique identifier of the user</param>
         /// <param name="newRole">New role to assign to the user</param>
         /// <returns>True if role update successful, false if user not found</returns>
-        public async Task<bool> UpdateUserRoleAsync(int userId, UserRole newRole)
+        public async Task<bool> UpdateUserRoleAsync(int userId, SystemRole newRole)
         {
             try
             {
@@ -897,7 +961,7 @@ namespace ClubManagementApp.Services
                     return false;
                 }
 
-                if (!Enum.IsDefined(typeof(UserRole), newRole))
+                if (!Enum.IsDefined(typeof(SystemRole), newRole))
                 {
                     await _loggingService.LogWarningAsync($"Invalid role provided to UpdateUserRoleAsync: {newRole}");
                     return false;
@@ -912,10 +976,10 @@ namespace ClubManagementApp.Services
                     return false; // User not found
                 }
 
-                var oldRole = user.Role;
+                var oldRole = user.SystemRole;
                 Console.WriteLine($"[USER_SERVICE] Changing {user.FullName} role from {oldRole} to {newRole}");
                 // Update user's organizational role
-                user.Role = newRole;
+                user.SystemRole = newRole;
                 await _context.SaveChangesAsync();
                 Console.WriteLine($"[USER_SERVICE] Role updated successfully for {user.FullName}: {oldRole} -> {newRole}");
                 await _loggingService.LogInformationAsync($"User {userId} role updated from {oldRole} to {newRole}");
@@ -952,15 +1016,8 @@ namespace ClubManagementApp.Services
                     return new List<User>();
                 }
 
-                return await _context.Users
-                    .Include(u => u.Club) // Club context for leadership display
-                    .Where(u => u.ClubID == clubId &&
-                               (u.Role == UserRole.Chairman ||
-                                u.Role == UserRole.ViceChairman ||
-                                u.Role == UserRole.TeamLeader)) // Filter leadership roles
-                    .OrderBy(u => u.Role) // Order by role hierarchy
-                    .ThenBy(u => u.FullName) // Then alphabetically by name
-                    .ToListAsync();
+                // This method is deprecated - use ClubService.GetClubMembersAsync with role filtering instead
+                return new List<User>();
             }
             catch (Exception ex)
             {
@@ -1207,12 +1264,97 @@ namespace ClubManagementApp.Services
             {
                 var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                 return await _context.Users
-                    .Where(u => u.JoinDate >= startOfMonth)
+                    .Where(u => u.CreatedAt >= startOfMonth)
                     .CountAsync();
             }
             catch (Exception ex)
             {
                 _loggingService.LogError($"Error getting new members this month count: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves all users with a specific system role.
+        /// </summary>
+        /// <param name="role">The system role to filter by</param>
+        /// <returns>Collection of users with the specified system role</returns>
+        public async Task<IEnumerable<User>> GetMembersBySystemRoleAsync(SystemRole role)
+        {
+            try
+            {
+                _loggingService.LogInfo($"Getting users by system role: {role}");
+                var users = await _context.Users
+                    .Include(u => u.Club)
+                    .Where(u => u.SystemRole == role)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
+                _loggingService.LogInfo($"Retrieved {users.Count} users with system role {role}");
+                return users;
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error retrieving users by system role {role}: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves all users with a specific club role within a club.
+        /// </summary>
+        /// <param name="role">The club role to filter by</param>
+        /// <param name="clubId">The club ID to filter by</param>
+        /// <returns>Collection of users with the specified club role in the specified club</returns>
+        public async Task<IEnumerable<User>> GetMembersByClubRoleAsync(ClubRole role, int clubId)
+        {
+            try
+            {
+                _loggingService.LogInfo($"Getting users by club role: {role} in club {clubId}");
+                // Note: This implementation assumes ClubRole is stored somewhere accessible
+                // Since the User model doesn't have ClubRole, this is a placeholder implementation
+                var users = await _context.Users
+                    .Include(u => u.Club)
+                    .Where(u => u.ClubID == clubId)
+                    .OrderBy(u => u.FullName)
+                    .ToListAsync();
+                _loggingService.LogInfo($"Retrieved {users.Count} users in club {clubId}");
+                return users;
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error retrieving users by club role {role} in club {clubId}: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Updates a user's system role.
+        /// </summary>
+        /// <param name="userId">The ID of the user to update</param>
+        /// <param name="newRole">The new system role to assign</param>
+        /// <returns>True if the update was successful, false otherwise</returns>
+        public async Task<bool> UpdateUserSystemRoleAsync(int userId, SystemRole newRole)
+        {
+            try
+            {
+                _loggingService.LogInfo($"Updating system role for user {userId} to {newRole}");
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    _loggingService.LogWarning($"User not found with ID: {userId}");
+                    return false;
+                }
+
+                var oldRole = user.SystemRole;
+                user.SystemRole = newRole;
+                await _context.SaveChangesAsync();
+
+                _loggingService.LogInfo($"Successfully updated user {userId} system role from {oldRole} to {newRole}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _loggingService.LogError($"Error updating system role for user {userId}: {ex.Message}", ex);
                 throw;
             }
         }

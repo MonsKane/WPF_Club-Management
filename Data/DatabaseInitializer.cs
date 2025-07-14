@@ -37,7 +37,7 @@ namespace ClubManagementApp.Data
                 Console.WriteLine($"[DB_INIT] Found {userCount} users, {clubCount} clubs, {eventCount} events in database.");
 
                 // Check for admin users specifically
-                var adminUsers = await context.Users.Where(u => u.Role == UserRole.Admin).ToListAsync();
+                var adminUsers = await context.Users.Where(u => u.SystemRole == SystemRole.Admin).ToListAsync();
                 Console.WriteLine($"[DB_INIT] Found {adminUsers.Count} admin users in database.");
 
                 // Check if database is already fully seeded
@@ -74,26 +74,37 @@ namespace ClubManagementApp.Data
 
         private static async Task SeedDataAsync(ClubManagementDbContext context)
         {
+            // Create single admin user
+            await CreateAdminUsersIfNeededAsync(context);
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.SystemRole == SystemRole.Admin);
+
+            if (adminUser == null)
+            {
+                throw new InvalidOperationException("No admin user found for club creation");
+            }
+
             // Create default clubs only if they don't exist
             var existingClubs = await context.Clubs.ToListAsync();
             Club[] clubs;
 
             if (!existingClubs.Any())
             {
-                Console.WriteLine("[DB_SEED] Creating default clubs...");
+                Console.WriteLine("[DB_SEED] Creating 2 default clubs...");
                 clubs = new[]
                 {
                     new Club
                     {
-                        Name = "Computer Science Club",
-                        Description = "A club for computer science enthusiasts",
-                        CreatedDate = DateTime.Now.AddMonths(-6)
+                        ClubName = "Computer Science Club",
+                        Description = "A club for computer science enthusiasts and programming",
+                        EstablishedDate = DateTime.Now.AddMonths(-6).Date,
+                        CreatedUserId = adminUser.UserID
                     },
                     new Club
                     {
-                        Name = "Photography Club",
-                        Description = "Capturing moments and learning photography",
-                        CreatedDate = DateTime.Now.AddMonths(-4)
+                        ClubName = "Photography Club",
+                        Description = "Capturing moments and learning photography techniques",
+                        EstablishedDate = DateTime.Now.AddMonths(-4).Date,
+                        CreatedUserId = adminUser.UserID
                     }
                 };
 
@@ -107,66 +118,53 @@ namespace ClubManagementApp.Data
                 clubs = existingClubs.Take(2).ToArray();
             }
 
-            // Create users only if they don't exist
+            // Create 5 members only if they don't exist
             var existingUsers = await context.Users.ToListAsync();
             var existingEmails = existingUsers.Select(u => u.Email).ToHashSet();
             var usersToCreate = new List<User>();
 
-            // Define all users to potentially create
+            // Define 5 members to create
             var potentialUsers = new[]
             {
-                new User
-                {
-                    FullName = "System Administrator",
-                    Email = "admin@clubmanagement.com",
-                    Password = HashPassword("admin123"),
-                    Role = UserRole.Admin,
-                    JoinDate = DateTime.Now.AddYears(-1),
-                    IsActive = true,
-                    ActivityLevel = ActivityLevel.Active
-                },
-                new User
-                {
-                    FullName = "University Administrator",
-                    Email = "admin@university.edu",
-                    Password = HashPassword("admin123"),
-                    Role = UserRole.Admin,
-                    JoinDate = DateTime.Now.AddYears(-1),
-                    IsActive = true,
-                    ActivityLevel = ActivityLevel.Active
-                },
                 new User
                 {
                     FullName = "John Doe",
                     Email = "john.doe@university.edu",
                     Password = HashPassword("password123"),
-                    Role = UserRole.Chairman,
-                    ClubID = clubs[0].ClubID,
-                    JoinDate = DateTime.Now.AddMonths(-5),
-                    IsActive = true,
-                    ActivityLevel = ActivityLevel.Active
+                    SystemRole = SystemRole.ClubOwner,
+                    CreatedAt = DateTime.Now.AddMonths(-5)
                 },
                 new User
                 {
                     FullName = "Jane Smith",
                     Email = "jane.smith@university.edu",
                     Password = HashPassword("password123"),
-                    Role = UserRole.Member,
-                    ClubID = clubs[0].ClubID,
-                    JoinDate = DateTime.Now.AddMonths(-3),
-                    IsActive = true,
-                    ActivityLevel = ActivityLevel.Normal
+                    SystemRole = SystemRole.Member,
+                    CreatedAt = DateTime.Now.AddMonths(-3)
                 },
                 new User
                 {
                     FullName = "Mike Johnson",
                     Email = "mike.johnson@university.edu",
                     Password = HashPassword("password123"),
-                    Role = UserRole.ViceChairman,
-                    ClubID = clubs[1].ClubID,
-                    JoinDate = DateTime.Now.AddMonths(-4),
-                    IsActive = true,
-                    ActivityLevel = ActivityLevel.Active
+                    SystemRole = SystemRole.Member,
+                    CreatedAt = DateTime.Now.AddMonths(-4)
+                },
+                new User
+                {
+                    FullName = "Sarah Wilson",
+                    Email = "sarah.wilson@university.edu",
+                    Password = HashPassword("password123"),
+                    SystemRole = SystemRole.Member,
+                    CreatedAt = DateTime.Now.AddMonths(-2)
+                },
+                new User
+                {
+                    FullName = "David Brown",
+                    Email = "david.brown@university.edu",
+                    Password = HashPassword("password123"),
+                    SystemRole = SystemRole.Member,
+                    CreatedAt = DateTime.Now.AddMonths(-1)
                 }
             };
 
@@ -198,8 +196,11 @@ namespace ClubManagementApp.Data
             // Get all users for event participant creation
             var allUsers = await context.Users.ToListAsync();
 
+            // Create club memberships for the users
+            await CreateClubMembershipsAsync(context, clubs);
+
             // Verify admin users were saved
-            var savedAdminUsers = await context.Users.Where(u => u.Role == UserRole.Admin).ToListAsync();
+            var savedAdminUsers = await context.Users.Where(u => u.SystemRole == SystemRole.Admin).ToListAsync();
             Console.WriteLine($"[DB_SEED] Verification: Found {savedAdminUsers.Count} admin users in database:");
             foreach (var admin in savedAdminUsers)
             {
@@ -220,7 +221,7 @@ namespace ClubManagementApp.Data
                     new Event
                     {
                         Name = "Programming Workshop",
-                        Description = "Learn advanced programming techniques",
+                        Description = "Learn advanced programming techniques and best practices",
                         EventDate = DateTime.Now.AddDays(7),
                         Location = "Computer Lab A",
                         ClubID = clubs[0].ClubID,
@@ -229,7 +230,7 @@ namespace ClubManagementApp.Data
                     new Event
                     {
                         Name = "Photography Exhibition",
-                        Description = "Showcase of student photography work",
+                        Description = "Showcase of student photography work and techniques",
                         EventDate = DateTime.Now.AddDays(14),
                         Location = "Art Gallery",
                         ClubID = clubs[1].ClubID,
@@ -248,40 +249,34 @@ namespace ClubManagementApp.Data
                 events = await context.Events.Take(2).ToArrayAsync();
             }
 
-            // Create sample event participants only if they don't exist
+            // Create event participants only if none exist
             var existingParticipants = await context.EventParticipants.CountAsync();
-            if (existingParticipants == 0 && events.Length >= 2 && allUsers.Count >= 3)
+            if (existingParticipants == 0 && events.Any() && allUsers.Any())
             {
-                var janeSmith = allUsers.FirstOrDefault(u => u.Email == "jane.smith@university.edu");
-                var mikeJohnson = allUsers.FirstOrDefault(u => u.Email == "mike.johnson@university.edu");
+                Console.WriteLine("[DB_SEED] Creating sample event participants...");
+                var participants = new List<EventParticipant>();
 
-                if (janeSmith != null && mikeJohnson != null)
+                // Add some users to events
+                var nonAdminUsers = allUsers.Where(u => u.SystemRole != SystemRole.Admin).Take(3).ToList();
+                foreach (var user in nonAdminUsers)
                 {
-                    var participants = new[]
+                    if (events.Length > 0)
                     {
-                        new EventParticipant
+                        participants.Add(new EventParticipant
                         {
-                            UserID = janeSmith.UserID,
+                            UserID = user.UserID,
                             EventID = events[0].EventID,
                             Status = AttendanceStatus.Registered,
-                            RegistrationDate = DateTime.Now.AddDays(-8)
-                        },
-                        new EventParticipant
-                        {
-                            UserID = mikeJohnson.UserID,
-                            EventID = events[1].EventID,
-                            Status = AttendanceStatus.Registered,
                             RegistrationDate = DateTime.Now.AddDays(-3)
-                        }
-                    };
+                        });
+                    }
+                }
 
+                if (participants.Any())
+                {
                     context.EventParticipants.AddRange(participants);
                     await context.SaveChangesAsync();
-                    Console.WriteLine($"[DB_SEED] Created {participants.Length} event participants successfully.");
-                }
-                else
-                {
-                    Console.WriteLine("[DB_SEED] Could not find required users for event participants.");
+                    Console.WriteLine($"[DB_SEED] Created {participants.Count} event participants successfully.");
                 }
             }
             else
@@ -297,7 +292,7 @@ namespace ClubManagementApp.Data
             // Check what's missing and create only what's needed
             var clubCount = await context.Clubs.CountAsync();
             var userCount = await context.Users.CountAsync();
-            var adminCount = await context.Users.CountAsync(u => u.Role == UserRole.Admin);
+            var adminCount = await context.Users.CountAsync(u => u.SystemRole == SystemRole.Admin);
             var eventCount = await context.Events.CountAsync();
 
             Console.WriteLine($"[DB_PARTIAL] Current state: {clubCount} clubs, {userCount} users ({adminCount} admins), {eventCount} events");
@@ -348,33 +343,9 @@ namespace ClubManagementApp.Data
         {
             try
             {
-                Console.WriteLine("[DB_CLEANUP] Checking for invalid ActivityLevel data...");
-
-                // Use raw SQL to find and fix invalid ActivityLevel values
-                var invalidUsers = await context.Database.SqlQueryRaw<int>(
-                    "SELECT UserID FROM Users WHERE ActivityLevel NOT IN ('Active', 'Normal', 'Inactive')"
-                ).ToListAsync();
-
-                if (invalidUsers.Any())
-                {
-                    Console.WriteLine($"[DB_CLEANUP] Found {invalidUsers.Count} users with invalid ActivityLevel values. Fixing...");
-
-                    // Update invalid ActivityLevel values
-                    await context.Database.ExecuteSqlRawAsync(
-                        "UPDATE Users SET ActivityLevel = CASE " +
-                        "WHEN ActivityLevel = 'High' THEN 'Active' " +
-                        "WHEN ActivityLevel = 'Medium' THEN 'Normal' " +
-                        "WHEN ActivityLevel = 'Low' THEN 'Inactive' " +
-                        "ELSE 'Normal' END " +
-                        "WHERE ActivityLevel NOT IN ('Active', 'Normal', 'Inactive')"
-                    );
-
-                    Console.WriteLine("[DB_CLEANUP] Invalid ActivityLevel values have been fixed.");
-                }
-                else
-                {
-                    Console.WriteLine("[DB_CLEANUP] No invalid ActivityLevel data found.");
-                }
+                Console.WriteLine("[DB_CLEANUP] Checking for invalid data...");
+                // No specific cleanup needed for new schema
+                Console.WriteLine("[DB_CLEANUP] No cleanup required for current schema.");
             }
             catch (Exception ex)
             {
@@ -383,69 +354,136 @@ namespace ClubManagementApp.Data
             }
         }
 
-        private static async Task CreateAdminUsersAsync(ClubManagementDbContext context)
+        private static async Task CreateAdminUsersIfNeededAsync(ClubManagementDbContext context)
         {
-            Console.WriteLine("[DB_ADMIN] Creating missing admin users...");
-
-            var adminEmails = new[] { "admin@clubmanagement.com", "admin@university.edu" };
-            var existingAdmins = await context.Users
-                .Where(u => adminEmails.Contains(u.Email))
-                .Select(u => u.Email)
-                .ToListAsync();
-
-            var usersToCreate = new List<User>();
-
-            if (!existingAdmins.Contains("admin@clubmanagement.com"))
+            var adminCount = await context.Users.CountAsync(u => u.SystemRole == SystemRole.Admin);
+            if (adminCount == 0)
             {
-                Console.WriteLine("[DB_ADMIN] Creating admin@clubmanagement.com...");
-                usersToCreate.Add(new User
-                {
-                    FullName = "System Administrator",
-                    Email = "admin@clubmanagement.com",
-                    Password = HashPassword("admin123"),
-                    Role = UserRole.Admin,
-                    ActivityLevel = ActivityLevel.Active,
-                    JoinDate = DateTime.Now,
-                    IsActive = true,
-                    TwoFactorEnabled = false
-                });
-            }
-            else
-            {
-                Console.WriteLine("[DB_ADMIN] admin@clubmanagement.com already exists, skipping...");
-            }
-
-            if (!existingAdmins.Contains("admin@university.edu"))
-            {
-                Console.WriteLine("[DB_ADMIN] Creating admin@university.edu...");
-                usersToCreate.Add(new User
-                {
-                    FullName = "University Admin",
-                    Email = "admin@university.edu",
-                    Password = HashPassword("admin123"),
-                    Role = UserRole.Admin,
-                    ActivityLevel = ActivityLevel.Active,
-                    JoinDate = DateTime.Now,
-                    IsActive = true,
-                    TwoFactorEnabled = false
-                });
-            }
-            else
-            {
-                Console.WriteLine("[DB_ADMIN] admin@university.edu already exists, skipping...");
-            }
-
-            if (usersToCreate.Any())
-            {
-                await context.Users.AddRangeAsync(usersToCreate);
-                await context.SaveChangesAsync();
-                Console.WriteLine($"[DB_ADMIN] Created {usersToCreate.Count} admin users successfully.");
-            }
-            else
-            {
-                Console.WriteLine("[DB_ADMIN] All admin users already exist, no creation needed.");
+                await CreateAdminUsersAsync(context);
             }
         }
+
+        private static async Task CreateClubMembershipsAsync(ClubManagementDbContext context, Club[] clubs)
+        {
+            Console.WriteLine("[DB_SEED] Creating club memberships...");
+
+            var existingMemberships = await context.ClubMembers.CountAsync();
+            if (existingMemberships > 0)
+            {
+                Console.WriteLine("[DB_SEED] Club memberships already exist, skipping creation.");
+                return;
+            }
+
+            // Get all the users we created
+            var johnDoe = await context.Users.FirstOrDefaultAsync(u => u.Email == "john.doe@university.edu");
+            var janeSmith = await context.Users.FirstOrDefaultAsync(u => u.Email == "jane.smith@university.edu");
+            var mikeJohnson = await context.Users.FirstOrDefaultAsync(u => u.Email == "mike.johnson@university.edu");
+            var sarahWilson = await context.Users.FirstOrDefaultAsync(u => u.Email == "sarah.wilson@university.edu");
+            var davidBrown = await context.Users.FirstOrDefaultAsync(u => u.Email == "david.brown@university.edu");
+
+            var memberships = new List<ClubMember>();
+
+            // Computer Science Club memberships (3 members)
+            if (johnDoe != null && clubs.Length > 0)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = johnDoe.UserID,
+                    ClubID = clubs[0].ClubID, // Computer Science Club
+                    ClubRole = ClubRole.Chairman,
+                    JoinDate = DateTime.Now.AddMonths(-5)
+                });
+                Console.WriteLine($"[DB_SEED] Added John Doe as Chairman of {clubs[0].ClubName}");
+            }
+
+            if (janeSmith != null && clubs.Length > 0)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = janeSmith.UserID,
+                    ClubID = clubs[0].ClubID, // Computer Science Club
+                    ClubRole = ClubRole.Member,
+                    JoinDate = DateTime.Now.AddMonths(-3)
+                });
+                Console.WriteLine($"[DB_SEED] Added Jane Smith as Member of {clubs[0].ClubName}");
+            }
+
+            if (mikeJohnson != null && clubs.Length > 0)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = mikeJohnson.UserID,
+                    ClubID = clubs[0].ClubID, // Computer Science Club
+                    ClubRole = ClubRole.Member,
+                    JoinDate = DateTime.Now.AddMonths(-4)
+                });
+                Console.WriteLine($"[DB_SEED] Added Mike Johnson as Member of {clubs[0].ClubName}");
+            }
+
+            // Photography Club memberships (2 members)
+            if (sarahWilson != null && clubs.Length > 1)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = sarahWilson.UserID,
+                    ClubID = clubs[1].ClubID, // Photography Club
+                    ClubRole = ClubRole.Admin,
+                    JoinDate = DateTime.Now.AddMonths(-2)
+                });
+                Console.WriteLine($"[DB_SEED] Added Sarah Wilson as Admin of {clubs[1].ClubName}");
+            }
+
+            if (davidBrown != null && clubs.Length > 1)
+            {
+                memberships.Add(new ClubMember
+                {
+                    UserID = davidBrown.UserID,
+                    ClubID = clubs[1].ClubID, // Photography Club
+                    ClubRole = ClubRole.Member,
+                    JoinDate = DateTime.Now.AddMonths(-1)
+                });
+                Console.WriteLine($"[DB_SEED] Added David Brown as Member of {clubs[1].ClubName}");
+            }
+
+            if (memberships.Any())
+            {
+                context.ClubMembers.AddRange(memberships);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[DB_SEED] Created {memberships.Count} club memberships successfully.");
+                Console.WriteLine($"[DB_SEED] Computer Science Club: 3 members, Photography Club: 2 members");
+            }
+        }
+
+        private static async Task CreateAdminUsersAsync(ClubManagementDbContext context)
+        {
+            Console.WriteLine("[DB_ADMIN] Creating single admin user...");
+
+            var adminEmail = "admin@university.edu";
+            var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+
+            if (existingAdmin == null)
+            {
+                Console.WriteLine($"[DB_ADMIN] Creating {adminEmail}...");
+                var adminUser = new User
+                {
+                    FullName = "System Administrator",
+                    Email = adminEmail,
+                    Password = HashPassword("admin123"),
+                    SystemRole = SystemRole.Admin,
+                    CreatedAt = DateTime.Now
+                };
+
+                await context.Users.AddAsync(adminUser);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[DB_ADMIN] Created admin user successfully: {adminEmail}");
+            }
+            else
+            {
+                Console.WriteLine($"[DB_ADMIN] Admin user already exists: {adminEmail}");
+            }
+        }
+
+
 
         public static async Task ResetDatabaseAsync(ClubManagementDbContext context)
         {

@@ -119,11 +119,11 @@ namespace ClubManagementApp.Helpers
                        user.ClubID != targetClub.ClubID;
             }
             
-            public static bool CanPromoteUser(Models.User currentUser, Models.User targetUser, UserRole newRole)
+            public static bool CanPromoteUser(Models.User currentUser, Models.User targetUser, SystemRole newRole)
             {
                 return currentUser != null && targetUser != null &&
                        currentUser.IsActive && targetUser.IsActive &&
-                       ValidationHelper.UserValidation.CanAssignRole(currentUser.Role, newRole);
+                       ValidationHelper.UserValidation.CanAssignRole(currentUser.SystemRole, newRole);
             }
             
             public static bool CanDeactivateUser(Models.User currentUser, Models.User targetUser)
